@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "configVersion": 8,
+  "updatedAt": "2026-09-07T11:30:00.000Z",
+  "pollIntervalMinutes": 3,
+  "_nota": "Manifest del cliente 'ristorante-demo'. Stesso schema dell'attuale launcher/config.json: defaults + devices[UUID]. Per abilitare/disabilitare un gioco usa 'visible'. Branding e palette sono indipendenti da Big Ben.",
+  "defaults": {
+    "branding": {
+      "appTitle": "Giochi per i piccoli ospiti",
+      "logoUrl": null,
+      "backgroundUrl": null,
+      "primaryColor": "#1F7A5B",
+      "accentColor": "#FFC93C",
+      "language": "it"
+    },
+    "layout": {
+      "columns": 4,
+      "tileSize": "large",
+      "showLabels": true
+    },
+    "kiosk": {
+      "enabled": true,
+      "exitPin": "0000",
+      "idleTimeoutSeconds": 60,
+      "sessionLimitSeconds": 0,
+      "maxVolumePercent": 50,
+      "brightnessPercent": 85,
+      "autoLaunchPackage": null
+    },
+    "operational": {
+      "status": "active",
+      "maintenanceMessage": "Torniamo subito!",
+      "banner": {
+        "enabled": false,
+        "text": "",
+        "imageUrl": ""
+      }
+    },
+    "games": [
+      {
+        "id": "memory",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/memory/index.html",
+        "displayName": "Memory",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/memory.png",
+        "category": "Giochi web",
+        "order": 10,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "palloncini",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/palloncini/index.html",
+        "displayName": "Scoppia i palloncini",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/palloncini.png",
+        "category": "Giochi web",
+        "order": 11,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "frutta",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/frutta/index.html",
+        "displayName": "Taglia la Frutta",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/frutta.png",
+        "category": "Giochi web",
+        "order": 12,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "lavagna",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/lavagna/index.html",
+        "displayName": "Lavagna",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/lavagna.png",
+        "category": "Giochi web",
+        "order": 13,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "labirinto",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/labirinto/index.html",
+        "displayName": "Labirinto",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/labirinto.png",
+        "category": "Giochi web",
+        "order": 14,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "sequenza",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/sequenza/index.html",
+        "displayName": "Sequenza colori",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/sequenza.png",
+        "category": "Giochi web",
+        "order": 15,
+        "visible": false,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "talpe",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/talpe/index.html",
+        "displayName": "Acchiappa la Talpa",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/talpe.png",
+        "category": "Giochi web",
+        "order": 16,
+        "visible": false,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "stelle",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/stelle/index.html",
+        "displayName": "Acchiappa-stelle",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/stelle.png",
+        "category": "Giochi web",
+        "order": 17,
+        "visible": false,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "puzzle",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/puzzle/index.html",
+        "displayName": "Rompicapo",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/puzzle.png",
+        "category": "Giochi web",
+        "order": 18,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "tris",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/tris/index.html",
+        "displayName": "Tris",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/tris.png",
+        "category": "Giochi web",
+        "order": 19,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      },
+      {
+        "id": "hanoi",
+        "url": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/hanoi/index.html",
+        "displayName": "Torre di Hanoi",
+        "iconUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/hanoi.png",
+        "category": "Giochi web",
+        "order": 20,
+        "visible": true,
+        "sessionLimitSeconds": 0
+      }
+    ],
+    "network": {
+      "wifiNetworks": []
+    },
+    "update": {
+      "latestVersionCode": 16,
+      "apkUrl": "https://kevodable.github.io/Fun-Planet-touch/launcher/apk/launcher-latest.apk",
+      "silentInstall": true
+    },
+    "managedApps": [],
+    "telemetry": {
+      "enabled": true,
+      "reportUrl": "https://script.google.com/macros/s/XXXX/exec",
+      "reportIntervalMinutes": 30,
+      "heartbeatIntervalMinutes": 5,
+      "sendGameUsage": true,
+      "sendDeviceHealth": true
+    },
+    "content": {
+      "version": 7,
+      "url": "https://kevodable.github.io/Fun-Planet-touch/launcher/content/content-7.zip",
+      "baseUrl": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/"
+    }
+  },
+  "devices": {}
+}

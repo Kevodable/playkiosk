@@ -1,0 +1,86 @@
+[
+  {
+    "id": "memory",
+    "nome": "Memory",
+    "cartella": "memory",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/launcher/uploads/memorygame_segnaposto-1782221476317.jpg"
+  },
+  {
+    "id": "talpe",
+    "nome": "Acchiappa la Talpa",
+    "cartella": "talpe",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/launcher/uploads/icon-1782218056475.png"
+  },
+  {
+    "id": "palloncini",
+    "nome": "Scoppia i palloncini",
+    "cartella": "palloncini",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/launcher/uploads/unnamed-1782217966114.png"
+  },
+  {
+    "id": "frutta",
+    "nome": "Taglia la Frutta",
+    "cartella": "frutta",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/frutta.png"
+  },
+  {
+    "id": "stelle",
+    "nome": "Acchiappa-stelle",
+    "cartella": "stelle",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/stelle.png"
+  },
+  {
+    "id": "sequenza",
+    "nome": "Sequenza colori",
+    "cartella": "sequenza",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/sequenza.png"
+  },
+  {
+    "id": "lavagna",
+    "nome": "Lavagna",
+    "cartella": "lavagna",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/lavagna.png"
+  },
+  {
+    "id": "labirinto",
+    "nome": "Labirinto",
+    "cartella": "labirinto",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/labirinto.png"
+  },
+  {
+    "id": "forme",
+    "nome": "Abbina le forme",
+    "cartella": "forme",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/forme.png"
+  },
+  {
+    "id": "puzzle",
+    "nome": "Rompicapo",
+    "cartella": "puzzle",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/puzzle.png"
+  },
+  {
+    "id": "tris",
+    "nome": "Tris",
+    "cartella": "tris",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/tris.png"
+  },
+  {
+    "id": "hanoi",
+    "nome": "Torre di Hanoi",
+    "cartella": "hanoi",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/hanoi.png"
+  }
+]

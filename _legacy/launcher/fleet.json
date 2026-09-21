@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "routerVersion": 9,
+  "updatedAt": "2026-09-07T11:00:00.000Z",
+  "_nota": "Router multi-tenant. Mappa ogni UUID device al manifest del suo cliente. 'default' = cliente zero Big Ben Matic (retrocompatibilità: punta all'attuale config.json). I device non elencati in 'devices' usano 'default'.",
+  "default": {
+    "clientId": "fun-planet-srl",
+    "locationId": "Kids fun planet Correggio",
+    "manifestUrl": "https://kevodable.github.io/Fun-Planet-touch/launcher/clients/fun-planet-srl/config.json"
+  },
+  "devices": {
+    "176fe05d-1fa0-4432-bbed-988611332a57": {
+      "clientId": "fun-planet-srl",
+      "locationId": "Kids fun planet Correggio",
+      "manifestUrl": "https://kevodable.github.io/Fun-Planet-touch/launcher/clients/fun-planet-srl/config.json"
+    },
+    "9a27468b4ff6429db002a6f6490bf2cf": {
+      "clientId": "fun-planet-srl",
+      "locationId": "Kids fun planet Correggio",
+      "manifestUrl": "https://kevodable.github.io/Fun-Planet-touch/launcher/clients/fun-planet-srl/config.json"
+    },
+    "642e0bf3-d658-425e-bcc2-cb45b5ab3db7": {
+      "clientId": "fun-planet-srl",
+      "locationId": "Kids fun planet Correggio",
+      "manifestUrl": "https://kevodable.github.io/Fun-Planet-touch/launcher/clients/fun-planet-srl/config.json"
+    }
+  },
+  "_esempio_nuovo_cliente": {
+    "UUID-DEL-DEVICE-DEL-CLIENTE": {
+      "clientId": "ristorante-demo",
+      "locationId": "ristorante-demo-sala1",
+      "manifestUrl": "https://kevodable.github.io/Fun-Planet-touch/launcher/clients/ristorante-demo/config.json"
+    }
+  }
+}

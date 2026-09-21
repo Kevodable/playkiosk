@@ -1,0 +1,85 @@
+[
+  {
+    "id": "memory",
+    "nome": "Memory",
+    "cartella": "memory",
+    "icona": "🧠",
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/launcher/uploads/memorygame_segnaposto-1782221476317.jpg",
+    "colore": "#E8488B",
+    "minEta": 3,
+    "descrizione": "Trova tutte le coppie uguali",
+    "attivo": true
+  },
+  {
+    "id": "talpe",
+    "nome": "Acchiappa la Talpa",
+    "cartella": "talpe",
+    "icona": "🐹",
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/launcher/uploads/icon-1782218056475.png",
+    "colore": "#2E5BFF",
+    "minEta": 4,
+    "descrizione": "Colpisci le talpe che spuntano",
+    "attivo": true
+  },
+  {
+    "id": "palloncini",
+    "nome": "Scoppia i palloncini",
+    "cartella": "palloncini",
+    "icona": "🎈",
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/launcher/uploads/unnamed-1782217966114.png",
+    "colore": "#7A1F3D",
+    "minEta": 3,
+    "descrizione": "Tocca i palloncini per scoppiarli",
+    "attivo": true
+  },
+  {
+    "id": "frutta",
+    "nome": "Taglia la Frutta",
+    "cartella": "frutta",
+    "icona": "🍉",
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/frutta.png",
+    "colore": "#34C759",
+    "minEta": 3,
+    "descrizione": "Taglia la frutta con un dito",
+    "attivo": true
+  },
+  {
+    "id": "stelle",
+    "nome": "Acchiappa-stelle",
+    "cartella": "stelle",
+    "icona": "⭐",
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/stelle.png",
+    "colore": "#FFB020",
+    "minEta": 3,
+    "descrizione": "Prendi le stelle col cesto",
+    "attivo": true
+  },
+  {
+    "id": "sequenza",
+    "nome": "Sequenza colori",
+    "cartella": "sequenza",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/sequenza.png"
+  },
+  {
+    "id": "lavagna",
+    "nome": "Lavagna",
+    "cartella": "lavagna",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/lavagna.png"
+  },
+  {
+    "id": "labirinto",
+    "nome": "Labirinto",
+    "cartella": "labirinto",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/labirinto.png"
+  },
+  {
+    "id": "forme",
+    "nome": "Abbina le forme",
+    "cartella": "forme",
+    "attivo": true,
+    "iconImg": "https://kevodable.github.io/Fun-Planet-touch/big-ben-giochi/assets/icons/forme.png"
+  }
+]

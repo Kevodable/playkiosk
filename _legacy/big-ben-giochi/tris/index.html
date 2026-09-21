@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#7A1F3D">
+  <title>Tris</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    .board{
+      position:relative;
+      width:72vmin; width:min(72vmin, 480px);
+      height:72vmin; height:min(72vmin, 480px);
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(3,1fr);
+      gap:1.6vmin;
+      padding:1.6vmin;
+      background:#fff;
+      border-radius:24px;
+      box-shadow:var(--bb-shadow);
+    }
+    .cella{
+      display:flex; align-items:center; justify-content:center;
+      border:0; border-radius:16px;
+      background:var(--bb-blue-soft);
+      font-weight:900; line-height:1;
+      font-size:18vmin; font-size:min(18vmin, 120px);
+      cursor:pointer;
+      transition:transform .1s var(--bb-ease-elastic);
+    }
+    .cella:active{ transform:scale(.95); }
+    .cella.x{ color:var(--bb-pink); }
+    .cella.o{ color:var(--bb-blue); }
+    .cella.vinta{ background:#FFE9A8; }
+    .turno{ font-size:5vmin; font-size:min(5vmin,30px); font-weight:900; }
+    .turno .x{ color:var(--bb-pink); } .turno .o{ color:var(--bb-blue); }
+
+    /* Schermata di start */
+    .start{
+      position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:20px;
+      background:rgba(255,247,251,.94);
+      text-align:center;
+    }
+    .start__img{ width:26vmin; width:clamp(120px,26vmin,190px); height:auto;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
+    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px); font-weight:900; color:var(--bb-burgundy); }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <!-- header iniettato da JS -->
+    <div class="bb-stage">
+      <div class="board" id="board"></div>
+      <div class="start" id="start">
+        <img class="start__img" src="../assets/mascotte/kip.png" alt="">
+        <div class="start__txt">Tris! Fai tre in fila.<br>Come vuoi giocare?</div>
+        <div class="liv-row">
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="facile">😊 Facile</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="difficile">🔥 Difficile</button>
+          <button class="bb-btn bb-btn--blue liv-btn" data-liv="due">👥 2 giocatori</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    var info = BB.header("⭕ Tris");
+    BB.idle(60000, BB.home);
+
+    var board = document.getElementById("board");
+    var startScreen = document.getElementById("start");
+
+    var LINEE = [
+      [0,1,2],[3,4,5],[6,7,8],   // righe
+      [0,3,6],[1,4,7],[2,5,8],   // colonne
+      [0,4,8],[2,4,6]            // diagonali
+    ];
+
+    var celle = [];        // "", "x", "o"
+    var turno = "x";       // il bambino è sempre "x" e inizia
+    var modo = "facile";   // facile | difficile | due
+    var inCorso = false;
+
+    function mostraTurno(){
+      if (modo === "due"){
+        info.innerHTML = 'Tocca a: <span class="turno"><span class="' + turno + '">' +
+          (turno === "x" ? "✕" : "◯") + "</span></span>";
+      } else {
+        info.innerHTML = turno === "x"
+          ? '<span class="turno"><span class="x">✕</span></span> tocca a te'
+          : "🤖 penso…";
+      }
+    }
+
+    function nuova(liv){
+      modo = liv;
+      celle = ["","","","","","","","",""];
+      turno = "x";
+      inCorso = true;
+      render();
+      mostraTurno();
+      startScreen.classList.add("bb-hidden");
+    }
+
+    function render(){
+      board.innerHTML = "";
+      for (var i = 0; i < 9; i++){
+        var c = document.createElement("button");
+        c.className = "cella" + (celle[i] ? " " + celle[i] : "");
+        c.textContent = celle[i] === "x" ? "✕" : (celle[i] === "o" ? "◯" : "");
+        (function(idx){ c.addEventListener("click", function(){ gioca(idx); }); })(i);
+        board.appendChild(c);
+      }
+    }
+
+    function gioca(i){
+      if (!inCorso || celle[i]) return;
+      if (modo !== "due" && turno !== "x") return;   // vs computer: solo il turno del bambino
+      piazza(i, turno);
+    }
+
+    function piazza(i, chi){
+      celle[i] = chi;
+      BB.sound("pop");
+      render();
+      var vinc = vincitore();
+      if (vinc){ return fine(vinc); }
+      if (pieno()){ return fine(null); }        // pareggio
+      turno = (chi === "x") ? "o" : "x";
+      mostraTurno();
+      if (modo !== "due" && turno === "o"){
+        inCorso = true;
+        setTimeout(mossaComputer, 450);
+      }
+    }
+
+    function mossaComputer(){
+      if (!inCorso) return;
+      var mossa = (modo === "difficile") ? sceltaSmart("o") : sceltaCasuale();
+      if (mossa != null) piazza(mossa, "o");
+    }
+
+    function libere(){
+      var out = []; for (var i=0;i<9;i++) if(!celle[i]) out.push(i); return out;
+    }
+    function sceltaCasuale(){
+      var l = libere(); return l.length ? l[BB.rand(0, l.length-1)] : null;
+    }
+    // AI robusta: vinci se puoi, blocca se devi, poi centro/angoli/lati
+    function sceltaSmart(me){
+      var avv = me === "o" ? "x" : "o";
+      var m = trovaLinea(me); if (m != null) return m;   // vinci
+      m = trovaLinea(avv); if (m != null) return m;       // blocca
+      if (!celle[4]) return 4;                            // centro
+      var angoli = [0,2,6,8].filter(function(i){ return !celle[i]; });
+      if (angoli.length) return angoli[BB.rand(0, angoli.length-1)];
+      var lati = [1,3,5,7].filter(function(i){ return !celle[i]; });
+      if (lati.length) return lati[BB.rand(0, lati.length-1)];
+      return sceltaCasuale();
+    }
+    // Se `chi` ha due su una linea e la terza è libera, ritorna quella casella
+    function trovaLinea(chi){
+      for (var k=0;k<LINEE.length;k++){
+        var a=LINEE[k][0], b=LINEE[k][1], c=LINEE[k][2];
+        var v=[celle[a],celle[b],celle[c]];
+        var n=v.filter(function(x){return x===chi;}).length;
+        var vuote=v.filter(function(x){return !x;}).length;
+        if (n===2 && vuote===1){
+          if(!celle[a]) return a; if(!celle[b]) return b; return c;
+        }
+      }
+      return null;
+    }
+
+    function vincitore(){
+      for (var k=0;k<LINEE.length;k++){
+        var a=LINEE[k][0], b=LINEE[k][1], c=LINEE[k][2];
+        if (celle[a] && celle[a]===celle[b] && celle[b]===celle[c]){
+          return { chi:celle[a], linea:LINEE[k] };
+        }
+      }
+      return null;
+    }
+    function pieno(){ return libere().length === 0; }
+
+    function fine(vinc){
+      inCorso = false;
+      if (vinc){
+        vinc.linea.forEach(function(i){ board.children[i].classList.add("vinta"); });
+      }
+      var titolo, emoji;
+      if (!vinc){ titolo = "Pareggio!"; emoji = "🤝"; }
+      else if (modo === "due"){ titolo = (vinc.chi==="x"?"✕":"◯") + " ha vinto!"; emoji = "🏆"; }
+      else if (vinc.chi === "x"){ titolo = "Hai vinto!"; emoji = "🏆"; }
+      else { titolo = "Ha vinto il computer"; emoji = "🤖"; }
+      setTimeout(function(){
+        BB.win({ emoji: emoji, titolo: titolo,
+          rigioca: function(){ startScreen.classList.remove("bb-hidden"); } });
+      }, 650);
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
+      b.addEventListener("click", function(){ nuova(b.dataset.liv); });
+    });
+  </script>
+</body>
+</html>

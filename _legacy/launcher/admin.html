@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fun Planet · Pannello di controllo flotta</title>
+<style>
+  :root {
+    --primary: #3346D6;
+    --accent: #FDCE72;
+    --bg: #eef2fb;
+    --card: #ffffff;
+    --ok: #2e7d32;
+    --err: #c62828;
+    --muted: #6b7280;
+    --border: #d7def0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: #1f2433;
+  }
+  header {
+    background: linear-gradient(120deg, var(--primary), #5a6bf0);
+    color: #fff; padding: 18px 22px; display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 20px; margin: 0; flex: 1; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 18px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .card h2 { margin: 0 0 4px; font-size: 17px; color: var(--primary); }
+  /* Accordion: sezioni comprimibili */
+  .card > h2 { cursor: pointer; user-select: none; }
+  .card > h2::before { content: "▸ "; color: #9aa; font-size: .85em; }
+  .card:not(.collapsed) > h2::before { content: "▾ "; }
+  .card.collapsed > *:not(h2) { display: none !important; }
+  .card .hint { color: var(--muted); font-size: 12.5px; margin: 0 0 14px; }
+  label.field { display: block; margin: 10px 0; font-size: 13px; color: #333; }
+  label.field span { display: block; margin-bottom: 4px; font-weight: 600; color: #444; }
+  input[type=text], input[type=number], input[type=password], textarea, select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px;
+    font-size: 14px; font-family: inherit; background: #fff;
+  }
+  textarea { min-height: 70px; resize: vertical; font-family: ui-monospace, monospace; font-size: 12.5px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .row > * { flex: 1; min-width: 160px; }
+  .inline { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  button {
+    background: var(--primary); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button.ghost { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  button.danger { background: #fff; color: var(--err); border: 1px solid var(--err); padding: 6px 12px; }
+  button.small { padding: 7px 12px; font-size: 13px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .listitem { border: 1px dashed var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; background: #fafbff; }
+  .listitem .top { display: flex; justify-content: flex-end; margin-bottom: -6px; }
+  .status { padding: 10px 14px; border-radius: 10px; font-size: 13.5px; margin: 10px 0; display: none; }
+  .status.show { display: block; }
+  .status.ok { background: #e6f4ea; color: var(--ok); }
+  .status.err { background: #fdecea; color: var(--err); }
+  .status.info { background: #e8eefc; color: var(--primary); }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  code { background: #eef; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+  details summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+  .ver { font-weight: 700; }
+  .save-bar {
+    position: sticky; bottom: 0; background: rgba(238,242,251,.95); backdrop-filter: blur(4px);
+    border-top: 1px solid var(--border); padding: 12px 0; margin-top: 8px;
+  }
+  /* Titoli che separano le due aree: Flotta/Assegnazioni vs Configurazione cliente */
+  .area-title {
+    margin: 24px 2px 10px; font-size: 18px; color: var(--primary);
+    border-bottom: 2px solid var(--border); padding-bottom: 8px;
+  }
+  .area-title small { display: block; font-size: 12.5px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <span style="font-size:22px">🎡</span>
+  <h1>Fun Planet · Pannello di controllo flotta</h1>
+</header>
+
+<div class="wrap">
+
+  <!-- CONNESSIONE -->
+  <div class="card">
+    <h2>1 · Connessione a GitHub</h2>
+    <p class="hint">
+      Serve una sola volta. Crea un <b>token fine-grained</b> su GitHub
+      (Settings → Developer settings → Fine-grained tokens), dai accesso al solo repository
+      <code>Fun-Planet-touch</code> con permesso <b>Contents: Read and write</b>, incollalo qui.
+      Il token resta salvato <b>solo in questo browser</b> (non viene mai pubblicato).
+    </p>
+    <div class="row">
+      <label class="field"><span>Proprietario (owner)</span>
+        <input type="text" id="gh-owner" value="Kevodable" /></label>
+      <label class="field"><span>Repository</span>
+        <input type="text" id="gh-repo" value="Fun-Planet-touch" /></label>
+      <label class="field"><span>Branch</span>
+        <input type="text" id="gh-branch" value="claude/great-meitner-1lluij" /></label>
+    </div>
+    <label class="field"><span>Token GitHub</span>
+      <input type="password" id="gh-token" placeholder="github_pat_..." /></label>
+    <div class="toolbar">
+      <button id="btn-load">Connetti e carica config</button>
+      <button class="ghost small" id="btn-forget">Dimentica token</button>
+      <span id="conn-info" style="font-size:13px;color:var(--muted)"></span>
+    </div>
+    <div class="status" id="conn-status"></div>
+  </div>
+
+  <!-- ============ AREA FLOTTA / ASSEGNAZIONI (globale) ============ -->
+  <h2 class="area-title" id="area-fleet" style="display:none">🚦 Flotta e assegnazioni
+    <small>vale per TUTTI i clienti · file <code>fleet.json</code></small></h2>
+
+  <!-- ROUTER CLIENTI (fleet.json) -->
+  <div class="card" id="fleet-card" style="display:none">
+    <h2>Assegna i monitor ai clienti</h2>
+    <p class="hint">
+      Qui decidi <b>quale cliente</b> serve ogni monitor. Un device non elencato usa il
+      <b>default</b> (Big Ben). L'<b>UUID</b> si legge sul tablet in <b>Diagnostica → ID dispositivo</b>.
+      Questa tabella si salva <b>a parte</b>, col suo pulsante in fondo.
+      <br>↳ Dopo aver assegnato un monitor, vai nell'area <b>«Configurazione del cliente»</b> qui sotto
+      per impostarne branding e giochi.
+    </p>
+    <div style="font-size:13px;font-weight:600;color:#444;margin:6px 0 2px">Default (fallback per i device non elencati)</div>
+    <div id="fleet-default"></div>
+    <div style="font-size:13px;font-weight:600;color:#444;margin:12px 0 2px">Monitor assegnati</div>
+    <div id="fleet-list"></div>
+    <button class="ghost small" id="btn-add-fleet">+ Assegna monitor a un cliente</button>
+    <div class="toolbar" style="margin-top:12px">
+      <button id="btn-save-fleet">💾 Salva assegnazioni (versione <span id="fleet-next-ver" class="ver"></span>)</button>
+    </div>
+    <div class="status" id="fleet-status"></div>
+  </div>
+
+  <!-- ============ AREA CONFIGURAZIONE DEL CLIENTE ============ -->
+  <h2 class="area-title" id="area-client" style="display:none">🎨 Configurazione del cliente
+    <small>branding, giochi e impostazioni del cliente selezionato</small></h2>
+
+  <!-- CLIENTE ATTIVO (multi-tenant) -->
+  <div class="card" id="tenant" style="display:none">
+    <h2>Cliente / manifest attivo</h2>
+    <p class="hint">
+      Scegli quale configurazione stai modificando. <b>Big Ben Matic</b> = <code>launcher/config.json</code>
+      (cliente zero). Gli altri clienti = <code>launcher/clients/&lt;id&gt;/config.json</code>.
+      Ogni cliente ha branding, giochi e telemetria propri.
+    </p>
+    <div class="row">
+      <label class="field"><span>Cliente attivo</span>
+        <select id="target-select"></select></label>
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <button class="ghost small" id="btn-new-client">➕ Nuovo cliente</button>
+      </div>
+    </div>
+    <div style="font-size:12.5px;color:var(--muted)">Sto modificando: <code id="target-path">launcher/config.json</code></div>
+  </div>
+
+  <div id="editor" style="display:none">
+
+    <!-- GENERALE -->
+    <div class="card">
+      <h2>2 · Generale</h2>
+      <p class="hint">
+        La <b>versione</b> si incrementa da sola ad ogni salvataggio: è il segnale che dice ai
+        tablet di applicare le modifiche. Le modifiche arrivano entro il tempo di polling
+        oppure subito riavviando il tablet.
+      </p>
+      <div class="row">
+        <label class="field"><span>Versione config (automatica)</span>
+          <input type="text" id="f-configVersion" disabled /></label>
+        <label class="field"><span>Intervallo di controllo (minuti)</span>
+          <input type="number" id="f-poll" min="1" /></label>
+      </div>
+    </div>
+
+    <!-- BRANDING -->
+    <div class="card">
+      <h2>3 · Aspetto (branding)</h2>
+      <p class="hint">Titolo, logo, sfondo e colori mostrati ai bambini.</p>
+      <label class="field"><span>Titolo</span><input type="text" id="f-appTitle" /></label>
+      <div class="row">
+        <label class="field"><span>URL logo</span><input type="text" id="f-logoUrl" /></label>
+        <label class="field"><span>URL sfondo</span><input type="text" id="f-backgroundUrl" /></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>Colore primario</span><input type="text" id="f-primaryColor" placeholder="#3346D6" /></label>
+        <label class="field"><span>Colore accento</span><input type="text" id="f-accentColor" placeholder="#FDCE72" /></label>
+        <label class="field"><span>Lingua</span><input type="text" id="f-language" placeholder="it" /></label>
+      </div>
+    </div>
+
+    <!-- LAYOUT -->
+    <div class="card">
+      <h2>4 · Griglia (layout)</h2>
+      <div class="row">
+        <label class="field"><span>Colonne (0 = automatico)</span><input type="number" id="f-columns" min="0" /></label>
+        <label class="field"><span>Dimensione riquadri</span>
+          <select id="f-tileSize"><option value="small">piccoli</option><option value="large">grandi</option></select></label>
+      </div>
+      <label class="inline"><input type="checkbox" id="f-showLabels" /> Mostra le etichette sotto le icone</label>
+    </div>
+
+    <!-- KIOSK -->
+    <div class="card">
+      <h2>5 · Kiosk e protezioni</h2>
+      <p class="hint">PIN dell'area genitori, ritorno automatico e limite di sessione per i giochi.
+        (Volume e luminosità: in arrivo lato app.)</p>
+      <div class="row">
+        <label class="field"><span>PIN uscita area genitori</span><input type="text" id="f-exitPin" /></label>
+        <label class="field"><span>Auto-launch (package singolo gioco)</span><input type="text" id="f-autoLaunch" placeholder="vuoto = griglia" /></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>Ritorno alla griglia dopo (secondi, 0 = off)</span><input type="number" id="f-idle" min="0" /></label>
+        <label class="field"><span>Limite sessione (secondi, 0 = off)</span><input type="number" id="f-session" min="0" /></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>Volume massimo (%)</span><input type="number" id="f-volume" min="0" max="100" /></label>
+        <label class="field"><span>Luminosità (%)</span><input type="number" id="f-brightness" min="0" max="100" /></label>
+      </div>
+      <label class="inline"><input type="checkbox" id="f-kioskEnabled" /> Kiosk attivo</label>
+    </div>
+
+    <!-- OPERATIVO -->
+    <div class="card">
+      <h2>6 · Stato operativo</h2>
+      <p class="hint">Metti un monitor in manutenzione o mostra un banner promozionale.</p>
+      <label class="field"><span>Stato</span>
+        <select id="f-status"><option value="active">attivo</option><option value="maintenance">manutenzione</option></select></label>
+      <label class="field"><span>Messaggio di manutenzione</span><input type="text" id="f-maintMsg" /></label>
+      <label class="inline"><input type="checkbox" id="f-bannerEnabled" /> Banner attivo</label>
+      <div class="row">
+        <label class="field"><span>Testo banner</span><input type="text" id="f-bannerText" /></label>
+        <label class="field"><span>Immagine banner (URL)</span><input type="text" id="f-bannerImg" /></label>
+      </div>
+    </div>
+
+    <!-- GIOCHI -->
+    <div class="card">
+      <h2>7 · Giochi mostrati</h2>
+      <p class="hint">L'app mostra solo i giochi <b>visibili</b> e <b>installati</b> sul tablet, in ordine.</p>
+      <div id="games-list"></div>
+      <button class="ghost small" id="btn-add-game">+ Aggiungi gioco</button>
+    </div>
+
+    <!-- APP GESTITE -->
+    <div class="card">
+      <h2>8 · App da installare/rimuovere da remoto</h2>
+      <p class="hint">
+        APK ospitati da te (es. in <code>launcher/apk/</code>) che la flotta installa/aggiorna/rimuove
+        in silenzio (richiede Device Owner). <code>versionCode</code> 0 = installa solo se assente;
+        maggiore di 0 = reinstalla quando l'installato è più vecchio. I titoli del Play Store non
+        si spingono da qui.
+      </p>
+      <div id="apps-list"></div>
+      <button class="ghost small" id="btn-add-app">+ Aggiungi app gestita</button>
+    </div>
+
+    <!-- AGGIORNAMENTO LAUNCHER (OTA) -->
+    <div class="card">
+      <h2>8b · Aggiornamento del launcher (OTA)</h2>
+      <p class="hint">
+        Aggiorna l'app launcher su tutta la flotta in silenzio (richiede Device Owner).
+        Carica il nuovo APK all'URL qui sotto (es. <code>launcher/apk/launcher-latest.apk</code>),
+        poi imposta <b>Versione disponibile</b> al <code>versionCode</code> del nuovo APK e salva:
+        i tablet con versione installata <i>minore</i> si aggiornano da soli al prossimo controllo.
+        ⚠ Il nuovo APK deve essere firmato con la <b>stessa chiave</b> di quello installato.
+      </p>
+      <div class="row">
+        <label class="field"><span>Versione disponibile (versionCode)</span><input type="number" id="f-updVersion" min="0" /></label>
+        <label class="field"><span>URL dell'APK</span><input type="text" id="f-updApkUrl" placeholder="https://…/launcher/apk/launcher-latest.apk" /></label>
+      </div>
+      <label class="inline"><input type="checkbox" id="f-updSilent" /> Installazione silenziosa (Device Owner)</label>
+    </div>
+
+    <!-- WIFI -->
+    <div class="card">
+      <h2>9 · Reti Wi-Fi del locale</h2>
+      <p class="hint">⚠ Questo file è pubblico: la password qui è leggibile da chiunque. Usa una rete dedicata. La rete "lifeline" privata resta solo sul tablet.</p>
+      <div id="wifi-list"></div>
+      <button class="ghost small" id="btn-add-wifi">+ Aggiungi rete</button>
+    </div>
+
+    <!-- TELEMETRIA -->
+    <div class="card">
+      <h2>10 · Telemetria</h2>
+      <label class="inline"><input type="checkbox" id="f-telEnabled" /> Telemetria attiva</label>
+      <label class="field"><span>URL ricevitore (Apps Script /exec)</span><input type="text" id="f-telUrl" /></label>
+      <div class="row">
+        <label class="field"><span>Report ogni (minuti)</span><input type="number" id="f-telReport" min="1" /></label>
+        <label class="field"><span>Heartbeat ogni (minuti)</span><input type="number" id="f-telHeartbeat" min="1" /></label>
+      </div>
+    </div>
+
+    <!-- PUBBLICITÀ / ATTRACT -->
+    <div class="card">
+      <h2>10b · Pubblicità (schermo inattività)</h2>
+      <p class="hint">
+        Dalla schermata giochi, dopo i secondi di inattività indicati, il monitor mostra a tutto
+        schermo un loop di <b>immagini e/o video</b> finché qualcuno tocca lo schermo. Puoi
+        <b>caricare qui sia le immagini sia i video .mp4</b> (imposta <i>Tipo: video</i> e premi
+        “Carica video”), oppure incollare un <b>URL</b> esterno. ⚠ I video restano nel repo: tienili
+        <b>brevi, muti e compressi</b> (max ~50–100&nbsp;MB) per non consumare banda.
+      </p>
+      <label class="inline"><input type="checkbox" id="f-attractEnabled" /> Pubblicità attiva</label>
+      <div class="row">
+        <label class="field"><span>Parte dopo inattività (secondi)</span><input type="number" id="f-attractIdle" min="5" /></label>
+        <label class="field"><span>Durata di ogni immagine (secondi)</span><input type="number" id="f-attractItem" min="1" /></label>
+      </div>
+      <label class="inline"><input type="checkbox" id="f-attractMute" /> Video senza audio (consigliato)</label>
+      <label class="field"><span>Messaggio in sovraimpressione (vuoto = nessuno)</span><input type="text" id="f-attractCta" placeholder="Tocca lo schermo per giocare" /></label>
+      <div id="attract-list" style="margin-top:10px"></div>
+      <button class="ghost small" id="btn-add-attract">+ Aggiungi media</button>
+    </div>
+
+    <!-- DISPOSITIVI -->
+    <div class="card">
+      <h2>11 · Ritocchi per questo monitor (dentro il cliente)</h2>
+      <p class="hint">
+        Le sezioni 2–10 valgono per <b>tutti i monitor di questo cliente</b>. Qui invece cambi qualcosa
+        <b>solo per un singolo tablet</b>: incolla il suo <b>ID dispositivo</b> (da <b>Diagnostica</b>) e
+        compila ciò che vuoi diverso — <b>etichetta</b> (il nome dello schermo, es. <i>Sala bimbi</i>),
+        <b>branding</b> e <b>quali giochi mostrare</b>. I campi vuoti / le caselle non toccate ereditano i
+        valori del cliente.
+        <br>↳ Prima però il monitor va <b>assegnato a questo cliente</b> nell'area
+        <b>«Flotta e assegnazioni»</b> in alto.
+      </p>
+      <div id="devices-list"></div>
+      <button class="ghost small" id="btn-add-device">+ Aggiungi monitor</button>
+    </div>
+
+    <!-- AVANZATO -->
+    <div class="card">
+      <details>
+        <summary>JSON grezzo (sola lettura, anteprima di ciò che verrà salvato)</summary>
+        <textarea id="raw-preview" style="min-height:220px" readonly></textarea>
+      </details>
+    </div>
+
+    <div class="save-bar">
+      <div class="wrap" style="padding:0">
+        <div class="toolbar">
+          <button id="btn-save">💾 Salva e pubblica (versione <span id="next-ver" class="ver"></span>)</button>
+          <button class="ghost" id="btn-refresh-preview">Mostra anteprima JSON</button>
+          <span style="font-size:12.5px;color:var(--muted)">Dopo il salvataggio: riavvia il tablet per applicare subito.</span>
+        </div>
+        <div class="status" id="save-status"></div>
+      </div>
+    </div>
+
+  </div><!-- /editor -->
+
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const API = "https://api.github.com";
+
+// ---- token persistence ----
+const LS = { token:"fp_token", owner:"fp_owner", repo:"fp_repo", branch:"fp_branch" };
+function loadCreds(){
+  $("gh-token").value  = localStorage.getItem(LS.token)  || "";
+  $("gh-owner").value  = localStorage.getItem(LS.owner)  || "Kevodable";
+  $("gh-repo").value   = localStorage.getItem(LS.repo)   || "Fun-Planet-touch";
+  $("gh-branch").value = localStorage.getItem(LS.branch) || "claude/great-meitner-1lluij";
+}
+function saveCreds(){
+  localStorage.setItem(LS.token,  $("gh-token").value.trim());
+  localStorage.setItem(LS.owner,  $("gh-owner").value.trim());
+  localStorage.setItem(LS.repo,   $("gh-repo").value.trim());
+  localStorage.setItem(LS.branch, $("gh-branch").value.trim());
+}
+loadCreds();
+
+// ---- base64 <-> utf8 ----
+function b64ToUtf8(b64){ return new TextDecoder().decode(Uint8Array.from(atob(b64), c=>c.charCodeAt(0))); }
+function utf8ToB64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin=""; bytes.forEach(b=>bin+=String.fromCharCode(b));
+  return btoa(bin);
+}
+
+// targetPath = file config attualmente in modifica (Big Ben o un cliente).
+// fleet = router fleet.json (assegnazione device→cliente), salvato a parte.
+let state = { config:null, sha:null, targetPath:"launcher/config.json", targetClient:"bigbenmatic",
+              fleet:null, fleetSha:null };
+
+function status(el, msg, kind){
+  el.className = "status show " + kind;
+  el.textContent = msg;
+}
+
+function ghHeaders(){
+  return {
+    "Authorization": "Bearer " + $("gh-token").value.trim(),
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
+function contentsUrlFor(path){
+  const o=$("gh-owner").value.trim(), r=$("gh-repo").value.trim();
+  return `${API}/repos/${o}/${r}/contents/${path}`;
+}
+// URL del file config attualmente selezionato (Big Ben o cliente).
+function contentsUrl(){ return contentsUrlFor(state.targetPath); }
+
+// Lettura "fresca" che bypassa la cache HTTP (GitHub mette max-age=60 sulle GET,
+// che farebbe leggere uno sha vecchio -> conflitto 409 in scrittura).
+function ghGet(path){
+  const branch=$("gh-branch").value.trim();
+  const url=contentsUrlFor(path)+"?ref="+encodeURIComponent(branch)+"&_="+Date.now();
+  return fetch(url, { headers:ghHeaders(), cache:"no-store" });
+}
+// Legge lo sha corrente di un file (null se non esiste): serve per aggiornarlo via API.
+async function getSha(path){
+  const res=await ghGet(path);
+  if(res.status===404) return null;
+  if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+  return (await res.json()).sha;
+}
+// Scrive (crea o aggiorna) un file JSON nel repo. Rilegge lo sha al volo e ritenta
+// una volta su 409 (conflitto sha), così un salvataggio non fallisce per cache stantia.
+async function putJsonFile(path, obj, message){
+  const branch=$("gh-branch").value.trim();
+  const content=utf8ToB64(JSON.stringify(obj,null,2)+"\n");
+  for(let attempt=0; attempt<2; attempt++){
+    const sha=await getSha(path);
+    const body={ message, content, branch };
+    if(sha) body.sha=sha;
+    const res=await fetch(contentsUrlFor(path), { method:"PUT", headers:ghHeaders(), body:JSON.stringify(body) });
+    if(res.ok) return (await res.json()).content.sha;
+    if(res.status===409 && attempt===0) continue; // sha stantio: rileggi e riprova
+    throw new Error("HTTP "+res.status+" — "+(await res.text()));
+  }
+}
+
+// ---- Upload immagini su GitHub (logo, sfondo, icone giochi) ----
+function fileToB64(file){
+  return new Promise((res,rej)=>{ const fr=new FileReader();
+    fr.onload=()=>res(String(fr.result).split(",")[1]); fr.onerror=rej; fr.readAsDataURL(file); });
+}
+function pagesUrl(path){
+  const o=$("gh-owner").value.trim(), r=$("gh-repo").value.trim();
+  return `https://${o.toLowerCase()}.github.io/${r}/${path}`;
+}
+/* Carica un file qualsiasi (immagine o video) in launcher/uploads/ via API GitHub
+   e ritorna l'URL pubblico su GitHub Pages. I video .mp4 vengono così ospitati
+   nel repo (niente link esterni) e il launcher li mette in cache per l'offline.
+   Nota: l'API GitHub accetta file fino a ~100 MB, ma per la pubblicità conviene
+   un clip corto e leggero (muto, bassa risoluzione). */
+async function uploadFile(file){
+  if(!$("gh-token").value.trim()) throw new Error("inserisci prima il token GitHub e premi Carica");
+  const ext=(((file.name.split(".").pop())||"bin").toLowerCase().replace(/[^a-z0-9]/g,""))||"bin";
+  const safe=((file.name.replace(/\.[^.]+$/,"").toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,""))||"file").slice(0,40);
+  const path=`launcher/uploads/${safe}-${Date.now()}.${ext}`;
+  const o=$("gh-owner").value.trim(), r=$("gh-repo").value.trim(), branch=$("gh-branch").value.trim();
+  const b64=await fileToB64(file);
+  const res=await fetch(`${API}/repos/${o}/${r}/contents/${path}`, { method:"PUT", headers:ghHeaders(),
+    body:JSON.stringify({ message:"Upload media "+path+" (da admin)", content:b64, branch }) });
+  if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+  return pagesUrl(path);
+}
+const uploadImage = uploadFile; // compatibilità: alias storico
+/* Bottone di upload: carica un file e passa l'URL pubblico a onDone.
+   `txt` e `accept` possono essere stringhe oppure funzioni (valutate al click),
+   così un bottone può alternare immagine/video in base alla scelta corrente. */
+function uploadButton(onDone, txt, accept){
+  const wrap=document.createElement("span");
+  wrap.style.cssText="display:inline-flex;align-items:center;gap:6px;margin-top:4px";
+  const input=document.createElement("input"); input.type="file"; input.style.display="none";
+  const btn=document.createElement("button"); btn.type="button"; btn.className="ghost small";
+  const label=()=> (typeof txt==="function"?txt():txt) || "⬆ Carica immagine";
+  btn.textContent=label();
+  btn.onclick=()=>{ input.accept=(typeof accept==="function"?accept():accept) || "image/*"; input.click(); };
+  input.onchange=async()=>{
+    const f=input.files&&input.files[0]; if(!f) return;
+    const old=btn.textContent; btn.disabled=true; btn.textContent="⏳ Carico…";
+    try{ const url=await uploadFile(f); onDone(url); btn.textContent="✓ Caricato"; }
+    catch(e){ alert("Upload fallito: "+e.message); btn.textContent=old; }
+    btn.disabled=false; input.value="";
+  };
+  wrap.append(btn,input); return wrap;
+}
+
+// ---- CONNECT / LOAD (multi-tenant) ----
+function pathForClient(id){ return id==="bigbenmatic" ? "launcher/config.json" : "launcher/clients/"+id+"/config.json"; }
+
+async function connect(){
+  saveCreds();
+  status($("conn-status"), "Connessione e caricamento…", "info");
+  try {
+    await loadFleet();              // router fleet.json (tollera l'assenza)
+    await populateTargetSelect();   // elenco clienti dalla cartella launcher/clients/
+    await loadTarget(pathForClient(state.targetClient), state.targetClient);
+    // Area Flotta/Assegnazioni (globale)
+    $("area-fleet").style.display = "";
+    $("fleet-card").style.display = ""; $("fleet-card").classList.remove("collapsed");
+    // Area Configurazione del cliente
+    $("area-client").style.display = "";
+    $("tenant").style.display = ""; $("tenant").classList.remove("collapsed");
+    $("editor").style.display = "";
+    renderFleet();
+    status($("conn-status"), "Connesso. Cliente attivo: "+state.targetClient+".", "ok");
+    $("conn-info").textContent = "";
+  } catch(e){
+    status($("conn-status"), "Errore: "+e.message, "err");
+  }
+}
+
+// Carica il manifest config del target (Big Ben o cliente) e popola tutte le sezioni.
+async function loadTarget(path, clientId){
+  const branch = $("gh-branch").value.trim();
+  const res = await ghGet(path);
+  if(!res.ok){ throw new Error("HTTP "+res.status+" — "+(await res.text())); }
+  const data = await res.json();
+  state.sha = data.sha;
+  state.targetPath = path;
+  state.targetClient = clientId || "bigbenmatic";
+  state.config = JSON.parse(b64ToUtf8(data.content));
+  $("target-path").textContent = path;
+  renderAll();
+}
+
+// Elenca le sottocartelle di launcher/clients/ (ogni cartella = un cliente).
+async function listClients(){
+  const branch = $("gh-branch").value.trim();
+  const res = await ghGet("launcher/clients");
+  if(res.status===404) return [];
+  if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+  const arr = await res.json();
+  return arr.filter(e=>e.type==="dir").map(e=>e.name).sort();
+}
+
+async function populateTargetSelect(){
+  const sel = $("target-select"); const prev = state.targetClient;
+  let clients = []; try { clients = await listClients(); } catch(e){ clients = []; }
+  sel.innerHTML = "";
+  const o0 = document.createElement("option"); o0.value="bigbenmatic";
+  o0.textContent="Big Ben Matic (config.json)"; sel.appendChild(o0);
+  clients.forEach(id=>{ const o=document.createElement("option"); o.value=id;
+    o.textContent=id+" (clients/"+id+")"; sel.appendChild(o); });
+  sel.value = (prev==="bigbenmatic" || clients.includes(prev)) ? prev : "bigbenmatic";
+}
+
+// ---- helpers to get nested defaults safely ----
+function d(){ state.config.defaults = state.config.defaults || {}; return state.config.defaults; }
+function obj(parent, key){ parent[key] = parent[key] || {}; return parent[key]; }
+
+// ---- RENDER forms from state.config ----
+function renderAll(){
+  const c = state.config; const D = d();
+  $("f-configVersion").value = c.configVersion || 0;
+  $("next-ver").textContent = (c.configVersion||0)+1;
+  $("f-poll").value = c.pollIntervalMinutes ?? 15;
+
+  const b = obj(D,"branding");
+  $("f-appTitle").value = b.appTitle || "";
+  $("f-logoUrl").value = b.logoUrl || "";
+  $("f-backgroundUrl").value = b.backgroundUrl || "";
+  $("f-primaryColor").value = b.primaryColor || "";
+  $("f-accentColor").value = b.accentColor || "";
+  $("f-language").value = b.language || "it";
+
+  const l = obj(D,"layout");
+  $("f-columns").value = l.columns ?? 0;
+  $("f-tileSize").value = l.tileSize || "large";
+  $("f-showLabels").checked = l.showLabels !== false;
+
+  const k = obj(D,"kiosk");
+  $("f-exitPin").value = k.exitPin || "";
+  $("f-autoLaunch").value = k.autoLaunchPackage || "";
+  $("f-idle").value = k.idleTimeoutSeconds ?? 0;
+  $("f-session").value = k.sessionLimitSeconds ?? 0;
+  $("f-volume").value = k.maxVolumePercent ?? 100;
+  $("f-brightness").value = k.brightnessPercent ?? 100;
+  $("f-kioskEnabled").checked = k.enabled !== false;
+
+  const op = obj(D,"operational"); const ba = obj(op,"banner");
+  $("f-status").value = op.status || "active";
+  $("f-maintMsg").value = op.maintenanceMessage || "";
+  $("f-bannerEnabled").checked = !!ba.enabled;
+  $("f-bannerText").value = ba.text || "";
+  $("f-bannerImg").value = ba.imageUrl || "";
+
+  const t = obj(D,"telemetry");
+  $("f-telEnabled").checked = !!t.enabled;
+  $("f-telUrl").value = t.reportUrl || "";
+  $("f-telReport").value = t.reportIntervalMinutes ?? 30;
+  $("f-telHeartbeat").value = t.heartbeatIntervalMinutes ?? 5;
+
+  const up = obj(D,"update");
+  $("f-updVersion").value = up.latestVersionCode ?? 0;
+  $("f-updApkUrl").value = up.apkUrl || "";
+  $("f-updSilent").checked = up.silentInstall !== false;
+
+  const at = obj(D,"attract");
+  $("f-attractEnabled").checked = !!at.enabled;
+  $("f-attractIdle").value = at.idleSeconds ?? 60;
+  $("f-attractItem").value = at.itemSeconds ?? 8;
+  $("f-attractMute").checked = at.muteVideo !== false;
+  $("f-attractCta").value = at.callToAction || "";
+
+  renderGames(); renderApps(); renderWifi(); renderDevices(); renderAttract();
+  refreshPreview();
+}
+
+// ---- dynamic lists ----
+function lineRemoveBtn(onClick){
+  const top=document.createElement("div"); top.className="top";
+  const b=document.createElement("button"); b.className="danger small"; b.textContent="Rimuovi";
+  b.onclick=onClick; top.appendChild(b); return top;
+}
+function fieldInput(labelTxt, value, opts={}){
+  const lab=document.createElement("label"); lab.className="field";
+  const sp=document.createElement("span"); sp.textContent=labelTxt; lab.appendChild(sp);
+  const inp=document.createElement(opts.textarea?"textarea":"input");
+  if(!opts.textarea) inp.type = opts.type||"text";
+  if(opts.type==="checkbox"){ inp.checked=!!value; } else { inp.value = value==null?"":value; }
+  if(opts.placeholder) inp.placeholder=opts.placeholder;
+  lab.appendChild(inp); lab.__input=inp; return lab;
+}
+
+function renderGames(){
+  const wrap=$("games-list"); wrap.innerHTML="";
+  const games = obj(d(),"games"); if(!Array.isArray(d().games)) d().games=[];
+  d().games.forEach((g,i)=>{
+    const box=document.createElement("div"); box.className="listitem";
+    box.appendChild(lineRemoveBtn(()=>{ d().games.splice(i,1); renderGames(); refreshPreview(); }));
+    const r1=document.createElement("div"); r1.className="row";
+    const fId=fieldInput("ID univoco", g.id, {placeholder:"es. racing01"});
+    const fPkg=fieldInput("Package Android", g.package, {placeholder:"com.esempio.gioco"});
+    const fName=fieldInput("Nome mostrato", g.displayName);
+    r1.append(fId,fPkg,fName); box.appendChild(r1);
+    const r2=document.createElement("div"); r2.className="row";
+    // Gioco web: indica un URL (HTML su Pages) invece del package nativo.
+    // Si valorizza SOLO uno tra "Package Android" e "URL gioco web".
+    const fUrl=fieldInput("URL gioco web (vuoto = gioco nativo)", g.url, {placeholder:"https://…/index.html"});
+    const fIcon=fieldInput("URL icona", g.iconUrl);
+    // Carica un'icona dal browser e riempi il campo URL
+    fIcon.appendChild(uploadButton(url=>{ fIcon.__input.value=url; refreshPreview(); }, "⬆ Carica icona"));
+    const fCat=fieldInput("Categoria", g.category);
+    r2.append(fUrl,fIcon,fCat); box.appendChild(r2);
+    const r2b=document.createElement("div"); r2b.className="row";
+    const fOrder=fieldInput("Ordine", g.order ?? 0, {type:"number"});
+    const fLimit=fieldInput("Limite sessione (s, 0=usa globale)", g.sessionLimitSeconds ?? 0, {type:"number"});
+    r2b.append(fOrder,fLimit); box.appendChild(r2b);
+    const r3=document.createElement("div"); r3.style.marginTop="6px";
+    const fVis=fieldInput("", g.visible!==false, {type:"checkbox"});
+    fVis.style.display="inline-flex"; fVis.style.gap="6px"; fVis.querySelector("span").textContent="";
+    const visWrap=document.createElement("label"); visWrap.className="inline";
+    visWrap.append(fVis.__input, document.createTextNode(" Visibile ai bambini"));
+    r3.appendChild(visWrap); box.appendChild(r3);
+    box.__get=()=>({
+      id:fId.__input.value.trim(), package:fPkg.__input.value.trim()||null,
+      url:fUrl.__input.value.trim()||null,
+      displayName:fName.__input.value.trim()||null, iconUrl:fIcon.__input.value.trim()||null,
+      category:fCat.__input.value.trim()||null, order:Number(fOrder.__input.value)||0,
+      visible:fVis.__input.checked, sessionLimitSeconds:Number(fLimit.__input.value)||0
+    });
+    // Propaga questo gioco a TUTTI gli altri manifest (Big Ben + clienti)
+    const propBtn=document.createElement("button"); propBtn.type="button"; propBtn.className="ghost small";
+    propBtn.style.marginTop="8px"; propBtn.textContent="↪ Aggiungi questo gioco a tutti i clienti";
+    propBtn.onclick=()=>propagateGame(box.__get());
+    box.appendChild(propBtn);
+    wrap.appendChild(box);
+  });
+}
+
+function renderApps(){
+  const wrap=$("apps-list"); wrap.innerHTML="";
+  if(!Array.isArray(d().managedApps)) d().managedApps=[];
+  d().managedApps.forEach((a,i)=>{
+    const box=document.createElement("div"); box.className="listitem";
+    box.appendChild(lineRemoveBtn(()=>{ d().managedApps.splice(i,1); renderApps(); refreshPreview(); }));
+    const r1=document.createElement("div"); r1.className="row";
+    const fPkg=fieldInput("Package Android", a.packageName, {placeholder:"com.esempio.gioco"});
+    const fAction=document.createElement("label"); fAction.className="field";
+    fAction.innerHTML="<span>Azione</span>";
+    const sel=document.createElement("select");
+    sel.innerHTML="<option value='install'>installa/aggiorna</option><option value='uninstall'>rimuovi</option>";
+    sel.value=a.action||"install"; fAction.appendChild(sel); fAction.__input=sel;
+    r1.append(fPkg,fAction); box.appendChild(r1);
+    const r2=document.createElement("div"); r2.className="row";
+    const fUrl=fieldInput("URL del file .apk", a.apkUrl);
+    const fVer=fieldInput("versionCode", a.versionCode ?? 0, {type:"number"});
+    r2.append(fUrl,fVer); box.appendChild(r2);
+    const fSha=fieldInput("SHA-256 (opzionale)", a.sha256); box.appendChild(fSha);
+    box.__get=()=>{
+      const o={ packageName:fPkg.__input.value.trim(), action:sel.value };
+      if(sel.value!=="uninstall"){
+        o.apkUrl=fUrl.__input.value.trim()||null;
+        o.versionCode=Number(fVer.__input.value)||0;
+        const s=fSha.__input.value.trim(); if(s) o.sha256=s;
+      }
+      return o;
+    };
+    wrap.appendChild(box);
+  });
+}
+
+function renderWifi(){
+  const wrap=$("wifi-list"); wrap.innerHTML="";
+  const net=obj(d(),"network"); if(!Array.isArray(net.wifiNetworks)) net.wifiNetworks=[];
+  net.wifiNetworks.forEach((w,i)=>{
+    const box=document.createElement("div"); box.className="listitem";
+    box.appendChild(lineRemoveBtn(()=>{ net.wifiNetworks.splice(i,1); renderWifi(); refreshPreview(); }));
+    const r=document.createElement("div"); r.className="row";
+    const fSsid=fieldInput("Nome rete (SSID)", w.ssid);
+    const fPass=fieldInput("Password", w.password);
+    const fPrio=fieldInput("Priorità", w.priority ?? 0, {type:"number"});
+    r.append(fSsid,fPass,fPrio); box.appendChild(r);
+    box.__get=()=>({ ssid:fSsid.__input.value.trim(), password:fPass.__input.value||null,
+      priority:Number(fPrio.__input.value)||0, hidden:!!w.hidden });
+    wrap.appendChild(box);
+  });
+}
+
+function renderAttract(){
+  const wrap=$("attract-list"); wrap.innerHTML="";
+  const at=obj(d(),"attract"); if(!Array.isArray(at.items)) at.items=[];
+  at.items.forEach((m,i)=>{
+    const box=document.createElement("div"); box.className="listitem";
+    box.appendChild(lineRemoveBtn(()=>{ at.items.splice(i,1); renderAttract(); refreshPreview(); }));
+    const r=document.createElement("div"); r.className="row";
+    const fType=document.createElement("label"); fType.className="field"; fType.innerHTML="<span>Tipo</span>";
+    const sel=document.createElement("select");
+    sel.innerHTML="<option value='image'>immagine</option><option value='video'>video</option>";
+    sel.value=(m.type==="video")?"video":"image"; fType.appendChild(sel); fType.__input=sel;
+    const fUrl=fieldInput("URL — oppure carica il file (immagine o video .mp4)", m.url);
+    // Il bottone segue il Tipo scelto: carica un'immagine o un video .mp4.
+    const isVideo=()=> sel.value==="video";
+    sel.addEventListener("change", ()=>{ if(sel.value==="video" && !m.type) m.type="video"; });
+    fUrl.appendChild(uploadButton(
+      url=>{ fUrl.__input.value=url; if(isVideo()) sel.value="video"; refreshPreview(); },
+      ()=> isVideo() ? "⬆ Carica video" : "⬆ Carica immagine",
+      ()=> isVideo() ? "video/*" : "image/*"
+    ));
+    const fSec=fieldInput("Durata immagine (s, 0=default)", m.seconds ?? 0, {type:"number"});
+    r.append(fType,fUrl,fSec); box.appendChild(r);
+    box.__get=()=>{
+      const o={ type:sel.value, url:fUrl.__input.value.trim() };
+      const s=Number(fSec.__input.value)||0; if(s>0) o.seconds=s;
+      return o;
+    };
+    wrap.appendChild(box);
+  });
+}
+
+function renderDevices(){
+  const wrap=$("devices-list"); wrap.innerHTML="";
+  state.config.devices = state.config.devices || {};
+  const entries = Object.entries(state.config.devices);
+  entries.forEach(([id,ov])=>{
+    ov = ov || {};
+    const box=document.createElement("div"); box.className="listitem";
+    box.appendChild(lineRemoveBtn(()=>{ delete state.config.devices[id]; renderDevices(); refreshPreview(); }));
+    const r1=document.createElement("div"); r1.className="row";
+    const fId=fieldInput("ID dispositivo (UUID, da Diagnostica)", id, {placeholder:"es. 256e7f33-…"});
+    const fLabel=fieldInput("Etichetta — nome di questo schermo (es. Sala bimbi)", ov.label||"");
+    r1.append(fId,fLabel); box.appendChild(r1);
+
+    // --- Branding del locale: si sovrascrivono SOLO i campi compilati,
+    //     gli altri ereditano i defaults globali. ---
+    const b=ov.branding||{};
+    const r2=document.createElement("div"); r2.className="row";
+    const fTitle=fieldInput("Titolo benvenuto", b.appTitle);
+    const fPrimary=fieldInput("Colore primario", b.primaryColor, {placeholder:"#3346D6"});
+    const fAccent=fieldInput("Colore accento", b.accentColor, {placeholder:"#FDCE72"});
+    r2.append(fTitle,fPrimary,fAccent); box.appendChild(r2);
+    const r3=document.createElement("div"); r3.className="row";
+    const fBg=fieldInput("Sfondo del locale (URL)", b.backgroundUrl);
+    fBg.appendChild(uploadButton(url=>{ fBg.__input.value=url; refreshPreview(); }, "⬆ Carica sfondo"));
+    const fLogo=fieldInput("Logo del locale (URL)", b.logoUrl);
+    fLogo.appendChild(uploadButton(url=>{ fLogo.__input.value=url; refreshPreview(); }, "⬆ Carica logo"));
+    r3.append(fBg,fLogo); box.appendChild(r3);
+
+    // --- Giochi visibili SOLO su questo tablet (caselle) ---
+    // Spunta = mostrato; togli la spunta = nascosto su questo tablet.
+    const defGames=((state.config.defaults&&state.config.defaults.games)||[]).filter(g=>g.id);
+    const ovGames=Array.isArray(ov.games)?ov.games:[];
+    const ovById={}; ovGames.forEach(g=>{ if(g&&g.id) ovById[g.id]=g; });
+    const gamesBox=document.createElement("div"); gamesBox.style.margin="6px 0";
+    const gh=document.createElement("div"); gh.textContent="Giochi visibili su questo tablet:";
+    gh.style.cssText="font-size:12px;color:#666;margin-bottom:4px"; gamesBox.appendChild(gh);
+    const gameChecks=defGames.map(g=>{
+      const defVis=(g.visible!==false);
+      const eff=(ovById[g.id]&&ovById[g.id].visible!=null)?ovById[g.id].visible:defVis;
+      const lab=document.createElement("label"); lab.className="inline"; lab.style.marginRight="14px";
+      const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=eff;
+      lab.append(cb, document.createTextNode(" "+(g.displayName||g.id)));
+      gamesBox.appendChild(lab);
+      return {id:g.id, cb, defVis};
+    });
+    if(defGames.length) box.appendChild(gamesBox);
+
+    // Override avanzato: il resto (kiosk…), escluso label, branding e games
+    const rest=Object.assign({}, ov); delete rest.label; delete rest.branding; delete rest.games;
+    const fJson=fieldInput("Override avanzato (JSON opzionale: kiosk…)",
+      Object.keys(rest).length?JSON.stringify(rest,null,2):"", {textarea:true,
+      placeholder:'{ "kiosk": { "sessionLimitSeconds": 300 } }'});
+    box.appendChild(fJson);
+
+    box.__get=()=>{
+      const key=fId.__input.value.trim(); if(!key) return null;
+      let over={}; const raw=fJson.__input.value.trim();
+      if(raw){ over=JSON.parse(raw); } // throws on invalid -> caught in collect
+      const lab=fLabel.__input.value.trim(); if(lab) over.label=lab;
+      const br={};
+      const t=fTitle.__input.value.trim(); if(t) br.appTitle=t;
+      const bg=fBg.__input.value.trim(); if(bg) br.backgroundUrl=bg;
+      const lg=fLogo.__input.value.trim(); if(lg) br.logoUrl=lg;
+      const pc=fPrimary.__input.value.trim(); if(pc) br.primaryColor=pc;
+      const ac=fAccent.__input.value.trim(); if(ac) br.accentColor=ac;
+      if(Object.keys(br).length) over.branding=br;
+      // giochi: salva solo le differenze rispetto al default (nascosti/mostrati)
+      const gp=[];
+      gameChecks.forEach(gc=>{ if(gc.cb.checked!==gc.defVis) gp.push({id:gc.id, visible:gc.cb.checked}); });
+      if(gp.length) over.games=gp;
+      return [key, over];
+    };
+    wrap.appendChild(box);
+  });
+}
+
+// ---- ROUTER (fleet.json): assegnazione device -> cliente ----
+function blankFleet(){
+  return { schemaVersion:1, routerVersion:0, updatedAt:null,
+    default:{ clientId:"bigbenmatic", locationId:null, manifestUrl:pagesUrl("launcher/config.json") },
+    devices:{} };
+}
+async function loadFleet(){
+  const branch=$("gh-branch").value.trim();
+  const res=await ghGet("launcher/fleet.json");
+  if(res.status===404){ state.fleet=blankFleet(); state.fleetSha=null; return; }
+  if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+  const data=await res.json();
+  state.fleetSha=data.sha;
+  state.fleet=JSON.parse(b64ToUtf8(data.content));
+}
+function fleetBox(uuid, ov, isDefault){
+  ov=ov||{};
+  const box=document.createElement("div"); box.className="listitem";
+  if(!isDefault) box.appendChild(lineRemoveBtn(()=>{ box.remove(); }));
+  const r1=document.createElement("div"); r1.className="row";
+  let fUuid=null;
+  if(!isDefault){ fUuid=fieldInput("UUID dispositivo (da Diagnostica)", uuid, {placeholder:"es. 256e7f33-…"}); r1.appendChild(fUuid); }
+  const fClient=fieldInput("Cliente — l'azienda/insegna (clientId)", ov.clientId||"bigbenmatic", {placeholder:"es. ristorante-rossi"});
+  const fLoc=fieldInput("Sede del cliente (locationId) — facoltativa", ov.locationId||"", {placeholder:"es. rossi-milano"});
+  r1.append(fClient,fLoc); box.appendChild(r1);
+  const fMan=fieldInput("Manifest URL (compilato dal pulsante qui sotto)", ov.manifestUrl||"", {placeholder:pagesUrl("launcher/config.json")});
+  box.appendChild(fMan);
+  const sug=document.createElement("button"); sug.type="button"; sug.className="ghost small";
+  sug.textContent="↳ usa il manifest di questo cliente";
+  sug.onclick=()=>{ fMan.__input.value=pagesUrl(pathForClient((fClient.__input.value.trim()||"bigbenmatic"))); };
+  box.appendChild(sug);
+  box.__get=()=>{
+    const cid=fClient.__input.value.trim()||"bigbenmatic";
+    const entry={ clientId:cid, locationId:fLoc.__input.value.trim()||null,
+      manifestUrl:fMan.__input.value.trim()||pagesUrl(pathForClient(cid)) };
+    if(isDefault) return ["__default__", entry];
+    const u=fUuid.__input.value.trim(); if(!u) return null;
+    return [u, entry];
+  };
+  return box;
+}
+function renderFleet(){
+  if(!state.fleet) state.fleet=blankFleet();
+  $("fleet-next-ver").textContent=(Number(state.fleet.routerVersion)||0)+1;
+  const dwrap=$("fleet-default"); dwrap.innerHTML="";
+  state.fleet.default=state.fleet.default||blankFleet().default;
+  dwrap.appendChild(fleetBox(null, state.fleet.default, true));
+  const wrap=$("fleet-list"); wrap.innerHTML="";
+  state.fleet.devices=state.fleet.devices||{};
+  Object.entries(state.fleet.devices).forEach(([uuid,ov])=>{ wrap.appendChild(fleetBox(uuid, ov||{}, false)); });
+}
+function collectFleet(){
+  const f=JSON.parse(JSON.stringify(state.fleet||blankFleet())); // preserva _nota/_esempio…
+  const def=$("fleet-default").firstChild.__get(); f.default=def[1];
+  f.devices={};
+  [...$("fleet-list").children].forEach(b=>{ const e=b.__get&&b.__get(); if(e) f.devices[e[0]]=e[1]; });
+  return f;
+}
+async function saveFleet(){
+  let f; try{ f=collectFleet(); }catch(e){ status($("fleet-status"),"Errore: "+e.message,"err"); return; }
+  f.schemaVersion=f.schemaVersion||1;
+  f.routerVersion=(Number(state.fleet&&state.fleet.routerVersion)||0)+1;
+  f.updatedAt=new Date().toISOString();
+  status($("fleet-status"),"Salvataggio router…","info"); $("btn-save-fleet").disabled=true;
+  try{
+    state.fleetSha=await putJsonFile("launcher/fleet.json", f, "Router fleet v"+f.routerVersion+" (da pannello)");
+    state.fleet=f; $("fleet-next-ver").textContent=f.routerVersion+1;
+    status($("fleet-status"),"✓ Router salvato (v"+f.routerVersion+"). I device leggeranno l'assegnazione al prossimo controllo.","ok");
+  }catch(e){ status($("fleet-status"),"Errore nel salvataggio del router: "+e.message,"err"); }
+  finally{ $("btn-save-fleet").disabled=false; }
+}
+
+// ---- Coerenza gallery web: deriva giochi.json dai giochi web del manifest ----
+function gameFolderFromUrl(url){ const m=(url||"").match(/\/big-ben-giochi\/([^\/]+)\//); return m?m[1]:null; }
+function configGamesToGallery(games){
+  return (games||[]).filter(g=>g.url && gameFolderFromUrl(g.url)).map(g=>{
+    const o={ id:g.id, nome:g.displayName||g.id, cartella:gameFolderFromUrl(g.url), attivo:g.visible!==false };
+    if(g.iconUrl) o.iconImg=g.iconUrl;
+    return o;
+  });
+}
+function galleryPathFor(clientId){
+  return clientId==="bigbenmatic" ? "big-ben-giochi/giochi.json" : "launcher/clients/"+clientId+"/giochi.json";
+}
+// Aggiorna la gallery del cliente preservando i campi extra (colore, descrizione, minEta, icona).
+async function syncGallery(clientId, games){
+  const path=galleryPathFor(clientId);
+  let existing=[];
+  try{
+    const branch=$("gh-branch").value.trim();
+    const r=await ghGet(path);
+    if(r.ok) existing=JSON.parse(b64ToUtf8((await r.json()).content));
+  }catch(e){ existing=[]; }
+  const exById={}; (Array.isArray(existing)?existing:[]).forEach(g=>{ if(g&&g.id) exById[g.id]=g; });
+  const derived=configGamesToGallery(games).map(g=>Object.assign({}, exById[g.id]||{}, g));
+  await putJsonFile(path, derived, "Sync gallery web "+clientId+" (da pannello)");
+}
+
+// ---- Propaga un gioco a TUTTI i manifest (Big Ben + ogni cliente) ----
+// Aggiunge (o aggiorna) il gioco in ogni manifest diverso da quello attuale,
+// lo rende visibile, salva e sincronizza la gallery di ciascuno.
+async function propagateGame(game){
+  if(!game || !game.id){ alert("Compila prima l'ID del gioco, poi riprova."); return; }
+  let clients=[]; try{ clients=await listClients(); }catch(e){ clients=[]; }
+  const targets=["bigbenmatic", ...clients].filter(t=>t!==state.targetClient);
+  if(!targets.length){ alert("Non ci sono altri manifest a cui aggiungere il gioco."); return; }
+  if(!confirm('Aggiungo "'+(game.displayName||game.id)+'" a '+targets.length+' manifest:\n'+targets.join(", ")+'\nVerranno salvati e pubblicati. Procedo?')) return;
+  status($("save-status"),"Propagazione del gioco in corso…","info");
+  let ok=0; const errs=[];
+  for(const t of targets){
+    try{
+      const path=pathForClient(t);
+      const res=await ghGet(path);
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const cfg=JSON.parse(b64ToUtf8((await res.json()).content));
+      cfg.defaults=cfg.defaults||{}; const games=cfg.defaults.games=cfg.defaults.games||[];
+      const idx=games.findIndex(x=>x&&x.id===game.id);
+      const maxOrder=games.reduce((m,x)=>Math.max(m, Number(x.order)||0), 0);
+      const entry=Object.assign({}, game, { visible:true,
+        order: idx>=0 ? (games[idx].order ?? maxOrder+1) : maxOrder+1 });
+      if(idx>=0) games[idx]=Object.assign({}, games[idx], entry); else games.push(entry);
+      cfg.configVersion=(Number(cfg.configVersion)||0)+1;
+      cfg.updatedAt=new Date().toISOString();
+      await putJsonFile(path, cfg, "Aggiunto gioco "+game.id+" a "+t+" (propagazione da pannello)");
+      try{ await syncGallery(t, cfg.defaults.games); }catch(_){}
+      ok++;
+    }catch(e){ errs.push(t+": "+e.message); }
+  }
+  status($("save-status"), "✓ Gioco aggiunto a "+ok+"/"+targets.length+" manifest."+(errs.length?" Errori: "+errs.join("; "):"")+" (il manifest attivo '"+state.targetClient+"' non è stato toccato: salvalo da qui se serve.)", errs.length?"err":"ok");
+}
+
+// ---- Crea un nuovo cliente: cartella clients/<id>/ con config.json + giochi.json ----
+async function newClient(){
+  let id=(prompt("ID nuovo cliente (minuscolo, senza spazi — es. ristorante-rossi):")||"").trim()
+          .toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"");
+  if(!id) return;
+  if(id==="bigbenmatic"){ alert("'bigbenmatic' è riservato al cliente zero."); return; }
+  status($("conn-status"),"Creazione cliente "+id+"…","info");
+  try{
+    const branch=$("gh-branch").value.trim();
+    const res=await ghGet("launcher/config.json");
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const bb=JSON.parse(b64ToUtf8((await res.json()).content));
+    const bd=bb.defaults||{};
+    const cat=((bd.games)||[]).map(g=>Object.assign({}, g, {visible:true}));
+    const cfg={ schemaVersion:1, configVersion:1, updatedAt:new Date().toISOString(),
+      pollIntervalMinutes:bb.pollIntervalMinutes||3,
+      defaults:{
+        branding:{ appTitle:"Giochi per i piccoli ospiti", logoUrl:null, backgroundUrl:null,
+                   primaryColor:"#3346D6", accentColor:"#FDCE72", language:"it" },
+        layout:{ columns:4, tileSize:"large", showLabels:true },
+        kiosk:{ enabled:true, exitPin:"0000", idleTimeoutSeconds:60, sessionLimitSeconds:0,
+                maxVolumePercent:60, brightnessPercent:90, autoLaunchPackage:null },
+        operational:{ status:"active", maintenanceMessage:"Torniamo subito!", banner:{enabled:false,text:"",imageUrl:""} },
+        games:cat,
+        network:{ wifiNetworks:[] },
+        update: bd.update || { latestVersionCode:0, apkUrl:pagesUrl("launcher/apk/launcher-latest.apk"), silentInstall:true },
+        managedApps:[],
+        telemetry: bd.telemetry || { enabled:false, reportUrl:null, reportIntervalMinutes:30,
+                   heartbeatIntervalMinutes:5, sendGameUsage:true, sendDeviceHealth:true }
+      },
+      devices:{} };
+    await putJsonFile("launcher/clients/"+id+"/config.json", cfg, "Nuovo cliente "+id+" (da pannello)");
+    await putJsonFile("launcher/clients/"+id+"/giochi.json", configGamesToGallery(cat), "Gallery cliente "+id+" (da pannello)");
+    await populateTargetSelect();
+    $("target-select").value=id;
+    await loadTarget(pathForClient(id), id);
+    status($("conn-status"),"✓ Cliente "+id+" creato e selezionato. Ora assegnagli i monitor nella sezione 12 (Router).","ok");
+  }catch(e){ status($("conn-status"),"Errore creazione cliente: "+e.message,"err"); }
+}
+
+// ---- COLLECT forms into a config object ----
+function collectConfig(){
+  const c = JSON.parse(JSON.stringify(state.config)); // preserve unknown keys
+  c.pollIntervalMinutes = Number($("f-poll").value)||15;
+  const D = c.defaults = c.defaults || {};
+
+  D.branding = Object.assign(D.branding||{}, {
+    appTitle:$("f-appTitle").value, logoUrl:$("f-logoUrl").value||null,
+    backgroundUrl:$("f-backgroundUrl").value||null,
+    primaryColor:$("f-primaryColor").value||null, accentColor:$("f-accentColor").value||null,
+    language:$("f-language").value||"it",
+  });
+  D.layout = Object.assign(D.layout||{}, {
+    columns:Number($("f-columns").value)||0, tileSize:$("f-tileSize").value, showLabels:$("f-showLabels").checked,
+  });
+  D.kiosk = Object.assign(D.kiosk||{}, {
+    enabled:$("f-kioskEnabled").checked, exitPin:$("f-exitPin").value||null,
+    idleTimeoutSeconds:Number($("f-idle").value)||0, sessionLimitSeconds:Number($("f-session").value)||0,
+    maxVolumePercent:Number($("f-volume").value)||100, brightnessPercent:Number($("f-brightness").value)||100,
+    autoLaunchPackage:$("f-autoLaunch").value||null,
+  });
+  D.operational = Object.assign(D.operational||{}, {
+    status:$("f-status").value, maintenanceMessage:$("f-maintMsg").value,
+    banner:{ enabled:$("f-bannerEnabled").checked, text:$("f-bannerText").value, imageUrl:$("f-bannerImg").value },
+  });
+  D.telemetry = Object.assign(D.telemetry||{}, {
+    enabled:$("f-telEnabled").checked, reportUrl:$("f-telUrl").value||null,
+    reportIntervalMinutes:Number($("f-telReport").value)||30,
+    heartbeatIntervalMinutes:Number($("f-telHeartbeat").value)||5,
+  });
+  D.update = Object.assign(D.update||{}, {
+    latestVersionCode:Number($("f-updVersion").value)||0,
+    apkUrl:$("f-updApkUrl").value||null,
+    silentInstall:$("f-updSilent").checked,
+  });
+
+  D.attract = Object.assign(D.attract||{}, {
+    enabled:$("f-attractEnabled").checked,
+    idleSeconds:Number($("f-attractIdle").value)||60,
+    itemSeconds:Number($("f-attractItem").value)||8,
+    muteVideo:$("f-attractMute").checked,
+    callToAction:$("f-attractCta").value||"",
+    items:[...$("attract-list").children].map(b=>b.__get()).filter(m=>m.url),
+  });
+
+  D.games = [...$("games-list").children].map(b=>b.__get()).filter(g=>g.id);
+  D.managedApps = [...$("apps-list").children].map(b=>b.__get()).filter(a=>a.packageName);
+  D.network = D.network || {};
+  D.network.wifiNetworks = [...$("wifi-list").children].map(b=>b.__get()).filter(w=>w.ssid);
+
+  const devs={};
+  [...$("devices-list").children].forEach(b=>{ const e=b.__get(); if(e) devs[e[0]]=e[1]; });
+  c.devices = devs;
+
+  return c;
+}
+
+function refreshPreview(){
+  try { $("raw-preview").value = JSON.stringify(collectConfig(), null, 2); }
+  catch(e){ $("raw-preview").value = "⚠ Errore in un campo JSON: "+e.message; }
+}
+
+// ---- SAVE ----
+async function saveConfig(){
+  let cfg;
+  try { cfg = collectConfig(); }
+  catch(e){ status($("save-status"), "Controlla gli override JSON dei dispositivi: "+e.message, "err"); return; }
+  cfg.configVersion = (Number(state.config.configVersion)||0) + 1;
+  cfg.updatedAt = new Date().toISOString();
+  const message = "Config "+state.targetClient+" v"+cfg.configVersion+" (da pannello web)";
+  const content = utf8ToB64(JSON.stringify(cfg, null, 2) + "\n");
+  const branch = $("gh-branch").value.trim();
+  status($("save-status"), "Salvataggio in corso…", "info");
+  $("btn-save").disabled = true;
+  try {
+    // Rilegge lo sha al volo (bypassando la cache) e ritenta una volta su 409.
+    let data;
+    for(let attempt=0; attempt<2; attempt++){
+      const sha = await getSha(state.targetPath);
+      const body = { message, content, branch }; if(sha) body.sha = sha;
+      const res = await fetch(contentsUrl(), { method:"PUT", headers:ghHeaders(), body:JSON.stringify(body) });
+      if(res.ok){ data = await res.json(); break; }
+      if(res.status===409 && attempt===0) continue;
+      throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    }
+    state.sha = data.content.sha;
+    state.config = cfg;
+    $("f-configVersion").value = cfg.configVersion;
+    $("next-ver").textContent = cfg.configVersion+1;
+    // Coerenza: aggiorna anche la gallery web (giochi.json) del cliente attivo.
+    let galleryMsg = "";
+    try { await syncGallery(state.targetClient, cfg.defaults.games); galleryMsg = " Gallery web sincronizzata."; }
+    catch(e){ galleryMsg = " (gallery web non aggiornata: "+e.message+")"; }
+    status($("save-status"), "✓ Pubblicato '"+state.targetClient+"' (versione "+cfg.configVersion+")."+galleryMsg+" I tablet si aggiornano entro il polling o al riavvio.", "ok");
+  } catch(e){
+    status($("save-status"), "Errore nel salvataggio: "+e.message+" — se è un conflitto, ricarica la config.", "err");
+  } finally {
+    $("btn-save").disabled = false;
+  }
+}
+
+// ---- wiring ----
+$("btn-load").onclick = connect;
+$("btn-forget").onclick = ()=>{ localStorage.removeItem(LS.token); $("gh-token").value=""; status($("conn-status"),"Token dimenticato da questo browser.","info"); };
+// Cambio cliente attivo: ricarica il manifest scelto (Big Ben o cliente).
+$("target-select").onchange = async (e)=>{
+  const id=e.target.value;
+  status($("conn-status"),"Carico "+id+"…","info");
+  try{ await loadTarget(pathForClient(id), id); renderFleet();
+       status($("conn-status"),"Cliente attivo: "+id+".","ok"); }
+  catch(err){ status($("conn-status"),"Errore: "+err.message+" — il file del cliente esiste?","err"); }
+};
+$("btn-new-client").onclick = newClient;
+$("btn-add-fleet").onclick = ()=>{ $("fleet-list").appendChild(fleetBox("", {clientId:state.targetClient}, false)); };
+$("btn-save-fleet").onclick = saveFleet;
+$("btn-add-game").onclick = ()=>{ d().games.push({id:"",visible:true,order:(d().games.length+1)}); renderGames(); refreshPreview(); };
+$("btn-add-app").onclick = ()=>{ d().managedApps.push({packageName:"",action:"install",versionCode:0}); renderApps(); refreshPreview(); };
+$("btn-add-wifi").onclick = ()=>{ obj(d(),"network").wifiNetworks.push({ssid:"",password:"",priority:0,hidden:false}); renderWifi(); refreshPreview(); };
+$("btn-add-attract").onclick = ()=>{ const at=obj(d(),"attract"); if(!Array.isArray(at.items)) at.items=[]; at.items.push({type:"image",url:""}); renderAttract(); refreshPreview(); };
+$("btn-add-device").onclick = ()=>{ state.config.devices["NUOVO-DEVICE-ID-"+Date.now()]={label:""}; renderDevices(); refreshPreview(); };
+$("btn-refresh-preview").onclick = refreshPreview;
+$("btn-save").onclick = saveConfig;
+
+// Upload immagini per il branding (logo e sfondo)
+$("f-logoUrl").parentElement.appendChild(uploadButton(url=>{ $("f-logoUrl").value=url; refreshPreview(); }, "⬆ Carica logo"));
+$("f-backgroundUrl").parentElement.appendChild(uploadButton(url=>{ $("f-backgroundUrl").value=url; refreshPreview(); }, "⬆ Carica sfondo"));
+document.addEventListener("input", e=>{ if($("editor").style.display!=="none") refreshPreview(); });
+
+// Accordion: tutte le sezioni chiuse, si aprono al clic sul titolo. Tengo aperta la "1 · Connessione".
+document.querySelectorAll(".card").forEach(c=>{
+  const h=c.querySelector("h2"); if(!h) return;
+  c.classList.add("collapsed");
+  h.addEventListener("click", ()=> c.classList.toggle("collapsed"));
+});
+(function(){ const f=document.querySelector(".card h2"); if(f) f.parentElement.classList.remove("collapsed"); })();
+</script>
+</body>
+</html>

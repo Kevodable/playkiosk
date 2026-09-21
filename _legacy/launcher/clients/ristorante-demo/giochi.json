@@ -1,0 +1,57 @@
+[
+  {
+    "id": "memory",
+    "nome": "Abbina le Coppie",
+    "cartella": "memory",
+    "icona": "🧠",
+    "iconImg": "assets/icons/memory.svg",
+    "colore": "#1F7A5B",
+    "minEta": 3,
+    "descrizione": "Trova tutte le coppie uguali",
+    "attivo": true
+  },
+  {
+    "id": "palloncini",
+    "nome": "Scoppia i Palloncini",
+    "cartella": "palloncini",
+    "icona": "🎈",
+    "iconImg": "assets/icons/palloncini.svg",
+    "colore": "#E8488B",
+    "minEta": 3,
+    "descrizione": "Tocca i palloncini per scoppiarli",
+    "attivo": true
+  },
+  {
+    "id": "frutta",
+    "nome": "Taglia la Frutta",
+    "cartella": "frutta",
+    "icona": "🍉",
+    "iconImg": "assets/icons/frutta.svg",
+    "colore": "#34C759",
+    "minEta": 3,
+    "descrizione": "Taglia la frutta con un dito",
+    "attivo": true
+  },
+  {
+    "id": "lavagna",
+    "nome": "Lavagna",
+    "cartella": "lavagna",
+    "icona": "✏️",
+    "iconImg": "assets/icons/lavagna.svg",
+    "colore": "#2F5D50",
+    "minEta": 3,
+    "descrizione": "Disegna libero con le dita",
+    "attivo": true
+  },
+  {
+    "id": "labirinto",
+    "nome": "Labirinto",
+    "cartella": "labirinto",
+    "icona": "🧩",
+    "iconImg": "assets/icons/labirinto.svg",
+    "colore": "#3346D6",
+    "minEta": 4,
+    "descrizione": "Porta il topino al formaggio",
+    "attivo": true
+  }
+]

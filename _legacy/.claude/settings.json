@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\":\"PROMEMORIA ATTIVI (Kids Fun Planet): 1) creare la chiave di firma Android PERMANENTE (release keystore) prima della distribuzione finale sui tablet; 2) implementare branding per-locale + caricamento immagini nel pannello admin. Dettagli in CLAUDE.md\",\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"Due task in sospeso da ricordare spesso a Kevin: (1) chiave di firma Android permanente (release keystore) per la distribuzione finale; (2) branding per-locale + upload immagini nel pannello admin. Menzionarli quando pertinente. Dettagli in CLAUDE.md.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}

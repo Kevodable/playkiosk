@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#7A1F3D">
+  <title>Torre di Hanoi</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    /* Area di gioco: 3 paletti allineati in basso */
+    .gioco{
+      position:absolute; top:0; right:0; bottom:0; left:0;
+      display:flex; align-items:flex-end; justify-content:space-around;
+      padding:0 3vw 8vmin;
+      gap:2vw;
+    }
+    .paletto{
+      position:relative;
+      flex:1 1 0;
+      max-width:30vw;
+      height:46vmin;
+      display:flex; flex-direction:column-reverse; align-items:center;
+      justify-content:flex-start;
+      cursor:pointer;
+    }
+    /* Asta verticale */
+    .paletto::before{
+      content:""; position:absolute; left:50%; bottom:0;
+      width:10px; height:100%;
+      margin-left:-5px;
+      background:linear-gradient(#b9754a,#8a4f2c);
+      border-radius:6px 6px 0 0; z-index:0;
+    }
+    /* Base del paletto */
+    .paletto::after{
+      content:""; position:absolute; left:2%; right:2%; bottom:-3vmin;
+      height:3vmin;
+      background:linear-gradient(#8a4f2c,#5f3418);
+      border-radius:10px; z-index:0;
+    }
+    .paletto.sel{ filter:drop-shadow(0 0 0 transparent); }
+    .paletto.sel::before{ background:linear-gradient(#3a6bff,#2148d6); }
+
+    .disco{
+      position:relative; z-index:1;
+      height:4.6vmin;
+      margin-top:1vmin;
+      border-radius:10px;
+      box-shadow:inset 0 -4px 0 rgba(0,0,0,.15), 0 3px 6px rgba(0,0,0,.2);
+      transition:transform .12s var(--bb-ease-elastic);
+    }
+    /* Disco in cima al paletto selezionato: sollevato */
+    .paletto.sel .disco:last-child{
+      transform:translateY(-1.4vmin) scale(1.03);
+      box-shadow:0 0 0 4px rgba(46,91,255,.35), 0 6px 10px rgba(0,0,0,.25);
+    }
+
+    /* Schermata di start */
+    .start{
+      position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:20px;
+      background:rgba(255,247,251,.94);
+      text-align:center;
+    }
+    .start__img{ width:26vmin; width:clamp(120px,26vmin,190px); height:auto;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
+    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px); font-weight:900; color:var(--bb-burgundy); }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <!-- header iniettato da JS -->
+    <div class="bb-stage">
+      <div class="gioco" id="gioco">
+        <div class="paletto" data-peg="0"></div>
+        <div class="paletto" data-peg="1"></div>
+        <div class="paletto" data-peg="2"></div>
+      </div>
+      <div class="start" id="start">
+        <img class="start__img" src="../assets/mascotte/stella.png" alt="">
+        <div class="start__txt">Sposta la torre a destra!<br>Mai un disco grande su uno piccolo.</div>
+        <div class="liv-row">
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="3">😊 3 dischi</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="4">😎 4 dischi</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="5">🔥 5 dischi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    var info = BB.header("🗼 Torre di Hanoi");
+    BB.idle(60000, BB.home);
+
+    var startScreen = document.getElementById("start");
+    var paletti = Array.prototype.slice.call(document.querySelectorAll(".paletto"));
+    var COLORI = ["#E8488B","#2E5BFF","#FFB020","#34C759","#7A1F3D","#FF6B6B"];
+
+    var N = 3;
+    var torri = [[], [], []];   // ogni torre: [fondo ... cima], numeri = dimensione disco
+    var sel = -1;               // paletto selezionato (-1 = nessuno)
+    var mosse = 0;
+    var minimo = 7;
+    var inCorso = false;
+
+    function aggiornaInfo(){ info.textContent = "👣 " + mosse + " (min " + minimo + ")"; }
+
+    function nuova(liv){
+      N = parseInt(liv, 10) || 3;
+      minimo = Math.pow(2, N) - 1;
+      torri = [[], [], []];
+      for (var s = N; s >= 1; s--) torri[0].push(s);   // disco più grande in fondo
+      sel = -1; mosse = 0; inCorso = true;
+      aggiornaInfo();
+      render();
+      startScreen.classList.add("bb-hidden");
+    }
+
+    // Larghezza del disco (in vmin) proporzionale alla dimensione
+    function larghezza(s){ return (9 + s * (19 / N)).toFixed(2) + "vmin"; }
+
+    function render(){
+      for (var p = 0; p < 3; p++){
+        var el = paletti[p];
+        el.className = "paletto" + (sel === p ? " sel" : "");
+        el.innerHTML = "";
+        for (var i = 0; i < torri[p].length; i++){
+          var s = torri[p][i];
+          var d = document.createElement("div");
+          d.className = "disco";
+          d.style.width = larghezza(s);
+          d.style.background = COLORI[(s - 1) % COLORI.length];
+          el.appendChild(d);   // column-reverse: primo figlio in basso
+        }
+      }
+    }
+
+    function cima(p){ return torri[p].length ? torri[p][torri[p].length - 1] : Infinity; }
+
+    function tocca(p){
+      if (!inCorso) return;
+      if (sel === -1){
+        if (torri[p].length === 0){ return; }   // niente da prendere
+        sel = p; BB.sound("pop"); render();
+        return;
+      }
+      if (sel === p){ sel = -1; render(); return; }   // deseleziona
+      // prova a spostare il disco in cima da `sel` a `p`
+      var disco = torri[sel][torri[sel].length - 1];
+      if (disco < cima(p)){
+        torri[sel].pop();
+        torri[p].push(disco);
+        mosse++; sel = -1;
+        BB.sound("match");
+        aggiornaInfo();
+        render();
+        if (torri[2].length === N) vittoria();
+      } else {
+        BB.sound("error");
+        sel = -1; render();   // mossa non valida: deseleziona
+      }
+    }
+
+    function vittoria(){
+      inCorso = false;
+      var perfetto = mosse === minimo;
+      BB.win({
+        mascotte: "../assets/mascotte/stella.png",
+        titolo: perfetto ? "Perfetto!" : "Bravo!",
+        punteggio: mosse + " mosse" + (perfetto ? " (minimo!)" : ""),
+        rigioca: function(){ startScreen.classList.remove("bb-hidden"); }
+      });
+    }
+
+    paletti.forEach(function(el){
+      el.addEventListener("click", function(){ tocca(parseInt(el.dataset.peg, 10)); });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
+      b.addEventListener("click", function(){ nuova(b.dataset.liv); });
+    });
+  </script>
+</body>
+</html>

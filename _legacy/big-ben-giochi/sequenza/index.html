@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4D8DFF">
+  <title>Sequenza colori</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    .bb-stage{ padding:10px 18px 22px; }
+    /* Griglia 2x2 dei pulsanti colorati, sempre quadrata e centrata */
+    .simon{
+      position:relative;
+      width:86vmin; width:min(86vmin, 560px);
+      aspect-ratio:1/1;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:1fr 1fr;
+      gap:2.4vmin; gap:clamp(10px,2.4vmin,20px);
+      touch-action:none;
+    }
+    .pad{
+      border-radius:26px;
+      box-shadow:var(--bb-shadow);
+      /* Da spento è "smorzato": più scuro e desaturato */
+      filter:brightness(.55) saturate(.8);
+      transition:filter .12s ease, transform .12s var(--bb-ease-elastic);
+      will-change:filter, transform;
+    }
+    .pad.on{ filter:brightness(1.25) saturate(1.2); transform:scale(.965); }
+    .pad--verde { background:#3DDC84; }
+    .pad--rosso { background:#FF5A5F; }
+    .pad--giallo{ background:#FFC93C; }
+    .pad--blu   { background:#4D8DFF; }
+
+    /* Pastiglia centrale con il numero della sequenza */
+    .centro{
+      position:absolute; top:0; right:0; bottom:0; left:0; inset:0; margin:auto;
+      width:34%; height:34%;
+      display:flex; align-items:center; justify-content:center;
+      background:var(--bb-paper);
+      border-radius:50%;
+      box-shadow:var(--bb-shadow-strong);
+      font-size:9vmin; font-size:clamp(28px,9vmin,60px); font-weight:900; color:var(--bb-burgundy);
+      pointer-events:none;
+    }
+    .centro small{ display:block; font-size:.32em; font-weight:800; color:var(--bb-blue); letter-spacing:.5px; }
+
+    /* Schermata iniziale con mascotte + scelta difficoltà */
+    .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:22px;
+      background:rgba(255,247,251,.94); text-align:center; padding:18px; }
+    .start__img{ width:26vmin; width:clamp(120px,26vmin,190px); height:auto;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
+    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,32px); font-weight:900; color:var(--bb-burgundy); }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+
+    /* "Guarda" / "Tocca tu!" stato in alto */
+    .stato{ font-weight:900; }
+    .stato--guarda{ color:var(--bb-pink); }
+    .stato--tocca { color:#3DAA5E; }
+    @supports not (aspect-ratio: 1 / 1){ .simon{ height:86vmin; } }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <div class="bb-stage">
+      <div class="simon" id="simon">
+        <button class="pad pad--verde"  data-pad="0" aria-label="verde"></button>
+        <button class="pad pad--rosso"  data-pad="1" aria-label="rosso"></button>
+        <button class="pad pad--giallo" data-pad="2" aria-label="giallo"></button>
+        <button class="pad pad--blu"    data-pad="3" aria-label="blu"></button>
+        <div class="centro" id="centro">0</div>
+
+        <div class="start" id="start">
+          <img class="start__img" src="../assets/mascotte/kip.png" alt="">
+          <div class="start__txt">Guarda la sequenza<br>e ripetila!<br>Scegli la difficoltà:</div>
+          <div class="liv-row">
+            <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
+            <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
+            <button class="bb-btn liv-btn" data-liv="difficile">🔥 Difficile</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    var info = BB.header("🎨 Sequenza colori");
+    BB.idle(60000, BB.home);
+
+    var simon = document.getElementById("simon");
+    var centro = document.getElementById("centro");
+    var startScreen = document.getElementById("start");
+
+    // Un pad = colore + frequenza (nota) distinta
+    var PADS = [
+      { el: simon.querySelector('[data-pad="0"]'), freq: 330 }, // verde  - E4
+      { el: simon.querySelector('[data-pad="1"]'), freq: 392 }, // rosso  - G4
+      { el: simon.querySelector('[data-pad="2"]'), freq: 494 }, // giallo - B4
+      { el: simon.querySelector('[data-pad="3"]'), freq: 587 }  // blu    - D5
+    ];
+
+    // Difficoltà scelta dal bambino: cambia la velocità della sequenza
+    var TAB = {
+      facile:    { flash: 620, gap: 300 },
+      medio:     { flash: 440, gap: 190 },
+      difficile: { flash: 300, gap: 110 }
+    };
+    var DIFF = TAB.facile;
+
+    var sequenza = [], passo = 0, accetta = false, livello = 0;
+
+    // ---- audio: tono breve per il pad (oltre ai suoni di BB) ----
+    var actx = null;
+    function ctx(){ if(actx) return actx; var AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC) return null; try{ actx=new AC(); }catch(e){ actx=null; } return actx; }
+    function tono(freq, dur){
+      var c=ctx(); if(!c) return; if(c.state==="suspended"&&c.resume) c.resume();
+      var t=c.currentTime, osc=c.createOscillator(), g=c.createGain();
+      osc.type="sine"; osc.frequency.setValueAtTime(freq,t);
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(0.2,t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      osc.connect(g).connect(c.destination); osc.start(t); osc.stop(t+dur+0.02);
+    }
+
+    function aggiornaInfo(){
+      info.innerHTML = '<span class="stato '+(accetta?"stato--tocca":"stato--guarda")+'">'+
+        (accetta ? "👉 Tocca tu!" : "👀 Guarda…") + '</span>';
+    }
+    function aggiornaCentro(){ centro.innerHTML = livello + '<small>colori</small>'; }
+
+    function illumina(i, dur){
+      var p = PADS[i];
+      p.el.classList.add("on");
+      tono(p.freq, dur/1000 * 0.9);
+      setTimeout(function(){ p.el.classList.remove("on"); }, dur);
+    }
+
+    // Riproduce tutta la sequenza, poi passa il turno al bambino
+    function mostraSequenza(){
+      accetta = false; aggiornaInfo();
+      var i = 0;
+      (function next(){
+        if (i >= sequenza.length){
+          // Turno del bambino
+          passo = 0; accetta = true; aggiornaInfo();
+          return;
+        }
+        illumina(sequenza[i], DIFF.flash);
+        i++;
+        setTimeout(next, DIFF.flash + DIFF.gap);
+      })();
+    }
+
+    function nuovoTurno(){
+      sequenza.push(BB.rand(0, PADS.length - 1));
+      livello = sequenza.length;
+      aggiornaCentro();
+      setTimeout(mostraSequenza, 600);
+    }
+
+    function tocca(i){
+      if (!accetta) return;
+      illumina(i, 260);
+      if (i === sequenza[passo]){
+        passo++;
+        if (passo === sequenza.length){
+          // Sequenza completata: avanti di livello
+          accetta = false; aggiornaInfo();
+          BB.sound("match");
+          setTimeout(nuovoTurno, 700);
+        }
+      } else {
+        // Errore: fine partita
+        accetta = false;
+        BB.sound("error");
+        simon.classList.add("bb-anim-shake");
+        setTimeout(function(){ simon.classList.remove("bb-anim-shake"); fine(); }, 450);
+      }
+    }
+
+    // Input sui pad (un solo handler per pad, niente doppio fire touch+click)
+    PADS.forEach(function(p, i){
+      p.el.addEventListener("pointerdown", function(e){ e.preventDefault(); tocca(i); });
+    });
+
+    function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
+
+    function avvia(liv){
+      if (TAB[liv]) DIFF = TAB[liv];
+      startScreen.classList.add("bb-hidden");
+      sequenza = []; passo = 0; livello = 0; accetta = false;
+      aggiornaCentro(); aggiornaInfo();
+      nuovoTurno();
+    }
+
+    function fine(){
+      // Il punteggio è la lunghezza raggiunta (colori ricordati senza errori)
+      var punti = sequenza.length - 1; // l'ultimo è quello sbagliato
+      if (punti < 0) punti = 0;
+      var record = BB.score("sequenza", punti);
+      var nuovoRecord = punti > 0 && punti >= record;
+      BB.win({
+        mascotte: nuovoRecord ? null : "../assets/mascotte/kip.png",
+        emoji: nuovoRecord ? "🏆" : null,
+        titolo: nuovoRecord ? "Nuovo record!" : "Bravo!",
+        punteggio: punti + " colori",
+        record: record,
+        rigioca: mostraStart
+      });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
+      b.addEventListener("click", function(){ avvia(b.dataset.liv); });
+    });
+
+    aggiornaCentro();
+  </script>
+</body>
+</html>

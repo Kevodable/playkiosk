@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icona "Torre di Hanoi" — dischi impilati su un paletto. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Torre di Hanoi">
+  <circle cx="120" cy="120" r="113" fill="#FFFFFF" stroke="#EADFE6" stroke-width="3"/>
+  <circle cx="120" cy="120" r="108" fill="none" stroke="#D7E0FF" stroke-width="7" opacity=".5"/>
+  <g fill="#FFD23F">
+    <path d="M44 78 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 Z"/>
+  </g>
+  <!-- asta -->
+  <rect x="115" y="70" width="10" height="98" rx="5" fill="#8A4F2C"/>
+  <!-- dischi (dal più grande in basso) -->
+  <rect x="58"  y="150" width="124" height="20" rx="10" fill="#E8488B"/>
+  <rect x="72"  y="124" width="96"  height="20" rx="10" fill="#FFB020"/>
+  <rect x="86"  y="98"  width="68"  height="20" rx="10" fill="#34C759"/>
+  <rect x="98"  y="72"  width="44"  height="20" rx="10" fill="#2E5BFF"/>
+  <!-- base -->
+  <rect x="46" y="172" width="148" height="16" rx="8" fill="#5F3418"/>
+</svg>

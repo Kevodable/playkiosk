@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#7A1F3D">
+  <title>Rompicapo scorrevole</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    .board{
+      position:relative;
+      width:82vmin; width:min(82vmin, 560px);
+      height:82vmin; height:min(82vmin, 560px);
+      display:grid;
+      gap:1.4vmin;
+      padding:1.4vmin;
+      background:#fff;
+      border-radius:22px;
+      box-shadow:var(--bb-shadow);
+    }
+    /* Una tessera: porzione dell'immagine + numero guida */
+    .tile{
+      position:relative;
+      display:block;
+      border:0; padding:0; margin:0;
+      border-radius:12px;
+      background-repeat:no-repeat;
+      box-shadow:0 3px 8px rgba(0,0,0,.18);
+      cursor:pointer;
+      overflow:hidden;
+      transition:transform .08s ease;
+    }
+    .tile:active{ transform:scale(.97); }
+    .tile__num{
+      position:absolute; left:6px; top:5px;
+      min-width:22px; height:22px; padding:0 6px;
+      border-radius:12px;
+      background:rgba(122,31,61,.82); color:#fff;
+      font-size:14px; font-weight:800; line-height:22px; text-align:center;
+    }
+    .tile--empty{ visibility:hidden; box-shadow:none; }
+
+    /* Schermata di start */
+    .start{
+      position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:20px;
+      background:rgba(255,247,251,.94);
+      text-align:center;
+    }
+    .start__img{ width:26vmin; width:clamp(120px,26vmin,190px); height:auto;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
+    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px); font-weight:900; color:var(--bb-burgundy); }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <!-- header iniettato da JS -->
+    <div class="bb-stage">
+      <div class="board" id="board"></div>
+      <div class="start" id="start">
+        <img class="start__img" src="../assets/mascotte/kip.png" alt="">
+        <div class="start__txt">Rimetti in ordine l'immagine!<br>Scegli la difficoltà:</div>
+        <div class="liv-row">
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="facile">😊 Facile</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="medio">😎 Medio</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="difficile">🔥 Difficile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    var info = BB.header("🧩 Rompicapo");
+    BB.idle(60000, BB.home);
+
+    var board = document.getElementById("board");
+    var startScreen = document.getElementById("start");
+
+    // Difficoltà: dimensione griglia + immagine da ricomporre.
+    var TAB = {
+      facile:    { n: 3, img: "../assets/mascotte/bobo.png" },
+      medio:     { n: 4, img: "../assets/mascotte/kip.png" },
+      difficile: { n: 5, img: "../assets/mascotte/bolt.png" }
+    };
+
+    var N = 3;
+    var IMG = "";
+    var cells = [];      // cells[posizione] = valore tessera (0..N*N-1); N*N-1 = vuoto
+    var EMPTY = 0;       // valore che rappresenta la casella vuota
+    var mosse = 0;
+    var inCorso = false;
+
+    function aggiornaInfo(){ info.textContent = "👣 " + mosse; }
+
+    // Coordinate riga/colonna da posizione
+    function rc(pos){ return { r: Math.floor(pos / N), c: pos % N }; }
+
+    // Costruisce la griglia risolta e poi la mescola con mosse valide (sempre risolvibile)
+    function nuova(liv){
+      var d = TAB[liv] || TAB.facile;
+      N = d.n; IMG = d.img; EMPTY = N * N - 1;
+      board.style.gridTemplateColumns = "repeat(" + N + ",1fr)";
+      board.style.gridTemplateRows = "repeat(" + N + ",1fr)";
+      // Stato risolto: cells[pos] = pos
+      cells = [];
+      for (var i = 0; i < N * N; i++) cells.push(i);
+      mescola();
+      mosse = 0; inCorso = true;
+      aggiornaInfo();
+      render();
+      startScreen.classList.add("bb-hidden");
+    }
+
+    // Mescola facendo tante mosse casuali valide a partire dalla soluzione
+    function mescola(){
+      var vuoto = cells.indexOf(EMPTY);
+      var passi = N * N * 30;
+      var ultimo = -1;
+      for (var k = 0; k < passi; k++){
+        var vicini = adiacenti(vuoto).filter(function(p){ return p !== ultimo; });
+        var scelto = vicini[BB.rand(0, vicini.length - 1)];
+        cells[vuoto] = cells[scelto];
+        cells[scelto] = EMPTY;
+        ultimo = vuoto;
+        vuoto = scelto;
+      }
+      // Evita di partire già risolto
+      if (risolto()) mescola();
+    }
+
+    function adiacenti(pos){
+      var p = rc(pos), out = [];
+      if (p.r > 0) out.push(pos - N);
+      if (p.r < N - 1) out.push(pos + N);
+      if (p.c > 0) out.push(pos - 1);
+      if (p.c < N - 1) out.push(pos + 1);
+      return out;
+    }
+
+    function render(){
+      board.innerHTML = "";
+      for (var pos = 0; pos < N * N; pos++){
+        var val = cells[pos];
+        var t = document.createElement("button");
+        t.className = "tile";
+        if (val === EMPTY){
+          t.className += " tile--empty";
+        } else {
+          // porzione dell'immagine corrispondente al valore della tessera
+          var tr = Math.floor(val / N), tc = val % N;
+          t.style.backgroundImage = "url(" + IMG + ")";
+          t.style.backgroundSize = (N * 100) + "% " + (N * 100) + "%";
+          t.style.backgroundPosition =
+            (N > 1 ? (tc * 100 / (N - 1)) : 0) + "% " +
+            (N > 1 ? (tr * 100 / (N - 1)) : 0) + "%";
+          var num = document.createElement("span");
+          num.className = "tile__num";
+          num.textContent = (val + 1);
+          t.appendChild(num);
+          (function(posClick){
+            t.addEventListener("click", function(){ muovi(posClick); });
+          })(pos);
+        }
+        board.appendChild(t);
+      }
+    }
+
+    function muovi(pos){
+      if (!inCorso) return;
+      var vuoto = cells.indexOf(EMPTY);
+      if (adiacenti(pos).indexOf(vuoto) < 0) return;   // non adiacente al vuoto
+      cells[vuoto] = cells[pos];
+      cells[pos] = EMPTY;
+      mosse++;
+      BB.sound("pop");
+      aggiornaInfo();
+      render();
+      if (risolto()) vittoria();
+    }
+
+    function risolto(){
+      for (var i = 0; i < cells.length; i++) if (cells[i] !== i) return false;
+      return true;
+    }
+
+    function vittoria(){
+      inCorso = false;
+      BB.win({
+        mascotte: IMG,
+        titolo: "Completato!",
+        punteggio: mosse + " mosse",
+        rigioca: function(){ startScreen.classList.remove("bb-hidden"); }
+      });
+    }
+
+    // Pulsanti difficoltà
+    Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
+      b.addEventListener("click", function(){ nuova(b.dataset.liv); });
+    });
+  </script>
+</body>
+</html>

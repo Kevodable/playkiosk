@@ -1,0 +1,32 @@
+{
+  "name": "Kids Fun Planet - Memory Game",
+  "short_name": "Memory Game",
+  "description": "Gioco delle coppie a tema Kids Fun Planet con Kip, Stella, Bolt e Bobo.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#6a5ef9",
+  "theme_color": "#7c6bff",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
