@@ -1,25 +1,33 @@
-/* Memory — Kids Fun Planet
-   Riscritto sul framework condiviso BB (come gli altri giochi):
-   header con "Torna ai giochi", schermata di start per la difficoltà,
-   overlay di vittoria BB.win, suoni BB.sound. Mantiene solo il logo/banner. */
+/* Memory — sul framework condiviso BB (come gli altri giochi):
+   header con "Torna ai giochi", schermata di start per la difficolta',
+   overlay di vittoria BB.win, suoni BB.sound. Grafica dall'icona del gufo. */
+
+/* =====================================================================
+   CONFIG: numeri e figure del gioco, da ritoccare qui.
+   ===================================================================== */
+var CONFIG = {
+  COPPIE_FACILE: 8,            // 4x4
+  COPPIE_DIFFICILE: 18,        // 6x6
+  ERRORE_MS: 800,              // quanto restano scoperte due carte diverse
+  INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
+};
+// Figure delle carte: img/fig_<nome>.webp (da tools/build_memory_sprites.py);
+// finche' l'immagine non c'e' si vede l'emoji di riserva.
+var FIGURE = [
+  ["mela", "🍎"], ["sole", "☀️"], ["arcobaleno", "🌈"], ["razzo", "🚀"], ["gelato", "🍦"],
+  ["papera", "🐤"], ["coccinella", "🐞"], ["pesce", "🐟"], ["dinosauro", "🦕"],
+  ["cupcake", "🧁"], ["carota", "🥕"], ["farfalla", "🦋"], ["macchina", "🚗"], ["balena", "🐳"],
+  ["albero", "🌳"], ["fragola", "🍓"], ["fiore", "🌸"], ["ombrello", "☂️"]
+];
 
 BB.lockScroll();
-var info = BB.header("🎉 Memory");
-BB.idle(60000, BB.home);
+var info = BB.header("Memory");
+BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
 var board = document.getElementById("board");
 var startScreen = document.getElementById("start");
 
-var MASCOTS = [
-  { type: "img", value: "assets/mascots/cards/kip.jpg", alt: "Kip" },
-  { type: "img", value: "assets/mascots/cards/stella.jpg", alt: "Stella" },
-  { type: "img", value: "assets/mascots/cards/bolt.jpg", alt: "Bolt" },
-  { type: "img", value: "assets/mascots/cards/bobo.jpg", alt: "Bobo" }
-];
-var EMOJIS = ["🚀","🌈","🪐","🌟","🛸","🎈","🦄","🍭","🎪","🌻","🐬","🍩","🎨","🐙","🍉","🎠"];
-var CARD_VALUES = MASCOTS.concat(EMOJIS.map(function (e) {
-  return { type: "emoji", value: e, alt: e };
-}));
+var CARD_VALUES = FIGURE.map(function (f) { return { nome: f[0], emoji: f[1] }; });
 
 var flipped = [];
 var matchedCount = 0;
@@ -57,23 +65,18 @@ function stopTimer() {
   timer = null;
 }
 
-function faceContent(card) {
-  if (card.type === "img") {
-    return '<img src="' + card.value + '" alt="' + card.alt + '">';
-  }
-  return card.value;
-}
-
 function makeCard(card) {
   var el = document.createElement("div");
   el.className = "card";
-  el.dataset.key = card.alt + "|" + card.value;
+  el.dataset.key = card.nome;
   el.innerHTML =
     '<div class="card-inner">' +
       '<div class="card-face card-front"></div>' +
-      '<div class="card-face card-back">' + faceContent(card) + "</div>" +
+      '<div class="card-face card-back"><img src="img/fig_' + card.nome + '.webp" alt=""></div>' +
     "</div>";
-  el.addEventListener("click", function () { onCardClick(el); });
+  var img = el.querySelector(".card-back img");
+  img.onerror = function () { img.replaceWith(document.createTextNode(card.emoji)); };
+  el.addEventListener("pointerdown", function () { onCardClick(el); });
   return el;
 }
 
@@ -116,13 +119,13 @@ function checkMatch() {
       second.classList.remove("flipped", "mismatch");
       flipped = [];
       lockBoard = false;
-    }, 800);
+    }, CONFIG.ERRORE_MS);
   }
 }
 
 function fine() {
   BB.win({
-    emoji: "🏆",
+    mascotte: "../assets/icons/memory.svg",
     titolo: "Hai vinto!",
     punteggio: "Mosse: " + moves + " · Tempo: " + fmt(seconds),
     rigioca: function () { startScreen.classList.remove("bb-hidden"); }

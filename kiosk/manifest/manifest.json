@@ -5,6 +5,7 @@
     {
       "id": "memory",
       "folder": "memory",
+      "version": "2",
       "category": "Giochi web",
       "order": 10,
       "tier": "base",
