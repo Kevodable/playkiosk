@@ -88,9 +88,9 @@
           return;
         }
       } catch (e) { /* ignora errori del bridge e usa il fallback */ }
-      // Fallback web: torna alla gallery preservando ?client (contesto multi-tenant)
-      var client = new URLSearchParams(window.location.search).get("client");
-      window.location.href = "../index.html" + (client ? "?client=" + encodeURIComponent(client) : "");
+      // Fallback web: torna alla gallery preservando ?tenant (contesto multi-tenant)
+      var tenant = new URLSearchParams(window.location.search).get("tenant");
+      window.location.href = "../index.html" + (tenant ? "?tenant=" + encodeURIComponent(tenant) : "");
     },
 
     /* Riproduce un suono di gioco: "pop" | "match" | "win" | "error" */
