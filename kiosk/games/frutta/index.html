@@ -52,6 +52,16 @@
     .lama{ position:absolute; width:18px; height:18px; border-radius:50%;
       background:rgba(255,255,255,.85); pointer-events:none; z-index:5;
       box-shadow:0 0 10px rgba(255,255,255,.9); will-change:transform,opacity; }
+    /* La spada del panda compare sotto il dito mentre si taglia */
+    .spada-dito{
+      position:absolute; left:0; top:0;
+      height:24vmin; height:clamp(130px,24vmin,240px); width:auto;
+      pointer-events:none; z-index:6;
+      filter:drop-shadow(0 6px 8px rgba(0,0,0,.25));
+      opacity:0;
+    }
+    /* Stelline di festa del panda (combo) */
+    .festa{ position:absolute; pointer-events:none; z-index:6; width:1px; height:1px; overflow:visible; }
     /* Schermata start */
     .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:22px;
@@ -72,6 +82,7 @@
         <div class="bambu" style="right:2%; --w:26px; --nodo:140px"></div>
         <div class="bambu" style="right:5.5%; --w:15px; --nodo:100px; top:30%"></div>
         <img class="panda" id="panda" src="img/panda.webp" alt="">
+        <img class="spada-dito" id="spada" src="img/spada.webp" alt="">
         <div class="start" id="start">
           <img class="start__img" src="../assets/icons/frutta.svg" alt="">
           <div class="start__txt">Taglia la frutta!<br>Scegli la difficoltà:</div>
@@ -107,6 +118,10 @@
       DIMENSIONE_MIN: 96,          // larghezza del frutto in px
       DIMENSIONE_MAX: 132,
       META_MS: 700,                // quanto restano visibili le due meta' dopo il taglio
+      SPADA_SEGUE: 0.35,           // quanto velocemente la spada si gira verso il movimento (0-1)
+      SPADA_SPARISCE_MS: 180,      // dissolvenza della spada quando il dito si alza
+      PANDA_SALTO: 0.07,           // salto del panda a ogni taglio (frazione della sua altezza)
+      COMBO_MIN: 2,                // frutti in un solo gesto per la festa grande
       INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
     };
 
@@ -165,6 +180,8 @@
       succhi(c.x, c.y, p.color);
       dividi(p);
       removeFrutto(p);
+      comboGesto++;
+      esulta(comboGesto === CONFIG.COMBO_MIN);
     }
 
     // Il frutto si divide in due meta' lungo la direzione del taglio, che
@@ -223,6 +240,74 @@
       }
     }
 
+    // ---- Panda che esulta ----
+    var panda = document.getElementById("panda");
+    var saltoPanda = null, comboGesto = 0;
+    function esulta(grande){
+      if (saltoPanda && saltoPanda.playState === "running" && !grande) return;
+      if (saltoPanda) saltoPanda.cancel();
+      var h = CONFIG.PANDA_SALTO * (grande ? 1.8 : 1) * 100;
+      saltoPanda = panda.animate([
+        { transform: "none" },
+        { transform: "translateY(-" + h + "%) rotate(-4deg) scale(.97,1.04)", offset: .35 },
+        { transform: "scale(1.05,.94)", offset: .7 },
+        { transform: "none" }
+      ], { duration: grande ? 520 : 380, easing: "ease-out" });
+      if (grande) festa();
+    }
+    function festa(){
+      var r = panda.getBoundingClientRect(), c = campo.getBoundingClientRect();
+      var cx = r.left - c.left + r.width * .5, cy = r.top - c.top + r.height * .25;
+      var el = document.createElement("div");
+      el.className = "festa"; el.style.left = cx + "px"; el.style.top = cy + "px";
+      var svg = "";
+      [[-.55, -.1, 22], [-.2, -.45, 16], [.25, -.5, 24], [.6, -.15, 17]].forEach(function (q) {
+        var x = q[0] * r.width, y = q[1] * r.height, R = q[2], pts = [];
+        for (var i = 0; i < 10; i++) {
+          var rr = i % 2 ? R * .45 : R, a = (-90 + i * 36) * Math.PI / 180;
+          pts.push((x + Math.cos(a) * rr).toFixed(1) + "," + (y + Math.sin(a) * rr).toFixed(1));
+        }
+        svg += '<polygon points="' + pts.join(" ") + '" fill="#FFD23F" stroke="#B3261E" stroke-width="3" stroke-linejoin="round"/>';
+      });
+      el.innerHTML = '<svg width="1" height="1" style="overflow:visible">' + svg + "</svg>";
+      campo.appendChild(el);
+      el.animate([{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(1.1)", opacity: 1, offset: .3 },
+                  { transform: "scale(1) translateY(-20px)", opacity: 0 }], { duration: 700, easing: "ease-out", fill: "forwards" });
+      setTimeout(function () { el.remove(); }, 720);
+    }
+
+    // ---- Spada sotto il dito ----
+    // Geometria di spada.webp (frazioni dello sprite, da build_frutta_sprites.py)
+    var SPADA = { centro: [.4352, .4196], punta: [.1806, .0179], elsa: [.6296, .9494], ratio: 216 / 336 };
+    var spada = document.getElementById("spada");
+    var spadaAng = null, spadaAnim = null;
+    function mostraSpada(x, y){
+      if (spadaAnim) spadaAnim.cancel();
+      spada.style.opacity = 1;
+      spadaAng = null;
+      muoviSpada(x, y, -Math.PI / 3);
+    }
+    function muoviSpada(x, y, dir){
+      var h = spada.offsetHeight, w = h * SPADA.ratio;          // offsetHeight: non risente della rotazione
+      // asse della lama nello sprite (dall'elsa alla punta)
+      var asse = Math.atan2((SPADA.punta[1] - SPADA.elsa[1]) * h, (SPADA.punta[0] - SPADA.elsa[0]) * w);
+      // la lama sta di traverso rispetto al movimento, con la punta verso l'alto
+      var perp = dir - Math.PI / 2;
+      if (Math.sin(perp) > 0) perp += Math.PI;
+      var voluto = perp - asse;
+      if (spadaAng === null) spadaAng = voluto;
+      var d = Math.atan2(Math.sin(voluto - spadaAng), Math.cos(voluto - spadaAng));
+      spadaAng += d * CONFIG.SPADA_SEGUE;
+      var ax = SPADA.centro[0] * w, ay = SPADA.centro[1] * h;
+      spada.style.transformOrigin = ax + "px " + ay + "px";
+      spada.style.transform = "translate(" + (x - ax) + "px," + (y - ay) + "px) rotate(" + spadaAng + "rad)";
+    }
+    function nascondiSpada(){
+      if (spada.style.opacity === "0") return;
+      spadaAnim = spada.animate([{ opacity: 1 }, { opacity: 0 }], { duration: CONFIG.SPADA_SPARISCE_MS });
+      spada.style.opacity = 0;          // stato finale; l'animazione copre la dissolvenza
+    }
+
     // ---- Lama / swipe ----
     var giu = false, lastX = 0, lastY = 0;
     function puntoSuFrutta(x, y){
@@ -246,22 +331,29 @@
       var t = (e.touches && e.touches[0]) || e;
       return { x: t.clientX - r.left, y: t.clientY - r.top };
     }
-    function onDown(e){ giu = true; var p = rel(e); lastX=p.x; lastY=p.y; if(inCorso){ puntoSuFrutta(p.x,p.y); sciaLama(p.x,p.y);} }
+    function onDown(e){
+      giu = true; comboGesto = 0;
+      var p = rel(e); lastX=p.x; lastY=p.y;
+      if (inCorso){ mostraSpada(p.x, p.y); puntoSuFrutta(p.x,p.y); sciaLama(p.x,p.y); }
+    }
     function onMove(e){
       if (!giu || !inCorso) return;
       e.preventDefault();
       var p = rel(e);
       if (p.x !== lastX || p.y !== lastY) angoloTaglio = Math.atan2(p.y - lastY, p.x - lastX);
+      muoviSpada(p.x, p.y, angoloTaglio);
       // campiona alcuni punti lungo il segmento per non "saltare" i frutti con swipe veloci
       var steps = 4;
       for (var i=1;i<=steps;i++){
         var x = lastX + (p.x-lastX)*i/steps, y = lastY + (p.y-lastY)*i/steps;
         puntoSuFrutta(x, y);
       }
-      sciaLama(p.x, p.y);
+      // scia continua: un puntino ogni ~12 px lungo il segmento
+      var n = Math.max(1, Math.round(Math.hypot(p.x - lastX, p.y - lastY) / 12));
+      for (var k = 1; k <= n; k++) sciaLama(lastX + (p.x - lastX) * k / n, lastY + (p.y - lastY) * k / n);
       lastX=p.x; lastY=p.y;
     }
-    function onUp(){ giu = false; }
+    function onUp(){ if (giu) nascondiSpada(); giu = false; }
     campo.addEventListener("pointerdown", onDown);
     campo.addEventListener("pointermove", onMove, { passive:false });
     window.addEventListener("pointerup", onUp);
@@ -308,6 +400,7 @@
 
     function fine(){
       inCorso = false;
+      giu = false; spada.style.opacity = 0;
       cancelAnimationFrame(rafId); clearInterval(tickTimer);
       frutti.forEach(function(p){ if(p.el.parentNode) p.el.remove(); }); frutti = [];
       var record = BB.score("frutta", punteggio);
