@@ -866,6 +866,7 @@ function enabledGames() {
     return {
       id: g.id,
       folder: g.folder,
+      version: g.version || null,
       title: o.title || localized(g.title, g.id),
       iconSvg: o.icon || (g.icon && g.icon.svg) || null,
       iconEmoji: (g.icon && g.icon.emoji) || null,
@@ -1036,7 +1037,10 @@ function openGame(g) {
   var frame = document.getElementById("game-frame");
   var homeBtn = document.getElementById("home-button");
   homeBtn.textContent = str("homeButton");
-  frame.src = "games/" + encodeURIComponent(g.folder) + "/index.html";
+  /* "version" (manifest) busts the browser cache when a game is updated:
+     bump it whenever a game's files change. */
+  frame.src = "games/" + encodeURIComponent(g.folder) + "/index.html" +
+    (g.version ? "?v=" + encodeURIComponent(g.version) : "");
 
   showScreen("game");
   telemetry("game_open", { gameId: g.id });

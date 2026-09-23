@@ -19,6 +19,7 @@
     {
       "id": "talpe",
       "folder": "talpe",
+      "version": "2",
       "category": "Giochi web",
       "order": 11,
       "tier": "base",
@@ -33,6 +34,7 @@
     {
       "id": "palloncini",
       "folder": "palloncini",
+      "version": "2",
       "category": "Giochi web",
       "order": 12,
       "tier": "base",
