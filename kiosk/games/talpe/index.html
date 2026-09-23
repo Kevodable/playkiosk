@@ -8,65 +8,86 @@
   <title>Acchiappa la Talpa</title>
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
-    /* ----- Talpe: griglia 3x3 di buche ----- */
+    /* ----- Prato: sfondo coerente con l'icona (talpa nella terra) ----- */
+    .bb-screen{
+      background:
+        radial-gradient(circle at 18% 22%, rgba(255,255,255,.35) 0 2px, transparent 3px) 0 0 / 46px 46px,
+        radial-gradient(circle at 70% 64%, rgba(60,120,40,.18) 0 3px, transparent 4px) 0 0 / 58px 58px,
+        linear-gradient(to bottom, #CDEFB0 0%, #A6DE82 45%, #86CC62 100%);
+    }
+    .bb-header{ background:rgba(255,255,255,.55); }
+
+    /* ----- Griglia di buche (colonne/righe da CONFIG) ----- */
     .board{
       display:grid;
       gap:3vmin; gap:clamp(12px,3vmin,26px);
-      grid-template-columns:repeat(3,1fr);
-      grid-template-rows:repeat(3,1fr);
       width:82vmin; width:min(82vmin, 760px);
       height:82vmin; height:min(82vmin, 760px);
       max-width:100%;
       max-height:100%;
     }
-    /* Una buca: cerchio scuro che fa da "terra" */
+    /* Una buca: cella quadrata e trasparente; la scena sta in basso.
+       Tutta la cella e' toccabile (bersaglio grande per i bambini). */
     .buca{
       position:relative;
-      border-radius:50%;
-      background:radial-gradient(circle at 50% 35%, #5a3a2a, #3a2418);
-      box-shadow:inset 0 12px 24px rgba(0,0,0,.45), var(--bb-shadow);
-      overflow:hidden;
       min-height:64px;
       min-width:64px;
+      touch-action:manipulation;
     }
-    /* La talpa parte sotto la buca e sale quando .su */
-    .talpa{
-      position:absolute;
-      left:8%;
-      bottom:-100%;
-      width:84%;
-      height:84%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:14vmin; font-size:clamp(40px,14vmin,96px);
-      transition:bottom .15s var(--bb-ease-elastic);
-      will-change:bottom;
-    }
-    .buca.su .talpa{ bottom:6%; }
-    /* Talpa colpita: piccola animazione + stella */
-    .buca.colpita .talpa{ animation:bb-pop .25s var(--bb-ease-elastic); }
-    /* Bordo erboso in cima alla buca per dare profondità */
-    .buca::after{
-      content:"";
-      position:absolute;
-      left:0; right:0; bottom:0;
-      height:26%;
-      background:linear-gradient(to top, rgba(46,91,255,.0), rgba(46,91,255,.0));
+    /* La scena ha le proporzioni dell'arte di partenza (644x623 px):
+       tutte le percentuali qui sotto sono misurate su quell'immagine
+       (vedi tools/build_talpe_sprites.py). */
+    .scena{
+      position:absolute; left:0; right:0; bottom:0;
+      aspect-ratio:644 / 623;
       pointer-events:none;
     }
+    .tana{              /* il buco scuro dietro la talpa */
+      position:absolute; left:21%; width:65%; top:73%; height:14%;
+      border-radius:50%;
+      background:radial-gradient(ellipse at 50% 40%, #2a1710 0 55%, #4a2c1c 100%);
+    }
+    /* Due finestre identiche: dentro scorrono talpa (dietro la terra) e
+       zampa (davanti alla terra). Vanno da -10% a 88% dell'altezza della
+       scena: sotto l'88% la talpa sparisce nella buca. */
+    .finestra{
+      position:absolute; left:0; right:0; top:-10%; height:98%;
+      overflow:hidden;
+    }
+    /* "salita" occupa tutta la finestra: spostarla del 100% porta
+       talpa e zampa sotto il bordo della finestra, cioe' dentro la buca. */
+    .salita{
+      position:absolute; inset:0;
+      transform:translateY(100%);
+      transition-property:transform;
+      transition-timing-function:var(--bb-ease-elastic);
+    }
+    .buca.su .salita{ transform:translateY(0); }
+    .sprite{ position:absolute; display:block; }
+    .talpa-img{ left:20.81%; width:64.29%; top:10.20%; height:85.17%; transform-origin:50% 100%; }
+    .zampa-img{ left:58.23%; width:21.27%; top:83.91%; height:15.89%; }
+    .terra-img{ left:0; width:100%; top:67.90%; height:32.10%; }
+
+    /* Talpa colpita: si schiaccia e intanto scende */
+    .buca.colpita .talpa-img{ animation-name:schiaccia; animation-timing-function:ease-out; }
+    @keyframes schiaccia{
+      0%{ transform:scale(1,1); }
+      30%{ transform:scale(1.18,.72); }
+      100%{ transform:scale(1,1); }
+    }
+
     /* Indicatore "+1" che sale al colpo */
     .plusone{
       position:absolute;
       left:50%;
-      top:30%;
+      top:10%;
       transform:translateX(-50%);
       font-size:5vmin; font-size:clamp(20px,5vmin,34px);
       font-weight:900;
       color:#fff;
-      text-shadow:0 2px 6px rgba(0,0,0,.4);
+      text-shadow:0 2px 0 #5B3A1E, 0 3px 8px rgba(0,0,0,.35);
       pointer-events:none;
-      animation:plusup .6s ease-out forwards;
+      animation-name:plusup; animation-timing-function:ease-out; animation-fill-mode:forwards;
     }
     @keyframes plusup{
       0%{ opacity:0; transform:translate(-50%,0) scale(.6); }
@@ -78,13 +99,12 @@
       position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
       display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:22px;
-      background:rgba(255,247,251,.92);
+      background:rgba(240,252,232,.9);
       text-align:center;
     }
-    .start__emoji{ font-size:18vmin; font-size:clamp(60px,18vmin,130px); }
-    .start__img{ width:28vmin; width:clamp(120px,28vmin,200px); height:auto;
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:var(--bb-burgundy); }
+    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:#5B3A1E; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
   </style>
 </head>
@@ -96,7 +116,7 @@
 
       <!-- Schermata iniziale: scelta difficoltà -->
       <div class="start" id="start">
-        <img class="start__img" src="../assets/mascotte/kip.png" alt="">
+        <img class="start__img" src="../assets/icons/talpe.svg" alt="">
         <div class="start__txt">Colpisci le talpe!<br>Scegli la difficoltà:</div>
         <div class="liv-row">
           <button class="bb-btn bb-btn--blue liv-btn" data-liv="facile">😊 Facile</button>
@@ -109,36 +129,65 @@
 
   <script src="../assets/shared.js"></script>
   <script>
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      DURATA_PARTITA: 60,        // secondi di partita
+      COLONNE: 3,                // buche per riga
+      RIGHE: 3,                  // righe di buche
+      PUNTI_PER_TALPA: 1,
+      // Difficoltà (pulsanti nella schermata start): ms in cui la talpa resta
+      // su all'inizio (base), minimo raggiungibile (min), e quanti ms in meno
+      // per ogni punto fatto (scal).
+      DIFFICOLTA: {
+        facile:    { base: 1200, min: 600, scal: 12 },
+        medio:     { base: 900,  min: 380, scal: 18 },
+        difficile: { base: 680,  min: 260, scal: 24 }
+      },
+      SALITA_MS: 150,            // quanto ci mette la talpa a uscire/rientrare
+      COLPO_MS: 260,             // animazione della talpa colpita
+      INATTIVITA_MS: 60000       // senza tocchi: torna al menu giochi
+    };
+
     BB.lockScroll();
-    var info = BB.header("🐹 Acchiappa la Talpa");
-    BB.idle(60000, BB.home);
+    var info = BB.header("Acchiappa la Talpa");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
     var board = document.getElementById("board");
     var startScreen = document.getElementById("start");
-    var DURATA = 60;          // secondi di partita
-
-    // Difficoltà scelta dal bambino a inizio partita (pulsanti nella schermata start).
-    // base = ms iniziali in cui la talpa resta su; min = limite minimo; scal = accelerazione.
-    var TAB = {
-      facile:    { base: 1200, min: 600, scal: 12 },
-      medio:     { base: 900,  min: 380, scal: 18 },
-      difficile: { base: 680,  min: 260, scal: 24 }
-    };
-    var DIFF = TAB.facile;
+    var DIFF = CONFIG.DIFFICOLTA.facile;
     var punteggio = 0;
-    var tempo = DURATA;
-    var buche = [];           // i 9 elementi buca
+    var tempo = CONFIG.DURATA_PARTITA;
+    var buche = [];           // gli elementi buca
     var attiva = -1;          // indice della buca con la talpa su
     var tickTalpa = null;     // timer comparsa talpe
     var tickTimer = null;     // timer countdown
     var inCorso = false;
 
-    // Crea le 9 buche
-    for (var i = 0; i < 9; i++) {
+    /* Le durate delle animazioni vengono da CONFIG e sono messe inline con
+       !important: shared.css le azzera quando il sistema chiede "riduci
+       movimento", ma sul chiosco il gioco deve animarsi comunque. */
+    function durata(el, prop, ms) { el.style.setProperty(prop, ms + "ms", "important"); }
+
+    // Crea le buche
+    board.style.gridTemplateColumns = "repeat(" + CONFIG.COLONNE + ",1fr)";
+    board.style.gridTemplateRows = "repeat(" + CONFIG.RIGHE + ",1fr)";
+    for (var i = 0; i < CONFIG.COLONNE * CONFIG.RIGHE; i++) {
       var buca = document.createElement("button");
       buca.className = "buca";
       buca.dataset.idx = i;
-      buca.innerHTML = '<span class="talpa">🐹</span>';
+      buca.innerHTML =
+        '<div class="scena">' +
+          '<div class="tana"></div>' +
+          '<div class="finestra"><div class="salita"><img class="sprite talpa-img" src="img/talpa.webp" alt=""></div></div>' +
+          '<img class="sprite terra-img" src="img/terra.webp" alt="">' +
+          '<div class="finestra"><div class="salita"><img class="sprite zampa-img" src="img/zampa.webp" alt=""></div></div>' +
+        '</div>';
+      Array.prototype.forEach.call(buca.querySelectorAll(".salita"), function (s) {
+        durata(s, "transition-duration", CONFIG.SALITA_MS);
+      });
+      durata(buca.querySelector(".talpa-img"), "animation-duration", CONFIG.COLPO_MS);
       buca.addEventListener("click", colpisci);
       board.appendChild(buca);
       buche.push(buca);
@@ -148,8 +197,7 @@
       info.innerHTML = "⭐ " + punteggio + " &nbsp; ⏱ " + tempo + "s";
     }
 
-    // Calcola la velocità: la talpa resta su meno tempo man mano che il
-    // punteggio cresce (da ~900ms fino a ~380ms minimo).
+    // La talpa resta su meno tempo man mano che il punteggio cresce.
     function durataTalpa() {
       return Math.max(DIFF.min, DIFF.base - punteggio * DIFF.scal);
     }
@@ -160,8 +208,9 @@
       if (attiva >= 0) buche[attiva].classList.remove("su");
       // Scegli una buca diversa dalla precedente
       var idx;
-      do { idx = BB.rand(0, 8); } while (idx === attiva && buche.length > 1);
+      do { idx = BB.rand(0, buche.length - 1); } while (idx === attiva && buche.length > 1);
       attiva = idx;
+      buche[idx].classList.remove("colpita");
       buche[idx].classList.add("su");
       // Programma la prossima comparsa
       tickTalpa = setTimeout(mostraTalpa, durataTalpa());
@@ -174,16 +223,17 @@
       if (!buca.classList.contains("su")) return;
       buca.classList.remove("su");
       buca.classList.add("colpita");
-      setTimeout(function () { buca.classList.remove("colpita"); }, 250);
+      setTimeout(function () { buca.classList.remove("colpita"); }, CONFIG.COLPO_MS);
 
-      punteggio++;
+      punteggio += CONFIG.PUNTI_PER_TALPA;
       aggiornaInfo();
       BB.sound("pop");
 
       // Mostra "+1" che sale
       var plus = document.createElement("span");
       plus.className = "plusone";
-      plus.textContent = "+1";
+      plus.textContent = "+" + CONFIG.PUNTI_PER_TALPA;
+      durata(plus, "animation-duration", 600);
       buca.appendChild(plus);
       setTimeout(function () { plus.remove(); }, 600);
     }
@@ -191,10 +241,10 @@
     function mostraStart() { startScreen.classList.remove("bb-hidden"); }
 
     function avvia(liv) {
-      if (TAB[liv]) DIFF = TAB[liv];   // difficoltà scelta dal bambino
+      if (CONFIG.DIFFICOLTA[liv]) DIFF = CONFIG.DIFFICOLTA[liv];   // difficoltà scelta dal bambino
       startScreen.classList.add("bb-hidden");
       punteggio = 0;
-      tempo = DURATA;
+      tempo = CONFIG.DURATA_PARTITA;
       attiva = -1;
       inCorso = true;
       aggiornaInfo();
@@ -217,7 +267,7 @@
       var record = BB.score("talpe", punteggio);
       var nuovoRecord = punteggio > 0 && punteggio >= record;
       BB.win({
-        mascotte: nuovoRecord ? null : "../assets/mascotte/kip.png",
+        mascotte: nuovoRecord ? null : "../assets/icons/talpe.svg",
         emoji: nuovoRecord ? "🏆" : null,
         titolo: nuovoRecord ? "Nuovo record!" : "Tempo scaduto!",
         punteggio: punteggio + " talpe",
