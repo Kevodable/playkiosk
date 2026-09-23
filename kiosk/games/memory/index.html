@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#7A1F3D">
+  <title>Memory</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    /* --- Info nell'header (mosse / tempo / coppie) --- */
+    .mem-stats{ display:flex; align-items:center; gap:14px; }
+    .mem-stat{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+    .mem-stat b{ color:var(--bb-burgundy); }
+
+    /* --- Board --- */
+    .board{
+      position:relative;
+      width:80vmin; width:min(80vmin, 560px);
+      height:80vmin; height:min(80vmin, 560px);
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-template-rows:repeat(4,1fr);
+      gap:1.6vmin;
+    }
+    .board.large{
+      grid-template-columns:repeat(6,1fr);
+      grid-template-rows:repeat(6,1fr);
+      gap:1.1vmin;
+    }
+
+    .card{ position:relative; perspective:700px; cursor:pointer; }
+    .card-inner{
+      width:100%; height:100%;
+      position:relative;
+      transition:transform .45s cubic-bezier(.4,.2,.2,1);
+      transform-style:preserve-3d;
+    }
+    .card.flipped .card-inner,
+    .card.matched .card-inner{ transform:rotateY(180deg); }
+
+    .card-face{
+      position:absolute;
+      top:0; right:0; bottom:0; left:0;
+      display:flex; align-items:center; justify-content:center;
+      border-radius:14px;
+      -webkit-backface-visibility:hidden; backface-visibility:hidden;
+      overflow:hidden;
+    }
+    .card-front{
+      background:linear-gradient(135deg, var(--bb-pink), var(--bb-blue));
+      color:#fff;
+      box-shadow:inset 0 0 0 3px rgba(255,255,255,.4);
+      font-size:6vmin; font-size:min(6vmin,34px);
+    }
+    .card-front::after{ content:'?'; font-weight:900; text-shadow:0 2px 4px rgba(0,0,0,.25); }
+    .card-back{
+      background:#fff;
+      border:3px solid var(--bb-blue-soft);
+      transform:rotateY(180deg);
+      font-size:8vmin; font-size:min(8vmin,46px);
+    }
+    .card-back img{ width:100%; height:100%; object-fit:cover; }
+    .card.matched .card-back{ border-color:#4caf50; background:#eafff0; }
+    .card.mismatch .card-inner{ animation:mem-shake .4s; }
+    @keyframes mem-shake{
+      0%,100%{ transform:rotateY(180deg) translateX(0); }
+      25%{ transform:rotateY(180deg) translateX(-6px); }
+      75%{ transform:rotateY(180deg) translateX(6px); }
+    }
+
+    /* --- Schermata di start (come gli altri giochi) --- */
+    .start{
+      position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:18px;
+      background:rgba(255,247,251,.94);
+      text-align:center;
+    }
+    .start__img{
+      width:52vmin; width:clamp(220px,52vmin,380px); height:auto;
+      border-radius:18px;
+      box-shadow:0 8px 20px rgba(0,0,0,.2);
+    }
+    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px);
+      font-weight:900; color:var(--bb-burgundy); }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <!-- header iniettato da JS -->
+    <div class="bb-stage">
+      <div class="board" id="board"></div>
+      <div class="start" id="start">
+        <img class="start__img" src="assets/mascots/banner.jpg" alt="Kids Fun Planet">
+        <div class="start__txt">Trova tutte le coppie!<br>Che difficoltà vuoi?</div>
+        <div class="liv-row">
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-pairs="8">🌈 Facile (4×4)</button>
+          <button class="bb-btn bb-btn--blue liv-btn" data-pairs="18">🚀 Difficile (6×6)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

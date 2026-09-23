@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FFB020">
+  <title>Acchiappa-stelle</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    .bb-stage{ padding:0; }
+    .campo{
+      position:absolute; top:0; right:0; bottom:0; left:0; overflow:hidden;
+      touch-action:none;
+      background:
+        radial-gradient(circle at 50% 0%, var(--bb-blue-soft), transparent 60%),
+        radial-gradient(circle at 80% 100%, var(--bb-pink-soft), transparent 55%),
+        var(--bb-paper);
+    }
+    /* Oggetto che cade (stella/caramella) */
+    .cosa{ position:absolute; left:0; top:0; font-size:var(--size,56px); line-height:1;
+      will-change:transform; user-select:none; filter:drop-shadow(0 4px 6px rgba(0,0,0,.15)); }
+    /* Cesto che segue il dito */
+    .cesto{
+      position:absolute; bottom:22px; width:132px; height:58px;
+      background:repeating-linear-gradient(90deg,#F6B400 0 10px,#E8A11f 10px 20px);
+      border:6px solid #7A1F3D; border-radius:10px 10px 30px 30px;
+      box-shadow:var(--bb-shadow); will-change:left;
+    }
+    .cesto::before{ content:""; position:absolute; left:-6px; right:-6px; top:-12px; height:14px;
+      background:#7A1F3D; border-radius:8px; }
+    .scintilla{ position:absolute; width:14px; height:14px; border-radius:50%;
+      pointer-events:none; will-change:transform,opacity; }
+    .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:22px;
+      background:rgba(255,247,251,.92); text-align:center; }
+    .start__img{ width:28vmin; width:clamp(120px,28vmin,200px); height:auto;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
+    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:var(--bb-burgundy); }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <div class="bb-stage">
+      <div class="campo" id="campo">
+        <div class="cesto" id="cesto"></div>
+        <div class="start" id="start">
+          <img class="start__img" src="../assets/mascotte/stella.png" alt="">
+          <div class="start__txt">Sposta il cesto e prendi le stelle!<br>Scegli la difficoltà:</div>
+          <div class="liv-row">
+            <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
+            <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
+            <button class="bb-btn liv-btn" data-liv="difficile">🔥 Difficile</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    var info = BB.header("⭐ Acchiappa-stelle");
+    BB.idle(60000, BB.home);
+
+    var campo = document.getElementById("campo");
+    var cesto = document.getElementById("cesto");
+    var startScreen = document.getElementById("start");
+    var DURATA = 60;
+
+    // Difficoltà scelta dal bambino (pulsanti start)
+    var TAB = {
+      facile:    { vMin: 180, vMax: 260, vScore: 1.5, spawnBase: 900, spawnMin: 520 },
+      medio:     { vMin: 240, vMax: 340, vScore: 2.5, spawnBase: 750, spawnMin: 400 },
+      difficile: { vMin: 320, vMax: 460, vScore: 3.5, spawnBase: 600, spawnMin: 300 }
+    };
+    var DIFF = TAB.facile;
+
+    var COSE = ["⭐","🌟","🍬","🍭","💛","🍪"];
+    var punteggio = 0, tempo = DURATA, inCorso = false;
+    var cose = [], rafId = null, tickTimer = null, lastTs = 0, ultimoSpawn = 0, spawnOgni = 900;
+    var bx = 0;  // posizione (left) del cesto
+
+    function aggiornaInfo(){ info.innerHTML = "⭐ " + punteggio + " &nbsp; ⏱ " + tempo + "s"; }
+
+    function clampCesto(x){
+      var bw = cesto.offsetWidth, W = campo.clientWidth;
+      bx = Math.max(0, Math.min(W - bw, x - bw/2));
+      cesto.style.left = bx + "px";
+    }
+    // Il cesto segue il dito
+    function rel(e){ var r=campo.getBoundingClientRect(); var t=(e.touches&&e.touches[0])||e; return t.clientX - r.left; }
+    function muovi(e){ if(!inCorso) return; e.preventDefault(); clampCesto(rel(e)); }
+    campo.addEventListener("pointerdown", muovi);
+    campo.addEventListener("pointermove", muovi, { passive:false });
+    campo.addEventListener("touchstart", muovi, { passive:false });
+    campo.addEventListener("touchmove", muovi, { passive:false });
+
+    function spawn(){
+      var size = BB.rand(48, 70);
+      var el = document.createElement("div");
+      el.className = "cosa"; el.textContent = COSE[BB.rand(0, COSE.length-1)];
+      el.style.setProperty("--size", size + "px");
+      campo.appendChild(el);
+      var W = campo.clientWidth;
+      var p = {
+        el: el, size: size,
+        x: BB.rand(6, Math.max(6, W - size - 6)),
+        y: -size,
+        vy: BB.rand(DIFF.vMin, DIFF.vMax) + (DURATA - tempo) * DIFF.vScore,
+        presa: false
+      };
+      el.style.transform = "translate("+p.x+"px,"+p.y+"px)";
+      cose.push(p);
+    }
+
+    function scintille(cx, cy){
+      for (var i=0;i<8;i++){
+        var s=document.createElement("span"); s.className="scintilla";
+        s.style.background = i%2 ? "#FFD23F" : "#E8488B";
+        s.style.left=cx+"px"; s.style.top=cy+"px"; campo.appendChild(s);
+        var ang=Math.random()*Math.PI*2, dist=BB.rand(30,80);
+        s.animate([{transform:"translate(0,0) scale(1)",opacity:1},
+          {transform:"translate("+Math.cos(ang)*dist+"px,"+Math.sin(ang)*dist+"px) scale(0)",opacity:0}],
+          {duration:450,easing:"ease-out"});
+        setTimeout((function(n){return function(){n.remove();};})(s),470);
+      }
+    }
+
+    function removeCosa(p){ var i=cose.indexOf(p); if(i>=0) cose.splice(i,1); if(p.el.parentNode) p.el.remove(); }
+
+    function loop(ts){
+      if(!inCorso) return;
+      if(!lastTs) lastTs=ts;
+      var dt=(ts-lastTs)/1000; if(dt>0.05) dt=0.05; lastTs=ts;
+      ultimoSpawn += (ts-(loop._prev||ts)); loop._prev=ts;
+      spawnOgni = Math.max(DIFF.spawnMin, DIFF.spawnBase - (DURATA-tempo)*6);
+      if (ultimoSpawn > spawnOgni){ ultimoSpawn=0; spawn(); }
+
+      var H = campo.clientHeight;
+      var bw = cesto.offsetWidth;
+      var catchTop = H - 22 - cesto.offsetHeight;   // bordo superiore del cesto
+      for (var i=cose.length-1;i>=0;i--){
+        var p = cose[i];
+        p.y += p.vy*dt;
+        p.el.style.transform = "translate("+p.x+"px,"+p.y+"px)";
+        if (!p.presa){
+          var cxItem = p.x + p.size/2;
+          var bordoBasso = p.y + p.size;
+          // entra nel cesto?
+          if (bordoBasso >= catchTop && p.y < catchTop + 30 &&
+              cxItem >= bx && cxItem <= bx + bw){
+            p.presa = true; punteggio++; aggiornaInfo(); BB.sound("pop");
+            scintille(cxItem, catchTop);
+            removeCosa(p); continue;
+          }
+        }
+        if (p.y > H + 40){ removeCosa(p); }  // mancata: nessuna penalità
+      }
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
+
+    function avvia(liv){
+      if (TAB[liv]) DIFF = TAB[liv];
+      startScreen.classList.add("bb-hidden");
+      cose.forEach(function(p){ if(p.el.parentNode) p.el.remove(); }); cose=[];
+      punteggio=0; tempo=DURATA; inCorso=true; ultimoSpawn=9999; lastTs=0; loop._prev=0;
+      clampCesto(campo.clientWidth/2);
+      aggiornaInfo();
+      rafId = requestAnimationFrame(loop);
+      tickTimer = setInterval(function(){ tempo--; aggiornaInfo(); if(tempo<=0) fine(); }, 1000);
+    }
+
+    function fine(){
+      inCorso=false; cancelAnimationFrame(rafId); clearInterval(tickTimer);
+      cose.forEach(function(p){ if(p.el.parentNode) p.el.remove(); }); cose=[];
+      var record = BB.score("stelle", punteggio);
+      var nuovoRecord = punteggio>0 && punteggio>=record;
+      BB.win({
+        mascotte: nuovoRecord ? null : "../assets/mascotte/stella.png",
+        emoji: nuovoRecord ? "🏆" : null,
+        titolo: nuovoRecord ? "Nuovo record!" : "Tempo scaduto!",
+        punteggio: punteggio + " stelle",
+        record: record,
+        rigioca: mostraStart
+      });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
+      b.addEventListener("click", function(){ avvia(b.dataset.liv); });
+    });
+  </script>
+</body>
+</html>

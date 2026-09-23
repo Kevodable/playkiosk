@@ -1,0 +1,46 @@
+{
+  "tenantId": "default",
+  "displayName": "Kiosk Giochi",
+  "language": "it",
+  "colors": {
+    "primary": "#2E5BFF",
+    "background": "#F5F7FF",
+    "accent": "#FFB020"
+  },
+  "logo": { "path": null },
+  "mascot": { "path": null },
+  "font": "Bold Doodle",
+  "background": {
+    "image": "assets/background-soft.webp",
+    "color": "#F5F7FF",
+    "overlay": "rgba(255,255,255,0.12)"
+  },
+  "button": {
+    "image": "assets/tile-button.png",
+    "aspectRatio": "1 / 1",
+    "contentBox": {
+      "top": 30,
+      "bottom": 30,
+      "left": 28,
+      "right": 28
+    },
+    "_measuredFrom": "assets/tile-button.png is 1024x1024, a single pre-composed image (wood frame + board fill in one piece, transparent outside), placed at 100% of the square button area with no scale/crop and no backdrop color behind it: whatever this art does not cover, the tile itself is fully transparent (no background, no border-radius) so the forest background shows straight through, by design. An earlier version tried scaling the image up to hide its own uneven internal margin behind a matching backdrop color - dropped in favor of this simpler, more honest rendering. contentBox is the board's usable inner area, measured directly: top 30%, bottom 30%, left 28%, right 28% from the SQUARE's edges (the square being just the button image area now, not the whole taller tile, since the title moved below it) - conservative on purpose so the logo never touches the wood. Update contentBox if this image changes; the shell derives the logo's slot position from it, so it stays aligned only if measured from the actual file in use."
+  },
+  "idleTimeoutSec": 75,
+  "attract": {
+    "loop": [],
+    "itemSeconds": 8
+  },
+  "enabledGames": [
+    "memory", "talpe", "palloncini", "frutta", "stelle",
+    "sequenza", "lavagna", "labirinto", "forme", "puzzle", "tris", "hanoi"
+  ],
+  "strings": {
+    "attractTap": "Tocca per iniziare",
+    "menuSubtitle": "Scegli un gioco",
+    "homeButton": "Menu",
+    "loading": "Caricamento...",
+    "noGames": "Nessun gioco disponibile"
+  },
+  "gameOverrides": {}
+}

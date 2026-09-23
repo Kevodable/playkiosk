@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#9B5DE5">
+  <title>Abbina le forme</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    .bb-stage{ padding:8px 14px 16px; }
+    .gioco{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; flex-direction:column;
+      justify-content:space-between; gap:12px; touch-action:none; }
+    .fila{ display:flex; flex-wrap:wrap; gap:2.5vmin; gap:clamp(10px,2.5vmin,22px);
+      justify-content:center; align-items:center; }
+    .targets{ flex:1 1 auto; align-content:center; }
+    .pool{ flex:0 0 auto; }
+
+    :root{ --sz:15vmin; --sz:clamp(66px,15vmin,120px); }
+    .slot, .shape{ width:var(--sz); height:var(--sz); }
+    .slot{ position:relative; border-radius:14px; }
+    .slot.pop{ animation:bb-pop .4s var(--bb-ease-elastic); }
+    .shape{ cursor:grab; will-change:transform; }
+    .shape.dragging{ cursor:grabbing; filter:drop-shadow(0 8px 10px rgba(0,0,0,.28)); }
+    .shape.locked{ pointer-events:none; }
+    .slot svg, .shape svg{ width:100%; height:100%; display:block; }
+    /* Forma piena (trascinabile): colore proprio */
+    .shape svg > *{ fill:var(--c); stroke:rgba(0,0,0,.12); stroke-width:2; }
+    /* Sagoma bersaglio: vuota, tratteggiata */
+    .slot svg > *{ fill:#eef0f6; stroke:#9aa3bd; stroke-width:4; stroke-dasharray:7 7; }
+
+    .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:20px;
+      background:rgba(255,247,251,.95); text-align:center; padding:18px; }
+    .start__img{ width:24vmin; width:clamp(110px,24vmin,180px); height:auto;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
+    .start__txt{ font-size:4.4vmin; font-size:clamp(18px,4.4vmin,30px); font-weight:900; color:var(--bb-burgundy); line-height:1.3; }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <div class="bb-stage">
+      <div class="gioco" id="gioco">
+        <div class="fila targets" id="targets"></div>
+        <div class="fila pool" id="pool"></div>
+
+        <div class="start" id="start">
+          <img class="start__img" src="../assets/mascotte/bobo.png" alt="">
+          <div class="start__txt">Trascina ogni forma<br>nella sua sagoma!<br>Scegli la difficoltà:</div>
+          <div class="liv-row">
+            <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
+            <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
+            <button class="bb-btn liv-btn" data-liv="difficile">🔥 Difficile</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    var info = BB.header("🔷 Abbina le forme");
+    BB.idle(90000, BB.home);
+
+    var gioco=document.getElementById("gioco");
+    var targetsBox=document.getElementById("targets");
+    var poolBox=document.getElementById("pool");
+    var startScreen=document.getElementById("start");
+
+    // Geometria delle forme (viewBox 0..100) — fill/stroke gestiti dal CSS
+    var SHAPES={
+      cerchio:'<circle cx="50" cy="50" r="42"/>',
+      quadrato:'<rect x="10" y="10" width="80" height="80" rx="10"/>',
+      triangolo:'<polygon points="50,10 90,88 10,88"/>',
+      rombo:'<polygon points="50,8 92,50 50,92 8,50"/>',
+      stella:'<polygon points="50,6 61,38 95,38 67,58 78,91 50,70 22,91 33,58 5,38 39,38"/>',
+      cuore:'<path d="M50 88 C12 60 14 22 38 22 C48 22 50 32 50 34 C50 32 52 22 62 22 C86 22 88 60 50 88 Z"/>',
+      esagono:'<polygon points="50,8 88,29 88,71 50,92 12,71 12,29"/>'
+    };
+    var COLORI={ cerchio:"#FF5A5F", quadrato:"#4D8DFF", triangolo:"#3DDC84",
+      rombo:"#9B5DE5", stella:"#FFC93C", cuore:"#E8488B", esagono:"#FF9F1C" };
+    var ORDINE=["cerchio","quadrato","triangolo","stella","cuore","rombo","esagono"];
+
+    var TAB={ facile:3, medio:5, difficile:7 };
+    var total=0, placed=0, tStart=0, inCorso=false;
+
+    function svg(id){ return '<svg viewBox="0 0 100 100">'+SHAPES[id]+'</svg>'; }
+
+    function aggiornaInfo(){ info.innerHTML = "✔ " + placed + " / " + total; }
+
+    // ---- drag ----
+    var dragging=null, startX=0, startY=0;
+    function pt(e){ var t=(e.touches&&e.touches[0])||e; return {x:t.clientX, y:t.clientY}; }
+    function center(el){ var r=el.getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2}; }
+
+    function onDown(e, sh){
+      if(!inCorso || sh.classList.contains("locked")) return;
+      e.preventDefault();
+      dragging=sh; sh.classList.add("dragging"); sh.style.zIndex="100";
+      var p=pt(e); startX=p.x; startY=p.y;
+    }
+    function onMove(e){
+      if(!dragging) return; e.preventDefault();
+      var p=pt(e);
+      dragging.style.transform="translate("+(p.x-startX)+"px,"+(p.y-startY)+"px)";
+    }
+    function onUp(){
+      if(!dragging) return;
+      var sh=dragging; dragging=null; sh.classList.remove("dragging");
+      var sc=center(sh), best=null, bestD=1e9;
+      var slots=targetsBox.querySelectorAll(".slot");
+      Array.prototype.forEach.call(slots, function(sl){
+        if(sl.dataset.filled) return;
+        var c=center(sl), d=Math.hypot(c.x-sc.x, c.y-sc.y);
+        if(d<bestD){ bestD=d; best=sl; }
+      });
+      var tol=sh.offsetWidth*0.75;
+      if(best && bestD<tol && best.dataset.shape===sh.dataset.shape){
+        best.dataset.filled="1"; sh.classList.add("locked"); sh.style.zIndex="";
+        best.innerHTML=""; best.appendChild(sh); sh.style.transform="";
+        best.classList.add("pop");
+        BB.sound("match"); placed++; aggiornaInfo();
+        if(placed===total) fine();
+      } else {
+        BB.sound("error");
+        sh.style.transition="transform .25s var(--bb-ease-elastic)"; sh.style.transform="";
+        setTimeout(function(){ sh.style.transition=""; sh.style.zIndex=""; }, 260);
+      }
+    }
+    document.addEventListener("pointermove", onMove, {passive:false});
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+
+    function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
+
+    function avvia(liv){
+      total=TAB[liv]||3; placed=0; inCorso=true;
+      startScreen.classList.add("bb-hidden");
+      var scelte=BB.shuffle(ORDINE.slice()).slice(0,total);
+      // bersagli (sagome) in un ordine, forme in un altro
+      var ordT=BB.shuffle(scelte.slice()), ordP=BB.shuffle(scelte.slice());
+      targetsBox.innerHTML=""; poolBox.innerHTML="";
+      ordT.forEach(function(id){
+        var s=document.createElement("div"); s.className="slot"; s.dataset.shape=id;
+        s.innerHTML=svg(id); targetsBox.appendChild(s);
+      });
+      ordP.forEach(function(id){
+        var sh=document.createElement("div"); sh.className="shape"; sh.dataset.shape=id;
+        sh.style.setProperty("--c", COLORI[id]); sh.innerHTML=svg(id);
+        sh.addEventListener("pointerdown", function(e){ onDown(e, sh); });
+        poolBox.appendChild(sh);
+      });
+      aggiornaInfo();
+      tStart=performance.now();
+    }
+
+    function bestTime(t){
+      var k="bb.kidsfunplanet.besttime.forme."+total;
+      var cur=0; try{ cur=parseFloat(localStorage.getItem(k))||0; }catch(_){}
+      if(t!=null && (cur===0 || t<cur)){ try{ localStorage.setItem(k,String(t)); }catch(_){} return t; }
+      return cur;
+    }
+
+    function fine(){
+      inCorso=false;
+      var t=Math.round((performance.now()-tStart)/100)/10;
+      var prima=bestTime(), record=bestTime(t);
+      var nuovo=(prima===0 || t<=prima);
+      BB.win({
+        mascotte: nuovo ? null : "../assets/mascotte/bobo.png",
+        emoji: nuovo ? "🏆" : null,
+        titolo: nuovo ? "Nuovo record!" : "Tutte abbinate!",
+        punteggio: "Tempo: " + t + "s",
+        record: "miglior tempo " + record + "s",
+        rigioca: mostraStart
+      });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
+      b.addEventListener("click", function(){ avvia(b.dataset.liv); });
+    });
+  </script>
+</body>
+</html>

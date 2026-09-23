@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2E5BFF">
+  <title>Acchiappa la Talpa</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    /* ----- Talpe: griglia 3x3 di buche ----- */
+    .board{
+      display:grid;
+      gap:3vmin; gap:clamp(12px,3vmin,26px);
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(3,1fr);
+      width:82vmin; width:min(82vmin, 760px);
+      height:82vmin; height:min(82vmin, 760px);
+      max-width:100%;
+      max-height:100%;
+    }
+    /* Una buca: cerchio scuro che fa da "terra" */
+    .buca{
+      position:relative;
+      border-radius:50%;
+      background:radial-gradient(circle at 50% 35%, #5a3a2a, #3a2418);
+      box-shadow:inset 0 12px 24px rgba(0,0,0,.45), var(--bb-shadow);
+      overflow:hidden;
+      min-height:64px;
+      min-width:64px;
+    }
+    /* La talpa parte sotto la buca e sale quando .su */
+    .talpa{
+      position:absolute;
+      left:8%;
+      bottom:-100%;
+      width:84%;
+      height:84%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14vmin; font-size:clamp(40px,14vmin,96px);
+      transition:bottom .15s var(--bb-ease-elastic);
+      will-change:bottom;
+    }
+    .buca.su .talpa{ bottom:6%; }
+    /* Talpa colpita: piccola animazione + stella */
+    .buca.colpita .talpa{ animation:bb-pop .25s var(--bb-ease-elastic); }
+    /* Bordo erboso in cima alla buca per dare profondità */
+    .buca::after{
+      content:"";
+      position:absolute;
+      left:0; right:0; bottom:0;
+      height:26%;
+      background:linear-gradient(to top, rgba(46,91,255,.0), rgba(46,91,255,.0));
+      pointer-events:none;
+    }
+    /* Indicatore "+1" che sale al colpo */
+    .plusone{
+      position:absolute;
+      left:50%;
+      top:30%;
+      transform:translateX(-50%);
+      font-size:5vmin; font-size:clamp(20px,5vmin,34px);
+      font-weight:900;
+      color:#fff;
+      text-shadow:0 2px 6px rgba(0,0,0,.4);
+      pointer-events:none;
+      animation:plusup .6s ease-out forwards;
+    }
+    @keyframes plusup{
+      0%{ opacity:0; transform:translate(-50%,0) scale(.6); }
+      30%{ opacity:1; }
+      100%{ opacity:0; transform:translate(-50%,-60px) scale(1.2); }
+    }
+    /* Schermata di start */
+    .start{
+      position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:22px;
+      background:rgba(255,247,251,.92);
+      text-align:center;
+    }
+    .start__emoji{ font-size:18vmin; font-size:clamp(60px,18vmin,130px); }
+    .start__img{ width:28vmin; width:clamp(120px,28vmin,200px); height:auto;
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
+    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:var(--bb-burgundy); }
+    .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <!-- header iniettato da JS -->
+    <div class="bb-stage">
+      <div class="board" id="board"></div>
+
+      <!-- Schermata iniziale: scelta difficoltà -->
+      <div class="start" id="start">
+        <img class="start__img" src="../assets/mascotte/kip.png" alt="">
+        <div class="start__txt">Colpisci le talpe!<br>Scegli la difficoltà:</div>
+        <div class="liv-row">
+          <button class="bb-btn bb-btn--blue liv-btn" data-liv="facile">😊 Facile</button>
+          <button class="bb-btn bb-btn--blue liv-btn" data-liv="medio">😎 Medio</button>
+          <button class="bb-btn bb-btn--blue liv-btn" data-liv="difficile">🔥 Difficile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    var info = BB.header("🐹 Acchiappa la Talpa");
+    BB.idle(60000, BB.home);
+
+    var board = document.getElementById("board");
+    var startScreen = document.getElementById("start");
+    var DURATA = 60;          // secondi di partita
+
+    // Difficoltà scelta dal bambino a inizio partita (pulsanti nella schermata start).
+    // base = ms iniziali in cui la talpa resta su; min = limite minimo; scal = accelerazione.
+    var TAB = {
+      facile:    { base: 1200, min: 600, scal: 12 },
+      medio:     { base: 900,  min: 380, scal: 18 },
+      difficile: { base: 680,  min: 260, scal: 24 }
+    };
+    var DIFF = TAB.facile;
+    var punteggio = 0;
+    var tempo = DURATA;
+    var buche = [];           // i 9 elementi buca
+    var attiva = -1;          // indice della buca con la talpa su
+    var tickTalpa = null;     // timer comparsa talpe
+    var tickTimer = null;     // timer countdown
+    var inCorso = false;
+
+    // Crea le 9 buche
+    for (var i = 0; i < 9; i++) {
+      var buca = document.createElement("button");
+      buca.className = "buca";
+      buca.dataset.idx = i;
+      buca.innerHTML = '<span class="talpa">🐹</span>';
+      buca.addEventListener("click", colpisci);
+      board.appendChild(buca);
+      buche.push(buca);
+    }
+
+    function aggiornaInfo() {
+      info.innerHTML = "⭐ " + punteggio + " &nbsp; ⏱ " + tempo + "s";
+    }
+
+    // Calcola la velocità: la talpa resta su meno tempo man mano che il
+    // punteggio cresce (da ~900ms fino a ~380ms minimo).
+    function durataTalpa() {
+      return Math.max(DIFF.min, DIFF.base - punteggio * DIFF.scal);
+    }
+
+    function mostraTalpa() {
+      if (!inCorso) return;
+      // Nascondi l'eventuale talpa attiva
+      if (attiva >= 0) buche[attiva].classList.remove("su");
+      // Scegli una buca diversa dalla precedente
+      var idx;
+      do { idx = BB.rand(0, 8); } while (idx === attiva && buche.length > 1);
+      attiva = idx;
+      buche[idx].classList.add("su");
+      // Programma la prossima comparsa
+      tickTalpa = setTimeout(mostraTalpa, durataTalpa());
+    }
+
+    function colpisci(e) {
+      if (!inCorso) return;
+      var buca = e.currentTarget;
+      // Conta solo se la talpa è effettivamente su e non già colpita
+      if (!buca.classList.contains("su")) return;
+      buca.classList.remove("su");
+      buca.classList.add("colpita");
+      setTimeout(function () { buca.classList.remove("colpita"); }, 250);
+
+      punteggio++;
+      aggiornaInfo();
+      BB.sound("pop");
+
+      // Mostra "+1" che sale
+      var plus = document.createElement("span");
+      plus.className = "plusone";
+      plus.textContent = "+1";
+      buca.appendChild(plus);
+      setTimeout(function () { plus.remove(); }, 600);
+    }
+
+    function mostraStart() { startScreen.classList.remove("bb-hidden"); }
+
+    function avvia(liv) {
+      if (TAB[liv]) DIFF = TAB[liv];   // difficoltà scelta dal bambino
+      startScreen.classList.add("bb-hidden");
+      punteggio = 0;
+      tempo = DURATA;
+      attiva = -1;
+      inCorso = true;
+      aggiornaInfo();
+
+      mostraTalpa();
+      // Countdown ogni secondo
+      tickTimer = setInterval(function () {
+        tempo--;
+        aggiornaInfo();
+        if (tempo <= 0) fine();
+      }, 1000);
+    }
+
+    function fine() {
+      inCorso = false;
+      clearTimeout(tickTalpa);
+      clearInterval(tickTimer);
+      if (attiva >= 0) buche[attiva].classList.remove("su");
+
+      var record = BB.score("talpe", punteggio);
+      var nuovoRecord = punteggio > 0 && punteggio >= record;
+      BB.win({
+        mascotte: nuovoRecord ? null : "../assets/mascotte/kip.png",
+        emoji: nuovoRecord ? "🏆" : null,
+        titolo: nuovoRecord ? "Nuovo record!" : "Tempo scaduto!",
+        punteggio: punteggio + " talpe",
+        record: record,
+        rigioca: mostraStart        // torna alla scelta della difficoltà
+      });
+    }
+
+    // Pulsanti difficoltà: ognuno avvia la partita al suo livello
+    Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function (b) {
+      b.addEventListener("click", function () { avvia(b.dataset.liv); });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icona "Lavagna": lavagna verde con cornice in legno, scarabocchio colorato e gessetti. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Lavagna">
+  <circle cx="120" cy="120" r="113" fill="#FFFFFF" stroke="#E7F0EC" stroke-width="3"/>
+  <circle cx="120" cy="120" r="108" fill="none" stroke="#CDE6DD" stroke-width="7" opacity=".55"/>
+
+  <!-- cornice in legno -->
+  <rect x="46" y="56" width="148" height="108" rx="14" fill="#B5793A"/>
+  <!-- superficie lavagna -->
+  <rect x="58" y="68" width="124" height="84" rx="7" fill="#2F5D50"/>
+
+  <!-- scarabocchio colorato dei bambini -->
+  <path d="M74 128 q14 -40 30 -12 q10 18 22 -6 q10 -20 24 4"
+        fill="none" stroke="#FFE34D" stroke-width="7" stroke-linecap="round"/>
+  <path d="M78 108 q18 14 34 0" fill="none" stroke="#FF8FC8" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="150" cy="96" r="9" fill="none" stroke="#7CC4FF" stroke-width="6"/>
+
+  <!-- gessetti appoggiati sul bordo -->
+  <g stroke-linecap="round">
+    <line x1="76"  y1="172" x2="100" y2="172" stroke="#FFFFFF" stroke-width="8"/>
+    <line x1="110" y1="172" x2="134" y2="172" stroke="#FF8FC8" stroke-width="8"/>
+    <line x1="144" y1="172" x2="168" y2="172" stroke="#7CC4FF" stroke-width="8"/>
+  </g>
+</svg>

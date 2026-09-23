@@ -1,0 +1,38 @@
+{
+  "tenantId": "funplanet",
+  "displayName": "Kids Fun Planet",
+  "language": "it",
+  "colors": {
+    "primary": "#7A1F3D",
+    "background": "#FFF7FB",
+    "accent": "#E8488B"
+  },
+  "logo": { "path": "assets/logo.png" },
+  "mascot": { "path": "assets/mascot.png" },
+  "font": null,
+  "background": {
+    "image": "",
+    "color": "#FFF7FB",
+    "overlay": "rgba(255,255,255,0.12)"
+  },
+  "button": {
+    "image": ""
+  },
+  "idleTimeoutSec": 75,
+  "attract": {
+    "loop": ["assets/attract/bg-home.png"],
+    "itemSeconds": 8
+  },
+  "enabledGames": [
+    "memory", "talpe", "palloncini", "frutta", "stelle",
+    "sequenza", "lavagna", "labirinto", "forme", "puzzle", "tris", "hanoi"
+  ],
+  "strings": {
+    "attractTap": "Tocca per iniziare!",
+    "menuSubtitle": "Scegli un gioco e divertiti!",
+    "homeButton": "Torna ai giochi",
+    "loading": "Caricamento...",
+    "noGames": "Nessun gioco disponibile"
+  },
+  "gameOverrides": {}
+}

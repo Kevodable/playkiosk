@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icona "Labirinto": labirinto con un percorso tracciato dal topino al formaggio. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Labirinto">
+  <circle cx="120" cy="120" r="113" fill="#FFFFFF" stroke="#E2E6FF" stroke-width="3"/>
+  <circle cx="120" cy="120" r="108" fill="none" stroke="#D7E0FF" stroke-width="7" opacity=".55"/>
+
+  <!-- riquadro labirinto -->
+  <rect x="56" y="56" width="128" height="128" rx="12" fill="#FFFFFF" stroke="#3346D6" stroke-width="9"/>
+
+  <!-- muri interni (blu) -->
+  <g fill="none" stroke="#3346D6" stroke-width="9" stroke-linecap="round">
+    <path d="M56 92 H140"/>
+    <path d="M184 92 H104"/>
+    <path d="M56 128 H92"/>
+    <path d="M128 120 V184"/>
+    <path d="M148 56 V128 H184"/>
+    <path d="M92 148 H128"/>
+  </g>
+
+  <!-- percorso tracciato (rosa) -->
+  <path d="M76 76 V112 H120 V148 H100 V168"
+        fill="none" stroke="#E8488B" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="2 14" opacity=".95"/>
+
+  <!-- topino (partenza) e formaggio (arrivo) -->
+  <circle cx="76"  cy="76"  r="12" fill="#CDEFD6" stroke="#3DAA5E" stroke-width="3"/>
+  <circle cx="164" cy="164" r="13" fill="#FFE9A8" stroke="#E0A516" stroke-width="3"/>
+  <text x="76"  y="76"  font-size="16" text-anchor="middle" dominant-baseline="central">🐭</text>
+  <text x="164" y="164" font-size="17" text-anchor="middle" dominant-baseline="central">🧀</text>
+</svg>

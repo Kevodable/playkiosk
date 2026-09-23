@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icona "Abbina le forme": forme colorate diverse. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Abbina le forme">
+  <circle cx="120" cy="120" r="113" fill="#FFFFFF" stroke="#ECE4F8" stroke-width="3"/>
+  <circle cx="120" cy="120" r="108" fill="none" stroke="#E3D6F6" stroke-width="7" opacity=".55"/>
+
+  <!-- cerchio -->
+  <circle cx="80" cy="84" r="30" fill="#FF5A5F"/>
+  <!-- quadrato -->
+  <rect x="132" y="56" width="56" height="56" rx="9" fill="#4D8DFF"/>
+  <!-- triangolo -->
+  <polygon points="82,128 116,188 48,188" fill="#3DDC84"/>
+  <!-- stella -->
+  <polygon points="160,128 169,152 195,152 174,168 182,193 160,178 138,193 146,168 125,152 151,152" fill="#FFC93C"/>
+</svg>

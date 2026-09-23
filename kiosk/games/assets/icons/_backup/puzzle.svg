@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icona "Rompicapo scorrevole" — griglia di tessere con una casella vuota. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Rompicapo">
+  <circle cx="120" cy="120" r="113" fill="#FFFFFF" stroke="#EADFE6" stroke-width="3"/>
+  <circle cx="120" cy="120" r="108" fill="none" stroke="#D7E0FF" stroke-width="7" opacity=".5"/>
+  <g fill="#FFD23F">
+    <path d="M40 92 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 Z"/>
+    <path d="M200 150 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 Z"/>
+  </g>
+  <rect x="62" y="62" width="116" height="116" rx="16" fill="#7A1F3D"/>
+  <g>
+    <rect x="70" y="70" width="30" height="30" rx="7" fill="#E8488B"/>
+    <rect x="105" y="70" width="30" height="30" rx="7" fill="#2E5BFF"/>
+    <rect x="140" y="70" width="30" height="30" rx="7" fill="#34C759"/>
+    <rect x="70" y="105" width="30" height="30" rx="7" fill="#FFB020"/>
+    <rect x="105" y="105" width="30" height="30" rx="7" fill="#E8488B"/>
+    <rect x="140" y="105" width="30" height="30" rx="7" fill="#2E5BFF"/>
+    <rect x="70" y="140" width="30" height="30" rx="7" fill="#34C759"/>
+    <rect x="105" y="140" width="30" height="30" rx="7" fill="#FFB020"/>
+    <!-- casella vuota in basso a destra -->
+  </g>
+</svg>

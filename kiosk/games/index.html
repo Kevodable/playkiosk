@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Home relay</title>
+</head>
+<body>
+<script>
+/* Pagina di appoggio, MAI vista dall'utente.
+   I 12 giochi legacy, quando l'utente preme il loro bottone interno
+   "Torna ai giochi", chiamano BB.home() che (fuori da un'app Android)
+   naviga a "../index.html" cioe' proprio questa pagina, dentro l'iframe
+   della shell. Qui ci limitiamo a segnalare al genitore (la shell) che
+   l'utente vuole tornare al menu, senza toccare il codice dei giochi. */
+try {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ source: "bb-game-home-relay" }, window.location.origin);
+  }
+} catch (e) { /* ignora: se il postMessage fallisce non c'e' altro da fare qui */ }
+</script>
+</body>
+</html>

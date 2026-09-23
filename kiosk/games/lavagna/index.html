@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2F5D50">
+  <title>Lavagna</title>
+  <link rel="stylesheet" href="../assets/shared.css">
+  <style>
+    .bb-stage{ padding:8px 14px 14px; flex-direction:column; gap:10px; }
+
+    /* La lavagna vera e propria, con cornice in legno */
+    .board{
+      position:relative; flex:1 1 auto; width:100%; min-height:0;
+      border-radius:22px;
+      background:#2F5D50;            /* verde lavagna */
+      border:12px solid #B5793A;     /* cornice legno */
+      box-shadow:var(--bb-shadow-strong), inset 0 0 60px rgba(0,0,0,.25);
+      overflow:hidden; touch-action:none;
+    }
+    .board canvas{ display:block; width:100%; height:100%; }
+    /* Velo di "polvere di gesso" sugli angoli, solo estetico */
+    .board::after{ content:""; position:absolute; top:0; right:0; bottom:0; left:0; inset:0; pointer-events:none;
+      background:radial-gradient(circle at 50% 120%, rgba(255,255,255,.06), transparent 60%); }
+
+    /* Barra strumenti */
+    .tools{
+      flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+      gap:1.8vmin; gap:clamp(8px,1.8vmin,16px); flex-wrap:wrap;
+    }
+    .chalk{
+      width:8vmin; width:clamp(46px,8vmin,60px); height:8vmin; height:clamp(46px,8vmin,60px);
+      border-radius:50%; box-shadow:var(--bb-shadow);
+      border:5px solid #fff; transition:transform .12s var(--bb-ease-elastic);
+    }
+    .chalk:active{ transform:scale(.9); }
+    .chalk.sel{ transform:scale(1.12); border-color:var(--bb-burgundy); }
+
+    /* Pulsanti tondi per dimensione/gomma/pulisci */
+    .tool{
+      min-width:9vmin; min-width:clamp(48px,9vmin,62px); height:9vmin; height:clamp(48px,9vmin,62px);
+      border-radius:999px; background:#fff; box-shadow:var(--bb-shadow);
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:4.4vmin; font-size:clamp(20px,4.4vmin,28px); color:var(--bb-burgundy); font-weight:900;
+      padding:0 clamp(10px,2vmin,18px); transition:transform .12s var(--bb-ease-elastic);
+    }
+    .tool:active{ transform:scale(.92); }
+    .tool.sel{ background:var(--bb-blue-soft); outline:4px solid var(--bb-blue); }
+
+    /* I tre "pallini" di dimensione tratto */
+    .dot{ background:var(--bb-burgundy); border-radius:50%; }
+    .dot--s{ width:10px; height:10px; }
+    .dot--m{ width:18px; height:18px; }
+    .dot--l{ width:26px; height:26px; }
+
+    .sep{ width:2px; height:36px; background:rgba(122,31,61,.25); border-radius:2px; }
+  </style>
+</head>
+<body>
+  <div class="bb-screen">
+    <div class="bb-stage">
+      <div class="board" id="board">
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <div class="tools" id="tools">
+        <!-- gessetti colorati -->
+        <button class="chalk sel" data-color="#FFFFFF" style="background:#FFFFFF"></button>
+        <button class="chalk" data-color="#FFE34D" style="background:#FFE34D"></button>
+        <button class="chalk" data-color="#FF8FC8" style="background:#FF8FC8"></button>
+        <button class="chalk" data-color="#7CC4FF" style="background:#7CC4FF"></button>
+        <button class="chalk" data-color="#9CE89C" style="background:#9CE89C"></button>
+        <button class="chalk" data-color="#FFB870" style="background:#FFB870"></button>
+
+        <span class="sep"></span>
+
+        <!-- dimensione tratto -->
+        <button class="tool" data-size="8"  aria-label="sottile"><span class="dot dot--s"></span></button>
+        <button class="tool sel" data-size="16" aria-label="medio"><span class="dot dot--m"></span></button>
+        <button class="tool" data-size="28" aria-label="grosso"><span class="dot dot--l"></span></button>
+
+        <span class="sep"></span>
+
+        <!-- gomma e pulisci -->
+        <button class="tool" id="gomma" aria-label="gomma">🧽</button>
+        <button class="tool" id="pulisci" aria-label="pulisci tutto">🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/shared.js"></script>
+  <script>
+    BB.lockScroll();
+    BB.header("✏️ Lavagna");
+    BB.idle(120000, BB.home);   // ritorno dopo 2 min di inattività (disegno libero)
+
+    var board = document.getElementById("board");
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+
+    var COLORE = "#FFFFFF";
+    var SPESSORE = 16;
+    var gomma = false;
+    var BOARD_BG = "#2F5D50";
+
+    // Adatta il canvas alla dimensione reale (con devicePixelRatio), preservando il disegno
+    function fitCanvas(){
+      var dpr = window.devicePixelRatio || 1;
+      var w = board.clientWidth, h = board.clientHeight;
+      if (w === 0 || h === 0) return;
+      // salva il disegno corrente
+      var prev = null;
+      if (canvas.width > 0 && canvas.height > 0){
+        prev = document.createElement("canvas");
+        prev.width = canvas.width; prev.height = canvas.height;
+        prev.getContext("2d").drawImage(canvas, 0, 0);
+      }
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
+      if (prev) ctx.drawImage(prev, 0, 0, w, h);
+    }
+
+    // Coordinate in pixel CSS relative al board
+    function pos(e){
+      var r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    // Più dita contemporaneamente: ogni pointerId ha la sua ultima posizione
+    var attivi = {};
+
+    function disegnaPunto(p){
+      ctx.beginPath();
+      ctx.fillStyle = gomma ? BOARD_BG : COLORE;
+      ctx.arc(p.x, p.y, (gomma ? SPESSORE*1.6 : SPESSORE)/2, 0, Math.PI*2);
+      ctx.fill();
+    }
+    function disegnaLinea(a, b){
+      ctx.beginPath();
+      ctx.strokeStyle = gomma ? BOARD_BG : COLORE;
+      ctx.lineWidth = gomma ? SPESSORE*1.6 : SPESSORE;
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    canvas.addEventListener("pointerdown", function(e){
+      e.preventDefault();
+      var p = pos(e); attivi[e.pointerId] = p;
+      disegnaPunto(p);
+      if (canvas.setPointerCapture) { try { canvas.setPointerCapture(e.pointerId); } catch(_){} }
+    });
+    canvas.addEventListener("pointermove", function(e){
+      var last = attivi[e.pointerId]; if (!last) return;
+      e.preventDefault();
+      var p = pos(e); disegnaLinea(last, p); attivi[e.pointerId] = p;
+    }, { passive:false });
+    function finePuntatore(e){ delete attivi[e.pointerId]; }
+    canvas.addEventListener("pointerup", finePuntatore);
+    canvas.addEventListener("pointercancel", finePuntatore);
+    canvas.addEventListener("pointerleave", finePuntatore);
+
+    // --- Strumenti ---
+    function selColore(btn){
+      Array.prototype.forEach.call(document.querySelectorAll(".chalk"), function(c){ c.classList.remove("sel"); });
+      btn.classList.add("sel");
+      COLORE = btn.dataset.color; gomma = false;
+      document.getElementById("gomma").classList.remove("sel");
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".chalk"), function(c){
+      c.addEventListener("click", function(){ selColore(c); BB.sound("pop"); });
+    });
+
+    function selSize(btn){
+      Array.prototype.forEach.call(document.querySelectorAll(".tool[data-size]"), function(t){ t.classList.remove("sel"); });
+      btn.classList.add("sel"); SPESSORE = parseInt(btn.dataset.size, 10);
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".tool[data-size]"), function(t){
+      t.addEventListener("click", function(){ selSize(t); });
+    });
+
+    document.getElementById("gomma").addEventListener("click", function(){
+      gomma = !gomma;
+      this.classList.toggle("sel", gomma);
+      BB.sound("pop");
+    });
+
+    document.getElementById("pulisci").addEventListener("click", function(){
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      BB.sound("match");
+    });
+
+    // Adatta al primo avvio e ai cambi di orientamento/resize
+    window.addEventListener("resize", fitCanvas);
+    window.addEventListener("orientationchange", function(){ setTimeout(fitCanvas, 200); });
+    fitCanvas();
+  </script>
+</body>
+</html>

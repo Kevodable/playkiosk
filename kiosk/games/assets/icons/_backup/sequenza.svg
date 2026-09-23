@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icona "Sequenza colori": quattro pad colorati (stile Simon), uno illuminato. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Sequenza colori">
+  <circle cx="120" cy="120" r="113" fill="#FFFFFF" stroke="#E6ECFF" stroke-width="3"/>
+  <circle cx="120" cy="120" r="108" fill="none" stroke="#D7E0FF" stroke-width="7" opacity=".55"/>
+
+  <!-- 4 pad colorati, gap centrale; quello verde è "acceso" (più luminoso) -->
+  <g stroke="#FFFFFF" stroke-width="6">
+    <!-- verde (acceso) -->
+    <rect x="48"  y="48"  width="68" height="68" rx="16" fill="#3DDC84"/>
+    <!-- rosso -->
+    <rect x="124" y="48"  width="68" height="68" rx="16" fill="#FF5A5F" opacity=".55"/>
+    <!-- giallo -->
+    <rect x="48"  y="124" width="68" height="68" rx="16" fill="#FFC93C" opacity=".55"/>
+    <!-- blu -->
+    <rect x="124" y="124" width="68" height="68" rx="16" fill="#4D8DFF" opacity=".55"/>
+  </g>
+
+  <!-- bagliore sul pad acceso -->
+  <rect x="48" y="48" width="68" height="68" rx="16" fill="none" stroke="#BFFFD8" stroke-width="5"/>
+
+  <!-- pastiglia centrale -->
+  <circle cx="120" cy="120" r="26" fill="#FFF7FB" stroke="#7A1F3D" stroke-width="5"/>
+  <circle cx="120" cy="120" r="9" fill="#7A1F3D"/>
+</svg>

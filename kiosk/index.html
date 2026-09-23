@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2E5BFF">
+<title>Kiosk</title>
+<style>
+  :root{
+    --primary:#2E5BFF;
+    --background:#F5F7FF;
+    --accent:#FFB020;
+    --ink:#20222B;
+    --paper:#FFFFFF;
+    --radius:18px;
+    --shadow:0 10px 24px rgba(0,0,0,.18);
+
+    /* Menu grid: tune these for the catalog size / touch target you want.
+       vw-based so the grid is proportionally identical on any 16:9 screen,
+       not just a specific pixel size - what you see full-screen in a
+       browser at any window size is what the 1920x1080 monitor shows.
+       Baseline target: 1920x1080 landscape, 4 fixed columns. */
+    --menu-columns:4;
+    --menu-gap:2vw;
+
+    /* Tile button image: the ONE visual thing at the base of every tile -
+       tile-button.png (wood board, transparent outside), at 100% of its own
+       square area, nothing painted behind or around it. No scale/crop trick
+       and no backdrop color here anymore (an earlier version tried both, to
+       hide this asset's own uneven internal transparent margin - a tenant
+       swapping in a different button.image can still set its own
+       aspectRatio via config.button, but the default here is deliberately
+       plain: whatever the tenant's art doesn't cover, the forest background
+       behind the tile shows through, on purpose).
+       button-shadow is a filter:drop-shadow on the image itself (not
+       box-shadow on the tile), so the shadow follows the board's own
+       organic silhouette - knobs, leaves, irregular edges - instead of
+       drawing a rectangle behind it. */
+    --tile-button-aspect:1 / 1;
+    --tile-button-shadow:0 6px 6px rgba(0,0,0,.30);
+
+    /* Content-box: the board's usable inner area, measured directly on the
+       button image - top 30%, bottom 30%, left 28%, right 28% from the
+       square's edges (NOT the whole tile, which is now taller than the
+       square - see .tile__square below). Holds ONLY the logo now that the
+       title lives outside the button; re-measure and update if
+       button.image changes. */
+    --tile-content-top:30%;
+    --tile-content-bottom:30%;
+    --tile-content-left:28%;
+    --tile-content-right:28%;
+
+    /* Title: lives BELOW the square button, on the forest background, not
+       inside the board - see .tile__name-wrap below. Reserved at a fixed
+       height (exactly 2 lines) so every tile is the same total height
+       regardless of a short ("Memory") vs long ("Acchiappa la Talpa")
+       name. name-gap is small on purpose - the title reads as a caption
+       for the button right above it. line-height is 1.35, not something
+       tighter: at 1.15 this font's tall ascenders/caps (the "S" in
+       "Scoppia", the "i" dots) were getting sliced flat by the
+       -webkit-line-clamp box, which sizes itself off line-height - 1.15
+       left too little headroom above the glyphs' own cap-height for this
+       particular bold font.
+       Each game sets its own bright, saturated fill color (titleColor in
+       the manifest) directly on .tile__name via inline style - that alone
+       would be unreadable against a light sky in some spots and a dark
+       green canopy in others, so legibility comes from a dark outline
+       (8-direction text-shadow, NOT -webkit-text-stroke - that renders
+       inconsistently/not at all on some WebKit versions, whereas
+       text-shadow is universally supported) plus one extra soft shadow
+       layer underneath to lift the text off the photo. font-family
+       defaults to plain sans-serif when a tenant sets no font (config.font
+       null) - see applyBranding() below for how a tenant's font gets
+       registered and this var gets pointed at it; titles are the ONLY
+       thing that use it, never the rest of the UI. */
+    --tile-name-gap:0vmin;
+    --tile-name-font-family:sans-serif;
+    --tile-name-font-size:2.8vmin;
+    --tile-name-line-height:1.35;
+    --tile-name-outline-color:#2E1A0A;
+    --tile-name-outline-width:2px;
+    --tile-name-drop-shadow:0 3px 4px rgba(0,0,0,.45);
+    --tile-name-height:calc(var(--tile-name-font-size) * var(--tile-name-line-height) * 2);
+
+    /* tile-button.png's own board does not reach the bottom edge of its
+       square (measured with numpy: an 11.3% transparent margin baked into
+       the file - see tenants/default/config.json's button._measuredFrom).
+       --tile-name-gap alone can't close that: it is a CSS margin from the
+       square's own box, which is bigger than the board's actual visible
+       edge. This pulls the title up by exactly that measured margin so it
+       sits right against the real wood, not the square's empty edge -
+       percentages on margin-top resolve against the containing block's
+       WIDTH, which for .tile__name-wrap is the tile's own width, and since
+       the square is 1:1 that width equals the square's height, so this
+       lines up exactly. Re-measure if button.image changes. */
+    --tile-name-board-margin-bottom:11.3%;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    overflow:hidden;
+    background:var(--background);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-user-select:none; user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  img{ -webkit-user-drag:none; }
+
+  .screen{
+    position:fixed; inset:0;
+    width:100%; height:100%;
+    display:none;
+  }
+  .screen.is-active{ display:flex; flex-direction:column; }
+
+  /* ---------- Boot ---------- */
+  #screen-boot{ align-items:center; justify-content:center; }
+  .boot__msg{ font-size:4vmin; font-weight:700; color:var(--primary); }
+
+  /* ---------- Attract ---------- */
+  #screen-attract{
+    align-items:center; justify-content:center;
+    position:fixed; inset:0;
+    background:center/cover no-repeat var(--background);
+    cursor:pointer;
+  }
+  .attract__logo{
+    max-width:40vmin; max-height:30vmin;
+    width:auto; height:auto;
+    display:block;
+    margin-bottom:4vmin;
+    filter:drop-shadow(0 8px 16px rgba(0,0,0,.2));
+  }
+  .attract__title{
+    font-size:7vmin; font-weight:900;
+    color:var(--primary);
+    text-align:center;
+    margin:0 4vmin 2vmin;
+  }
+  .attract__tap{
+    font-size:3.2vmin; font-weight:700;
+    color:var(--ink);
+    opacity:.75;
+    animation:bb-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes bb-pulse{
+    0%,100%{ opacity:.45; }
+    50%{ opacity:.95; }
+  }
+
+  /* ---------- Menu ---------- */
+  #screen-menu{
+    align-items:stretch; justify-content:flex-start;
+    padding:0;
+  }
+  .menu__bg{
+    position:fixed; inset:0; z-index:0;
+    background-position:center; background-size:cover; background-repeat:no-repeat;
+  }
+  .menu__bg-overlay{
+    position:fixed; inset:0; z-index:1;
+  }
+  .menu__head{
+    display:flex; align-items:center; justify-content:center;
+    gap:2vmin;
+    padding:3vmin 3vmin 1vmin;
+    text-align:center;
+  }
+  .menu__logo{ height:10vmin; max-height:96px; width:auto; display:block; }
+  .menu__title{ font-size:5vmin; font-weight:900; color:var(--primary); }
+  .menu__subtitle{
+    text-align:center;
+    font-size:2.6vmin; font-weight:700;
+    color:var(--ink); opacity:.7;
+    margin-bottom:1vmin;
+  }
+  /* Everything scrolls together here: title, subtitle and the grid. Only
+     the background (see .menu__bg above) stays put. */
+  .menu__scroll{
+    position:relative; z-index:2;
+    flex:1 1 auto; min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    touch-action:pan-y;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  .menu__scroll::-webkit-scrollbar{ display:none; width:0; height:0; }
+
+  .menu__grid{
+    display:grid;
+    grid-template-columns:repeat(var(--menu-columns),1fr);
+    /* Row height is NOT set here: each .tile is a square via aspect-ratio,
+       sized off its own column width, so rows follow automatically and
+       stay square at any viewport size. */
+    grid-auto-rows:auto;
+    gap:var(--menu-gap);
+    align-content:start;
+    /* Extra bottom padding keeps the last row clear of the fade overlay
+       once fully scrolled into view. */
+    padding:var(--menu-gap) calc(var(--menu-gap) * 1.3) calc(var(--menu-gap) * 2.4);
+  }
+  /* Soft hint that there is more to scroll to, pinned to the screen edge
+     (not the scroll container), so it never scrolls away with the content. */
+  .menu__fade{
+    position:absolute; left:0; right:0; bottom:0;
+    height:12vh;
+    z-index:3;
+    pointer-events:none;
+    background:linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.16));
+  }
+  /* Thin raised frame around the screen edge, above everything (the grid
+     scrolls UNDER it, like looking through a window) for a sense of depth.
+     ::after is the window: a rounded hole whose huge spread shadow paints
+     the band, a white bevel line on its inner rim, and an inset shadow the
+     band casts onto the content. ::before darkens the band's outer edge so
+     it reads as a rounded, lit surface rather than a flat stripe. */
+  .menu__frame{
+    --menu-frame-width:2.6vmin;
+    --menu-frame-radius:3vmin;
+    --menu-frame-color:#A9E2CB;
+    position:fixed; inset:0;
+    z-index:4;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .menu__frame::after{
+    content:"";
+    position:absolute;
+    inset:var(--menu-frame-width);
+    border-radius:var(--menu-frame-radius);
+    box-shadow:
+      0 0 0 .35vmin rgba(255,255,255,.8),
+      0 .5vmin 0 .35vmin rgba(20,80,60,.25),
+      0 0 0 100vmax var(--menu-frame-color),
+      inset 0 1.2vmin 2vmin rgba(20,80,60,.30),
+      inset 0 0 .6vmin rgba(20,80,60,.25);
+  }
+  .menu__frame::before{
+    content:"";
+    position:absolute; inset:0;
+    z-index:1;
+    box-shadow:
+      inset 0 .5vmin 0 rgba(255,255,255,.55),
+      inset 0 -.6vmin .8vmin rgba(20,80,60,.35),
+      inset 0 0 1.2vmin rgba(20,80,60,.30);
+  }
+  /* The tile itself is now TALLER than the square button: a plain,
+     fully-transparent flex column holding the square button area, then
+     the title below it. Nothing of its own to see - no background, no
+     border, no border-radius, no box-shadow - so the only thing visible
+     behind the button image is whatever .menu__bg is painting (the forest
+     photo), exactly as asked. */
+  .tile{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    background:none;
+    border:none;
+    border-radius:0;
+    padding:0;
+    color:#fff;
+    font-family:inherit;
+    transition:transform .12s ease-out;
+  }
+  .tile:active{ transform:scale(.96); }
+  /* The square button area: width comes from the grid column, height
+     follows via aspect-ratio, matching the button image's own shape. This
+     is what used to be the whole tile before the title moved out below. */
+  .tile__square{
+    position:relative;
+    width:100%;
+    aspect-ratio:var(--tile-button-aspect);
+  }
+  /* Safari-without-aspect-ratio fallback (pre-15.4): the classic
+     padding-top:100% intrinsic-ratio trick. Only kicks in when the browser
+     does not support aspect-ratio at all - never doubles up with it. */
+  @supports not (aspect-ratio: 1 / 1) {
+    .tile__square{ height:0; padding-top:100%; }
+  }
+  /* The button image: the ONE base visual, 100% of the square, nothing
+     painted behind or around it - any part it does not cover shows the
+     forest background straight through. pointer-events:none so taps
+     always reach the button element underneath. filter:drop-shadow (not
+     box-shadow) traces the board's own organic silhouette for the 3D lift
+     instead of drawing a rectangle behind it - see --tile-button-shadow. */
+  .tile__button{
+    position:absolute;
+    inset:0;
+    width:100%; height:100%;
+    object-fit:contain;
+    filter:drop-shadow(var(--tile-button-shadow));
+    pointer-events:none;
+  }
+  /* Content-box: the board's actual usable inner area, and the ONLY place
+     the logo is allowed to live (see --tile-content-* above - measured
+     directly from the PNG). Identical inset on every tile by construction.
+     Holds only the logo now - no title row to share with, so it can fill
+     the whole box. */
+  .tile__content{
+    position:absolute;
+    top:var(--tile-content-top);
+    right:var(--tile-content-right);
+    bottom:var(--tile-content-bottom);
+    left:var(--tile-content-left);
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  /* Lavagna's icon (a square edge-to-edge chalkboard illustration, no
+     built-in circle badge like the older SVG icons) reads small at the
+     shared content-box size, so its box is enlarged here specifically -
+     other games keep the shared --tile-content-* values. Numbers chosen to
+     bring the icon close to the board's edge without touching the wood. */
+  .tile[data-game-id="lavagna"] .tile__content{
+    top:19%;
+    right:17%;
+    bottom:19%;
+    left:17%;
+  }
+  /* Trial "bare" tiles (BARE_TILES in the script): no board image, so the
+     icon box is doubled from the shared 44% x 40% to 88% x 80% of the
+     square, and the title no longer tucks up under a board edge. Lavagna
+     keeps its own box above (more specific selector), i.e. its current
+     size. */
+  .menu__grid--bare{ --tile-name-board-margin-bottom:0%; }
+  .menu__grid--bare .tile__content{
+    top:10%;
+    right:6%;
+    bottom:10%;
+    left:6%;
+  }
+  .tile__icon-img{
+    width:100%; height:100%;
+    display:block;
+    object-fit:contain;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));
+  }
+  /* Fallback (no icon available) stays a circle rather than stretching
+     into an oval to fill a non-square box. */
+  .tile__icon-fallback{
+    aspect-ratio:1 / 1;
+    max-width:100%; max-height:100%;
+    width:70%; height:70%;
+    border-radius:50%;
+    background:rgba(255,255,255,.28);
+    display:flex; align-items:center; justify-content:center;
+    font-size:3.2vmin; font-weight:900;
+  }
+  /* Title: outside the button, on the forest background - see the comment
+     on --tile-name-* above. Fixed height (exactly 2 lines) reserved below
+     the square regardless of actual text length, so every tile is the
+     same total height and the row below never gets touched. White text
+     with a soft dark text-shadow (not the board's own contrast) since this
+     now sits over a busy photo, not flat wood. */
+  .tile__name-wrap{
+    flex:0 0 auto;
+    height:var(--tile-name-height);
+    margin-top:calc(var(--tile-name-gap) - var(--tile-name-board-margin-bottom));
+    padding:0 4%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  /* max-width (not width:100%) so it shrinks to its own text rather than
+     spanning the tile edge to edge; still gives -webkit-line-clamp a wrap
+     boundary. color is a fallback only - each tile sets its own titleColor
+     inline (see buildTile()); font-family/outline/shadow come from the
+     vars above so a tenant swapping fonts or retuning the outline touches
+     one place, not 12 titles. The 8-direction text-shadow is a hand-drawn
+     outline, not -webkit-text-stroke: stroke renders inconsistently across
+     WebKit versions (sometimes not at all), text-shadow is universally
+     supported on both Chromium and Safari. */
+  .tile__name{
+    max-width:92%;
+    box-sizing:border-box;
+    /* Same failure mode as the vertical clipping fixed via line-height,
+       just on the other axis: this box shrinks tight to the text's own
+       width, and overflow:hidden (needed for -webkit-line-clamp) was
+       clipping the outline shadow right at the first/last letter with no
+       side padding to give it room. */
+    padding:0 calc(var(--tile-name-outline-width) + 2px);
+    color:#fff;
+    font-family:var(--tile-name-font-family);
+    font-size:var(--tile-name-font-size);
+    line-height:var(--tile-name-line-height);
+    font-weight:800; text-align:center;
+    /* Titles always in capitals, whatever case the manifest uses. */
+    text-transform:uppercase;
+    text-shadow:
+      calc(var(--tile-name-outline-width) * -1) calc(var(--tile-name-outline-width) * -1) 0 var(--tile-name-outline-color),
+      0 calc(var(--tile-name-outline-width) * -1) 0 var(--tile-name-outline-color),
+      var(--tile-name-outline-width) calc(var(--tile-name-outline-width) * -1) 0 var(--tile-name-outline-color),
+      calc(var(--tile-name-outline-width) * -1) 0 0 var(--tile-name-outline-color),
+      var(--tile-name-outline-width) 0 0 var(--tile-name-outline-color),
+      calc(var(--tile-name-outline-width) * -1) var(--tile-name-outline-width) 0 var(--tile-name-outline-color),
+      0 var(--tile-name-outline-width) 0 var(--tile-name-outline-color),
+      var(--tile-name-outline-width) var(--tile-name-outline-width) 0 var(--tile-name-outline-color),
+      var(--tile-name-drop-shadow);
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+  }
+  .menu__empty{
+    margin:auto; text-align:center;
+    font-size:3vmin; font-weight:700;
+    color:var(--primary);
+  }
+
+  /* ---------- Game ---------- */
+  #screen-game{ background:#000; }
+  #game-frame{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    border:0;
+    background:#fff;
+  }
+  #home-button{
+    position:absolute;
+    top:max(16px, env(safe-area-inset-top, 0px) + 12px);
+    right:max(16px, env(safe-area-inset-right, 0px) + 12px);
+    z-index:10;
+    min-width:64px; min-height:64px;
+    padding:0 3vmin;
+    border:none; border-radius:999px;
+    background:var(--primary);
+    color:#fff;
+    font-size:2.6vmin; font-weight:800;
+    box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:center;
+    font-family:inherit;
+  }
+  #home-button:active{ transform:scale(.94); }
+
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+
+  <div class="screen is-active" id="screen-boot">
+    <div class="boot__msg" id="boot-msg">Loading...</div>
+  </div>
+
+  <div class="screen" id="screen-attract">
+    <img class="attract__logo" id="attract-logo" hidden alt="">
+    <div class="attract__title" id="attract-title"></div>
+    <div class="attract__tap" id="attract-tap"></div>
+  </div>
+
+  <div class="screen" id="screen-menu">
+    <div class="menu__bg" id="menu-bg"></div>
+    <div class="menu__bg-overlay" id="menu-bg-overlay"></div>
+    <div class="menu__scroll" id="menu-scroll">
+      <div class="menu__head">
+        <img class="menu__logo" id="menu-logo" hidden alt="">
+        <div class="menu__title" id="menu-title"></div>
+      </div>
+      <div class="menu__subtitle" id="menu-subtitle"></div>
+      <div class="menu__grid" id="menu-grid"></div>
+    </div>
+    <div class="menu__fade" aria-hidden="true"></div>
+    <div class="menu__frame" aria-hidden="true"></div>
+  </div>
+
+  <div class="screen" id="screen-game">
+    <iframe id="game-frame" title="game"></iframe>
+    <button type="button" id="home-button"></button>
+  </div>
+
+<script>
+"use strict";
+
+/* ============================================================================
+   Kiosk shell - single file, vanilla JS, ASCII only.
+   Boot -> Attract -> Menu -> Game, with a shared telemetry hook and
+   tenant-driven branding/i18n. See kiosk/README.md for the operating model.
+   ========================================================================== */
+
+var FALLBACK_STRINGS = {
+  loading: "Loading...",
+  attractTap: "Tap to start",
+  menuSubtitle: "Choose a game",
+  homeButton: "Menu",
+  noGames: "No games available"
+};
+
+var state = {
+  tenantId: null,
+  config: null,
+  manifest: null,
+  deviceUuid: null,
+  currentScreen: "boot",
+  currentGame: null,
+  gameOpenedAt: 0,
+  idleTimer: null,
+  audioUnlocked: false,
+  audioCtx: null,
+  attractIndex: 0,
+  attractTimer: null
+};
+
+/* ---------------------------------------------------------------------------
+   Telemetry: structured console.log now, single seam for a future backend.
+   ------------------------------------------------------------------------- */
+function telemetry(event, payload) {
+  var entry = {
+    ts: new Date().toISOString(),
+    tenantId: state.tenantId,
+    deviceUuid: state.deviceUuid,
+    event: event
+  };
+  if (payload) {
+    for (var key in payload) {
+      if (Object.prototype.hasOwnProperty.call(payload, key)) {
+        entry[key] = payload[key];
+      }
+    }
+  }
+  console.log("[telemetry]", entry);
+  /* TODO(backend): POST entry to the telemetry backend once it exists.
+     Keep this the only place that knows about that endpoint. */
+}
+
+/* ---------------------------------------------------------------------------
+   Device UUID: generated once, persisted locally, works fully offline.
+   ------------------------------------------------------------------------- */
+function loadOrCreateDeviceUuid() {
+  var key = "kiosk.deviceUuid";
+  var existing = null;
+  try { existing = window.localStorage.getItem(key); } catch (e) { existing = null; }
+  if (existing) return existing;
+
+  var uuid = null;
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    try { uuid = window.crypto.randomUUID(); } catch (e) { uuid = null; }
+  }
+  if (!uuid) {
+    var d = Date.now();
+    uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      var v = c === "x" ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+  try { window.localStorage.setItem(key, uuid); } catch (e) { /* ignore: storage may be unavailable */ }
+  return uuid;
+}
+
+/* ---------------------------------------------------------------------------
+   Screen switching
+   ------------------------------------------------------------------------- */
+function showScreen(name) {
+  var screens = document.querySelectorAll(".screen");
+  for (var i = 0; i < screens.length; i++) {
+    screens[i].classList.toggle("is-active", screens[i].id === "screen-" + name);
+  }
+  state.currentScreen = name;
+}
+
+/* ---------------------------------------------------------------------------
+   i18n helpers: strings live in tenant config / manifest, never hardcoded
+   Italian text in this file. FALLBACK_STRINGS above is an ASCII safety net
+   only, used when a tenant config is missing or broken.
+   ------------------------------------------------------------------------- */
+function lang() {
+  return (state.config && state.config.language) || "it";
+}
+function str(key) {
+  var s = state.config && state.config.strings;
+  if (s && typeof s[key] === "string" && s[key]) return s[key];
+  return FALLBACK_STRINGS[key] || key;
+}
+function localized(field, fallback) {
+  if (!field) return fallback || "";
+  var l = lang();
+  if (field[l]) return field[l];
+  if (field.it) return field.it;
+  var firstKey = null;
+  for (var k in field) { if (Object.prototype.hasOwnProperty.call(field, k)) { firstKey = k; break; } }
+  return firstKey ? field[firstKey] : (fallback || "");
+}
+
+/* ---------------------------------------------------------------------------
+   Tenant asset paths: every path in a tenant config.json (logo, mascot,
+   background, attract loop items) is relative to that tenant's own folder,
+   tenants/<tenantId>/, not to the shell root. Resolve them all through here
+   so nothing ever fetches from the wrong place.
+   ------------------------------------------------------------------------- */
+function tenantAsset(path) {
+  if (!path) return null;
+  return "tenants/" + encodeURIComponent(state.tenantId) + "/" + path;
+}
+
+/* ---------------------------------------------------------------------------
+   Idle watcher: resets on any touch/pointer/click, fires onFire after ms.
+   Returns a cancel function.
+   ------------------------------------------------------------------------- */
+function startIdleWatcher(ms, onFire) {
+  var timer = null;
+  function reset() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(onFire, ms);
+  }
+  var events = ["pointerdown", "touchstart", "click"];
+  events.forEach(function (ev) {
+    document.addEventListener(ev, reset, { passive: true });
+  });
+  reset();
+  return function cancel() {
+    if (timer) clearTimeout(timer);
+    events.forEach(function (ev) { document.removeEventListener(ev, reset); });
+  };
+}
+function stopIdleWatcher() {
+  if (state.idleTimer) { state.idleTimer(); state.idleTimer = null; }
+}
+
+/* ---------------------------------------------------------------------------
+   Audio unlock: lazily create a single AudioContext on first user gesture,
+   as required by autoplay policies on both Chromium and Safari/WebKit.
+   ------------------------------------------------------------------------- */
+function unlockAudio() {
+  if (state.audioUnlocked) return;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) { state.audioUnlocked = true; return; }
+  try {
+    state.audioCtx = new AC();
+    if (state.audioCtx.state === "suspended" && state.audioCtx.resume) {
+      state.audioCtx.resume();
+    }
+  } catch (e) { /* ignore: audio simply stays locked */ }
+  state.audioUnlocked = true;
+}
+
+/* ---------------------------------------------------------------------------
+   Branding: apply tenant colors as CSS custom properties.
+   ------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   Tenant title font: registers a real @font-face (local files only, never a
+   CDN) and points --tile-name-font-family at it. Scoped to game titles only
+   (.tile__name uses this var; nothing else does) - never touches the rest
+   of the UI. File convention: config.font "Bold Doodle" maps to
+   assets/fonts/BoldDoodle.woff2 / .woff (spaces stripped) in the tenant's
+   own folder, resolved through tenantAsset() like every other tenant asset,
+   so this works for any tenant without hardcoding a path here. A missing
+   file just fails the font load silently; --tile-name-font-family keeps
+   its :root fallback (plain sans-serif) and titles still render, just not
+   in the custom font - never a broken layout.
+   ------------------------------------------------------------------------- */
+function applyTenantTitleFont(familyName) {
+  var fileBase = familyName.replace(/\s+/g, "");
+  var woff2Url = tenantAsset("assets/fonts/" + fileBase + ".woff2");
+  var woffUrl = tenantAsset("assets/fonts/" + fileBase + ".woff");
+  if (!woff2Url || !woffUrl) return;
+
+  /* A real @font-face rule (not just the FontFace() JS constructor) so
+     font-display:swap is the standard CSS descriptor, which Safari has
+     supported for years - the JS-level "display" option on FontFace() is
+     the part with patchy WebKit support, so this avoids relying on it. */
+  var styleEl = document.getElementById("tenant-font-face");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "tenant-font-face";
+    document.head.appendChild(styleEl);
+  }
+  var safeFamily = familyName.replace(/["\\]/g, "");
+  styleEl.textContent =
+    "@font-face{" +
+    "font-family:\"" + safeFamily + "\";" +
+    "src:url('" + woff2Url + "') format('woff2')," +
+    "url('" + woffUrl + "') format('woff');" +
+    "font-weight:normal;" +
+    "font-style:normal;" +
+    "font-display:swap;" +
+    "}";
+
+  document.documentElement.style.setProperty(
+    "--tile-name-font-family",
+    "\"" + safeFamily + "\", sans-serif"
+  );
+}
+
+function applyBranding() {
+  var c = state.config;
+  if (!c) return;
+  var root = document.documentElement.style;
+  if (c.colors) {
+    if (c.colors.primary) root.setProperty("--primary", c.colors.primary);
+    if (c.colors.background) root.setProperty("--background", c.colors.background);
+    if (c.colors.accent) root.setProperty("--accent", c.colors.accent);
+  }
+  if (c.font) applyTenantTitleFont(c.font);
+  /* Tile button shape + content-box: these only stay correct for whichever
+     button.image is actually in use if they are measured from that same
+     file (see the "_measuredFrom" note next to it in the tenant config).
+     Pulling them from config.button, right next to the image path itself,
+     is what keeps image + tile shape + content placement from drifting
+     apart if a tenant swaps their button.png. The :root defaults are only
+     a fallback for a tenant with no button.image at all. */
+  if (c.button) {
+    if (c.button.aspectRatio) root.setProperty("--tile-button-aspect", c.button.aspectRatio);
+    if (c.button.contentBox) {
+      var cb = c.button.contentBox;
+      if (typeof cb.top === "number") root.setProperty("--tile-content-top", cb.top + "%");
+      if (typeof cb.bottom === "number") root.setProperty("--tile-content-bottom", cb.bottom + "%");
+      if (typeof cb.left === "number") root.setProperty("--tile-content-left", cb.left + "%");
+      if (typeof cb.right === "number") root.setProperty("--tile-content-right", cb.right + "%");
+    }
+  }
+
+  document.title = c.displayName || "Kiosk";
+}
+
+/* ---------------------------------------------------------------------------
+   Boot
+   ------------------------------------------------------------------------- */
+function boot() {
+  showScreen("boot");
+  var msgEl = document.getElementById("boot-msg");
+  if (msgEl) msgEl.textContent = FALLBACK_STRINGS.loading;
+
+  var params = new URLSearchParams(window.location.search);
+  var requestedTenant = params.get("tenant") || "default";
+  state.tenantId = requestedTenant;
+  state.deviceUuid = loadOrCreateDeviceUuid();
+
+  fetchTenantConfig(requestedTenant)
+    .then(function (config) {
+      state.config = config;
+      applyBranding();
+      return fetch("manifest/manifest.json", { cache: "no-store" });
+    })
+    .then(function (r) {
+      if (!r.ok) throw new Error("manifest HTTP " + r.status);
+      return r.json();
+    })
+    .then(function (manifest) {
+      state.manifest = manifest;
+    })
+    .catch(function (err) {
+      telemetry("error", { context: "boot", message: String(err && err.message || err) });
+      if (!state.manifest) state.manifest = { games: [] };
+    })
+    .then(function () {
+      telemetry("app_start", {});
+      goAttract();
+    });
+}
+
+function fetchTenantConfig(tenantId) {
+  return fetch("tenants/" + encodeURIComponent(tenantId) + "/config.json", { cache: "no-store" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("config HTTP " + r.status);
+      return r.json();
+    })
+    .catch(function (err) {
+      telemetry("error", { context: "tenant-config", message: String(err && err.message || err) });
+      if (tenantId === "default") {
+        /* Even the default tenant is missing: fall back to an inline
+           neutral config so the kiosk still boots. */
+        return {
+          tenantId: "default",
+          displayName: "Kiosk",
+          language: "it",
+          colors: { primary: "#2E5BFF", background: "#F5F7FF", accent: "#FFB020" },
+          logo: { path: null },
+          mascot: { path: null },
+          idleTimeoutSec: 75,
+          attract: { loop: [], itemSeconds: 8 },
+          enabledGames: [],
+          strings: {},
+          gameOverrides: {}
+        };
+      }
+      state.tenantId = "default";
+      return fetchTenantConfig("default");
+    });
+}
+
+/* ---------------------------------------------------------------------------
+   Attract screen
+   ------------------------------------------------------------------------- */
+function resetMenuScroll() {
+  var scrollEl = document.getElementById("menu-scroll");
+  if (scrollEl) scrollEl.scrollTop = 0;
+}
+
+function goAttract() {
+  stopIdleWatcher();
+  stopAttractLoop();
+  closeGameFrame();
+  resetMenuScroll();
+
+  var logoEl = document.getElementById("attract-logo");
+  var titleEl = document.getElementById("attract-title");
+  var tapEl = document.getElementById("attract-tap");
+  var screenEl = document.getElementById("screen-attract");
+
+  var logoPath = tenantAsset(state.config && state.config.logo && state.config.logo.path);
+  if (logoPath) {
+    logoEl.src = logoPath;
+    logoEl.hidden = false;
+    logoEl.onerror = function () { logoEl.hidden = true; };
+  } else {
+    logoEl.hidden = true;
+  }
+  titleEl.textContent = (state.config && state.config.displayName) || "";
+  tapEl.textContent = str("attractTap");
+  screenEl.style.background = "var(--background)";
+
+  startAttractLoop();
+  showScreen("attract");
+  telemetry("attract_view", {});
+}
+
+function startAttractLoop() {
+  var loop = (state.config && state.config.attract && state.config.attract.loop) || [];
+  var screenEl = document.getElementById("screen-attract");
+  if (!loop.length) return;
+  var seconds = (state.config.attract.itemSeconds) || 8;
+  state.attractIndex = 0;
+  function applyFrame() {
+    var path = tenantAsset(loop[state.attractIndex % loop.length]);
+    screenEl.style.backgroundImage = "url('" + path + "')";
+    screenEl.style.backgroundSize = "cover";
+    screenEl.style.backgroundPosition = "center";
+  }
+  applyFrame();
+  state.attractTimer = setInterval(function () {
+    state.attractIndex++;
+    applyFrame();
+  }, seconds * 1000);
+}
+function stopAttractLoop() {
+  if (state.attractTimer) { clearInterval(state.attractTimer); state.attractTimer = null; }
+  var screenEl = document.getElementById("screen-attract");
+  screenEl.style.backgroundImage = "";
+}
+
+function onAttractTap() {
+  unlockAudio();
+  goMenu();
+}
+
+/* ---------------------------------------------------------------------------
+   Menu screen
+   ------------------------------------------------------------------------- */
+function enabledGames() {
+  var manifestGames = (state.manifest && state.manifest.games) || [];
+  var enabledIds = (state.config && state.config.enabledGames) || [];
+  var overrides = (state.config && state.config.gameOverrides) || {};
+  var list = manifestGames.filter(function (g) {
+    return g.active === true && enabledIds.indexOf(g.id) !== -1;
+  });
+  list.sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+  return list.map(function (g) {
+    var o = overrides[g.id] || {};
+    return {
+      id: g.id,
+      folder: g.folder,
+      title: o.title || localized(g.title, g.id),
+      iconSvg: o.icon || (g.icon && g.icon.svg) || null,
+      iconEmoji: (g.icon && g.icon.emoji) || null,
+      color: (typeof g.color === "string" && g.color.charAt(0) === "#") ? g.color : null,
+      titleColor: (typeof g.titleColor === "string" && g.titleColor.charAt(0) === "#") ? g.titleColor : null
+    };
+  });
+}
+
+function goMenu() {
+  stopAttractLoop();
+  closeGameFrame();
+
+  var logoEl = document.getElementById("menu-logo");
+  var titleEl = document.getElementById("menu-title");
+  var subtitleEl = document.getElementById("menu-subtitle");
+  var gridEl = document.getElementById("menu-grid");
+
+  var logoPath = tenantAsset(state.config && state.config.logo && state.config.logo.path);
+  if (logoPath) {
+    logoEl.src = logoPath;
+    logoEl.hidden = false;
+    logoEl.onerror = function () { logoEl.hidden = true; };
+  } else {
+    logoEl.hidden = true;
+  }
+  titleEl.textContent = (state.config && state.config.displayName) || "";
+  subtitleEl.textContent = str("menuSubtitle");
+  applyMenuBackground();
+
+  var games = enabledGames();
+  gridEl.innerHTML = "";
+  if (!games.length) {
+    var empty = document.createElement("div");
+    empty.className = "menu__empty";
+    empty.textContent = str("noGames");
+    gridEl.appendChild(empty);
+  } else {
+    /* Trial: bare tiles (icon + title only, no wood board behind) - see
+       .menu__grid--bare in the CSS. Flip BARE_TILES back to false to
+       restore the board. */
+    var buttonPath = BARE_TILES ? null
+      : tenantAsset(state.config && state.config.button && state.config.button.image);
+    gridEl.classList.toggle("menu__grid--bare", BARE_TILES);
+    games.forEach(function (g) {
+      gridEl.appendChild(buildTile(g, buttonPath));
+    });
+  }
+
+  showScreen("menu");
+  resetMenuScroll();
+  telemetry("menu_view", {});
+
+  var idleSec = (state.config && state.config.idleTimeoutSec) || 75;
+  state.idleTimer = startIdleWatcher(idleSec * 1000, function () {
+    telemetry("idle_return", { from: "menu" });
+    goAttract();
+  });
+}
+
+/* Menu backdrop: image in cover behind the grid, with a color fallback and
+   a semi-transparent overlay veil. A missing/broken image never breaks the
+   screen: it just falls back to the flat color. */
+function applyMenuBackground() {
+  var bgEl = document.getElementById("menu-bg");
+  var overlayEl = document.getElementById("menu-bg-overlay");
+  var bg = state.config && state.config.background;
+  var fallbackColor = (state.config && state.config.colors && state.config.colors.background) || "#F5F7FF";
+  var color = (bg && bg.color) || fallbackColor;
+  var overlay = (bg && bg.overlay) || "rgba(255,255,255,0.12)";
+
+  bgEl.style.backgroundColor = color;
+  bgEl.style.backgroundImage = "none";
+  overlayEl.style.background = overlay;
+
+  var imagePath = tenantAsset(bg && bg.image);
+  if (!imagePath) return;
+
+  var probe = new Image();
+  probe.onload = function () {
+    bgEl.style.backgroundImage = "url('" + imagePath + "')";
+  };
+  probe.onerror = function () {
+    /* keep the color-only fallback already applied above */
+  };
+  probe.src = imagePath;
+}
+
+var BARE_TILES = true;
+
+function buildTile(g, buttonPath) {
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "tile";
+  /* Lets CSS target one specific game's tile (see the lavagna content-box
+     override below) without a whole per-game sizing system. */
+  btn.dataset.gameId = g.id;
+
+  /* Square button area: the button image (see .tile__button in the CSS
+     above) plus the logo content-box on top of it. */
+  var square = document.createElement("div");
+  square.className = "tile__square";
+
+  if (buttonPath) {
+    var buttonImg = document.createElement("img");
+    buttonImg.className = "tile__button";
+    buttonImg.alt = "";
+    buttonImg.src = buttonPath;
+    /* A per-tenant decoration; simply omitted, without breaking anything,
+       if the tenant has none or the file fails to load - the forest
+       background shows straight through .tile's own transparent box. */
+    buttonImg.onerror = function () { buttonImg.remove(); };
+    square.appendChild(buttonImg);
+  }
+
+  /* The content-box: today's icon (tomorrow's logo) fills it at 100% -
+     see .tile__content / .tile__icon-img in the CSS above. */
+  var content = document.createElement("div");
+  content.className = "tile__content";
+  if (g.iconSvg) {
+    var img = document.createElement("img");
+    img.className = "tile__icon-img";
+    img.alt = "";
+    img.src = g.iconSvg;
+    img.onerror = function () {
+      img.replaceWith(buildIconFallback(g));
+    };
+    content.appendChild(img);
+  } else {
+    content.appendChild(buildIconFallback(g));
+  }
+  square.appendChild(content);
+
+  btn.appendChild(square);
+
+  /* Title: a sibling of .tile__square, below it, on the forest background
+     - see .tile__name-wrap / .tile__name in the CSS above. */
+  var nameWrap = document.createElement("div");
+  nameWrap.className = "tile__name-wrap";
+  var name = document.createElement("span");
+  name.className = "tile__name";
+  name.textContent = g.title;
+  /* Each game's own bright fill color from the manifest; falls back to
+     .tile__name's own CSS color (white) if a game has none set. */
+  if (g.titleColor) name.style.color = g.titleColor;
+  nameWrap.appendChild(name);
+  btn.appendChild(nameWrap);
+
+  btn.addEventListener("click", function () { openGame(g); });
+  return btn;
+}
+
+function buildIconFallback(g) {
+  var el = document.createElement("span");
+  el.className = "tile__icon-fallback";
+  el.textContent = g.iconEmoji || (g.title ? g.title.charAt(0).toUpperCase() : "?");
+  return el;
+}
+
+/* ---------------------------------------------------------------------------
+   Game screen
+   ------------------------------------------------------------------------- */
+function openGame(g) {
+  stopIdleWatcher();
+  state.currentGame = g;
+  state.gameOpenedAt = Date.now();
+
+  var frame = document.getElementById("game-frame");
+  var homeBtn = document.getElementById("home-button");
+  homeBtn.textContent = str("homeButton");
+  frame.src = "games/" + encodeURIComponent(g.folder) + "/index.html";
+
+  showScreen("game");
+  telemetry("game_open", { gameId: g.id });
+
+  var idleSec = (state.config && state.config.idleTimeoutSec) || 75;
+  state.idleTimer = startIdleWatcher(idleSec * 1000, function () {
+    telemetry("idle_return", { from: "game" });
+    closeGame();
+    goAttract();
+  });
+}
+
+function closeGameFrame() {
+  var frame = document.getElementById("game-frame");
+  if (frame) frame.src = "about:blank";
+}
+
+/* Reports game_close for whatever game is currently open, if any, then
+   clears state.currentGame. Does not itself change screen. */
+function closeGame() {
+  if (!state.currentGame) return;
+  var durationMs = Date.now() - state.gameOpenedAt;
+  telemetry("game_close", { gameId: state.currentGame.id, durationMs: durationMs });
+  state.currentGame = null;
+  stopIdleWatcher();
+}
+
+function onHomeButtonTap() {
+  closeGame();
+  goMenu();
+}
+
+/* ---------------------------------------------------------------------------
+   Games communicate "go home" by navigating their iframe to
+   games/index.html (see kiosk/games/index.html), which posts this message.
+   Only messages from our own origin are trusted; "null" covers the rare
+   file:// testing case where the origin string itself is "null".
+   ------------------------------------------------------------------------- */
+window.addEventListener("message", function (event) {
+  if (event.origin !== window.location.origin && event.origin !== "null") return;
+  if (!event.data || event.data.source !== "bb-game-home-relay") return;
+  if (state.currentScreen !== "game") return;
+  onHomeButtonTap();
+});
+
+/* ---------------------------------------------------------------------------
+   Global scroll lock: without this, iOS Safari still rubber-bands the whole
+   document on a touchmove that starts outside the one element we want
+   scrollable (#menu-scroll), and that bounce drags position:fixed elements
+   (header, background) along with it even though overflow:hidden is set on
+   html/body. Block touchmove everywhere except inside #menu-scroll.
+   ------------------------------------------------------------------------- */
+document.addEventListener("touchmove", function (e) {
+  if (!e.target.closest || !e.target.closest("#menu-scroll")) {
+    e.preventDefault();
+  }
+}, { passive: false });
+document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+/* ---------------------------------------------------------------------------
+   Wire-up
+   ------------------------------------------------------------------------- */
+document.getElementById("screen-attract").addEventListener("click", onAttractTap);
+document.getElementById("home-button").addEventListener("click", onHomeButtonTap);
+
+boot();
+</script>
+</body>
+</html>
