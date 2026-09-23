@@ -16,7 +16,8 @@
     "overlay": "rgba(255,255,255,0.12)"
   },
   "button": {
-    "image": "assets/tile-button.png",
+    "image": null,
+    "_optional": "Tile nude di default (icona + titolo). Per la cornice di legno: \"image\": \"assets/tile-button.png\" - aspectRatio e contentBox qui sotto sono gia' misurati su quel file.",
     "aspectRatio": "1 / 1",
     "contentBox": {
       "top": 30,

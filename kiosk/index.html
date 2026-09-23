@@ -23,28 +23,19 @@
     --menu-columns:4;
     --menu-gap:2vw;
 
-    /* Tile button image: the ONE visual thing at the base of every tile -
-       tile-button.png (wood board, transparent outside), at 100% of its own
-       square area, nothing painted behind or around it. No scale/crop trick
-       and no backdrop color here anymore (an earlier version tried both, to
-       hide this asset's own uneven internal transparent margin - a tenant
-       swapping in a different button.image can still set its own
-       aspectRatio via config.button, but the default here is deliberately
-       plain: whatever the tenant's art doesn't cover, the forest background
-       behind the tile shows through, on purpose).
-       button-shadow is a filter:drop-shadow on the image itself (not
-       box-shadow on the tile), so the shadow follows the board's own
-       organic silhouette - knobs, leaves, irregular edges - instead of
-       drawing a rectangle behind it. */
+    /* Tile = the game's animated icon (square) + its title below. By default
+       tiles are "nude": no frame, the icon sits centered in the square with
+       --tile-icon-inset of air around it. A tenant can still set
+       button.image in its config: then every tile gets that frame image and
+       the icon moves into the frame's measured content-box (see
+       .menu__grid--cornice below and applyBranding()). */
+    --tile-icon-inset:10%;
+
+    /* Optional frame only (button.image set): its square shape, shadow and
+       usable inner area, measured on the frame image and set from
+       config.button by applyBranding(). */
     --tile-button-aspect:1 / 1;
     --tile-button-shadow:0 6px 6px rgba(0,0,0,.30);
-
-    /* Content-box: the board's usable inner area, measured directly on the
-       button image - top 30%, bottom 30%, left 28%, right 28% from the
-       square's edges (NOT the whole tile, which is now taller than the
-       square - see .tile__square below). Holds ONLY the logo now that the
-       title lives outside the button; re-measure and update if
-       button.image changes. */
     --tile-content-top:30%;
     --tile-content-bottom:30%;
     --tile-content-left:28%;
@@ -82,17 +73,9 @@
     --tile-name-drop-shadow:0 3px 4px rgba(0,0,0,.45);
     --tile-name-height:calc(var(--tile-name-font-size) * var(--tile-name-line-height) * 2);
 
-    /* tile-button.png's own board does not reach the bottom edge of its
-       square (measured with numpy: an 11.3% transparent margin baked into
-       the file - see tenants/default/config.json's button._measuredFrom).
-       --tile-name-gap alone can't close that: it is a CSS margin from the
-       square's own box, which is bigger than the board's actual visible
-       edge. This pulls the title up by exactly that measured margin so it
-       sits right against the real wood, not the square's empty edge -
-       percentages on margin-top resolve against the containing block's
-       WIDTH, which for .tile__name-wrap is the tile's own width, and since
-       the square is 1:1 that width equals the square's height, so this
-       lines up exactly. Re-measure if button.image changes. */
+    /* Optional frame only: the frame image may not reach the bottom of its
+       square (tile-button.png has an 11.3% transparent margin); the title is
+       pulled up by that much so it sits against the frame. 0 when nude. */
     --tile-name-board-margin-bottom:11.3%;
   }
   *,*::before,*::after{ box-sizing:border-box; }
@@ -269,26 +252,25 @@
     transition:transform .12s ease-out;
   }
   .tile:active{ transform:scale(.96); }
-  /* The square button area: width comes from the grid column, height
-     follows via aspect-ratio, matching the button image's own shape. This
-     is what used to be the whole tile before the title moved out below. */
+  /* The square area: width from the grid column, height via aspect-ratio. */
   .tile__square{
     position:relative;
     width:100%;
     aspect-ratio:var(--tile-button-aspect);
   }
-  /* Safari-without-aspect-ratio fallback (pre-15.4): the classic
-     padding-top:100% intrinsic-ratio trick. Only kicks in when the browser
-     does not support aspect-ratio at all - never doubles up with it. */
-  @supports not (aspect-ratio: 1 / 1) {
-    .tile__square{ height:0; padding-top:100%; }
+  /* Nude (default): the icon, centered, same air on every side, identical on
+     every tile. */
+  .tile__content{
+    position:absolute;
+    inset:var(--tile-icon-inset);
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
-  /* The button image: the ONE base visual, 100% of the square, nothing
-     painted behind or around it - any part it does not cover shows the
-     forest background straight through. pointer-events:none so taps
-     always reach the button element underneath. filter:drop-shadow (not
-     box-shadow) traces the board's own organic silhouette for the 3D lift
-     instead of drawing a rectangle behind it - see --tile-button-shadow. */
+  /* Optional frame (button.image set): the frame image fills the square
+     (drop-shadow follows its silhouette) and the icon lives in the frame's
+     measured content-box. */
   .tile__button{
     position:absolute;
     inset:0;
@@ -297,44 +279,15 @@
     filter:drop-shadow(var(--tile-button-shadow));
     pointer-events:none;
   }
-  /* Content-box: the board's actual usable inner area, and the ONLY place
-     the logo is allowed to live (see --tile-content-* above - measured
-     directly from the PNG). Identical inset on every tile by construction.
-     Holds only the logo now - no title row to share with, so it can fill
-     the whole box. */
-  .tile__content{
-    position:absolute;
+  .menu__grid--cornice .tile__content{
+    inset:auto;
     top:var(--tile-content-top);
     right:var(--tile-content-right);
     bottom:var(--tile-content-bottom);
     left:var(--tile-content-left);
-    z-index:1;
-    display:flex;
-    align-items:center;
-    justify-content:center;
   }
-  /* Lavagna's icon (a square edge-to-edge chalkboard illustration, no
-     built-in circle badge like the older SVG icons) reads small at the
-     shared content-box size, so its box is enlarged here specifically -
-     other games keep the shared --tile-content-* values. Numbers chosen to
-     bring the icon close to the board's edge without touching the wood. */
-  .tile[data-game-id="lavagna"] .tile__content{
-    top:19%;
-    right:17%;
-    bottom:19%;
-    left:17%;
-  }
-  /* Trial "bare" tiles (BARE_TILES in the script): no board image, so the
-     icon box is doubled from the shared 44% x 40% to 88% x 80% of the
-     square, and the title no longer tucks up under a board edge. Lavagna
-     keeps its own box above (more specific selector), i.e. its current
-     size. */
-  .menu__grid--bare{ --tile-name-board-margin-bottom:0%; }
-  .menu__grid--bare .tile__content{
-    top:10%;
-    right:6%;
-    bottom:10%;
-    left:6%;
+  .menu__grid--cornice .tile__name-wrap{
+    margin-top:calc(var(--tile-name-gap) - var(--tile-name-board-margin-bottom));
   }
   .tile__icon-img{
     width:100%; height:100%;
@@ -362,7 +315,7 @@
   .tile__name-wrap{
     flex:0 0 auto;
     height:var(--tile-name-height);
-    margin-top:calc(var(--tile-name-gap) - var(--tile-name-board-margin-bottom));
+    margin-top:var(--tile-name-gap);
     padding:0 4%;
     display:flex;
     align-items:center;
@@ -698,13 +651,9 @@ function applyBranding() {
     if (c.colors.accent) root.setProperty("--accent", c.colors.accent);
   }
   if (c.font) applyTenantTitleFont(c.font);
-  /* Tile button shape + content-box: these only stay correct for whichever
-     button.image is actually in use if they are measured from that same
-     file (see the "_measuredFrom" note next to it in the tenant config).
-     Pulling them from config.button, right next to the image path itself,
-     is what keeps image + tile shape + content placement from drifting
-     apart if a tenant swaps their button.png. The :root defaults are only
-     a fallback for a tenant with no button.image at all. */
+  /* Optional frame (button.image): its shape and content-box are measured
+     on that same image and stored next to it in config.button, so image
+     and icon placement cannot drift apart. Unused when tiles are nude. */
   if (c.button) {
     if (c.button.aspectRatio) root.setProperty("--tile-button-aspect", c.button.aspectRatio);
     if (c.button.contentBox) {
@@ -905,12 +854,10 @@ function goMenu() {
     empty.textContent = str("noGames");
     gridEl.appendChild(empty);
   } else {
-    /* Trial: bare tiles (icon + title only, no wood board behind) - see
-       .menu__grid--bare in the CSS. Flip BARE_TILES back to false to
-       restore the board. */
-    var buttonPath = BARE_TILES ? null
-      : tenantAsset(state.config && state.config.button && state.config.button.image);
-    gridEl.classList.toggle("menu__grid--bare", BARE_TILES);
+    /* button.image (tenant config) is optional: set -> framed tiles,
+       null/empty -> nude tiles (the default). */
+    var buttonPath = tenantAsset(state.config && state.config.button && state.config.button.image);
+    gridEl.classList.toggle("menu__grid--cornice", !!buttonPath);
     games.forEach(function (g) {
       gridEl.appendChild(buildTile(g, buttonPath));
     });
@@ -955,18 +902,13 @@ function applyMenuBackground() {
   probe.src = imagePath;
 }
 
-var BARE_TILES = true;
-
 function buildTile(g, buttonPath) {
   var btn = document.createElement("button");
   btn.type = "button";
   btn.className = "tile";
-  /* Lets CSS target one specific game's tile (see the lavagna content-box
-     override below) without a whole per-game sizing system. */
   btn.dataset.gameId = g.id;
 
-  /* Square button area: the button image (see .tile__button in the CSS
-     above) plus the logo content-box on top of it. */
+  /* Square area: the optional frame image, then the icon box on top. */
   var square = document.createElement("div");
   square.className = "tile__square";
 
@@ -975,15 +917,13 @@ function buildTile(g, buttonPath) {
     buttonImg.className = "tile__button";
     buttonImg.alt = "";
     buttonImg.src = buttonPath;
-    /* A per-tenant decoration; simply omitted, without breaking anything,
-       if the tenant has none or the file fails to load - the forest
-       background shows straight through .tile's own transparent box. */
+    /* Optional per-tenant frame: if the file fails to load it is simply
+       dropped and the tile stays nude. */
     buttonImg.onerror = function () { buttonImg.remove(); };
     square.appendChild(buttonImg);
   }
 
-  /* The content-box: today's icon (tomorrow's logo) fills it at 100% -
-     see .tile__content / .tile__icon-img in the CSS above. */
+  /* The icon box: the game's (animated) icon, one per tile. */
   var content = document.createElement("div");
   content.className = "tile__content";
   if (g.iconSvg) {
@@ -1002,8 +942,7 @@ function buildTile(g, buttonPath) {
 
   btn.appendChild(square);
 
-  /* Title: a sibling of .tile__square, below it, on the forest background
-     - see .tile__name-wrap / .tile__name in the CSS above. */
+  /* Title: below the square - see .tile__name-wrap / .tile__name. */
   var nameWrap = document.createElement("div");
   nameWrap.className = "tile__name-wrap";
   var name = document.createElement("span");
