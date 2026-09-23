@@ -8,79 +8,94 @@
   <title>Sequenza colori</title>
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
+    /* Paesaggio polare chiaro, coerente con il pinguino dell'icona */
+    .bb-screen{
+      background:
+        radial-gradient(ellipse at 20% 105%, #FFFFFF 0 22%, transparent 23%),
+        radial-gradient(ellipse at 85% 110%, #F2F8FF 0 26%, transparent 27%),
+        linear-gradient(to bottom, #BFE3FF 0%, #DDF0FF 60%, #EEF7FF 100%);
+    }
+    .bb-header{ background:rgba(255,255,255,.55); }
     .bb-stage{ padding:10px 18px 22px; }
-    /* Griglia 2x2 dei pulsanti colorati, sempre quadrata e centrata */
-    .simon{
+    .scena{
+      position:relative; width:100%; height:100%;
+      display:flex; align-items:center; justify-content:center; gap:4vmin;
+    }
+    /* Pinguino a sinistra del pannello */
+    .pinguino{
+      height:62vmin; height:min(62vmin, 600px); width:auto;
+      align-self:flex-end; margin-bottom:2vmin;
+      transform-origin:50% 100%;
+      pointer-events:none;
+      z-index:2;
+    }
+    /* Pannello crema dell'icona, i 4 tasti sopra gli incavi */
+    .pannello{
       position:relative;
-      width:86vmin; width:min(86vmin, 560px);
-      aspect-ratio:1/1;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      grid-template-rows:1fr 1fr;
-      gap:2.4vmin; gap:clamp(10px,2.4vmin,20px);
+      height:80vmin; height:min(80vmin, 760px);
+      aspect-ratio:442 / 433;
+      background:url("img/pannello.webp") center / 100% 100% no-repeat;
+      filter:drop-shadow(0 10px 16px rgba(40,70,120,.25));
       touch-action:none;
     }
-    .pad{
-      border-radius:26px;
-      box-shadow:var(--bb-shadow);
-      /* Da spento è "smorzato": più scuro e desaturato */
-      filter:brightness(.55) saturate(.8);
-      transition:filter .12s ease, transform .12s var(--bb-ease-elastic);
-      will-change:filter, transform;
+    .tasto{
+      position:absolute; width:36.2%; aspect-ratio:1;
+      transform:translate(-50%,-50%);
+      background:center / contain no-repeat;
+      border:0; padding:0; border-radius:50%;
+      touch-action:manipulation;
     }
-    .pad.on{ filter:brightness(1.25) saturate(1.2); transform:scale(.965); }
-    .pad--verde { background:#3DDC84; }
-    .pad--rosso { background:#FF5A5F; }
-    .pad--giallo{ background:#FFC93C; }
-    .pad--blu   { background:#4D8DFF; }
-
-    /* Pastiglia centrale con il numero della sequenza */
-    .centro{
-      position:absolute; top:0; right:0; bottom:0; left:0; inset:0; margin:auto;
-      width:34%; height:34%;
-      display:flex; align-items:center; justify-content:center;
-      background:var(--bb-paper);
-      border-radius:50%;
-      box-shadow:var(--bb-shadow-strong);
-      font-size:9vmin; font-size:clamp(28px,9vmin,60px); font-weight:900; color:var(--bb-burgundy);
-      pointer-events:none;
+    .tasto::after{              /* riflesso di luce quando e' acceso */
+      content:""; position:absolute; inset:6%; border-radius:50%; opacity:0;
+      background:radial-gradient(circle at 40% 35%, rgba(255,255,255,.95), rgba(255,255,255,.35) 55%, transparent 70%);
     }
-    .centro small{ display:block; font-size:.32em; font-weight:800; color:var(--bb-blue); letter-spacing:.5px; }
+    .tasto.on::after{ opacity:1; }
+    .tasto.on{ box-shadow:0 0 0 1.4vmin var(--glow), 0 0 4vmin var(--glow); }
 
-    /* Schermata iniziale con mascotte + scelta difficoltà */
+    /* Scia luminosa dalla pinna al tasto */
+    .indica{ position:absolute; inset:0; pointer-events:none; overflow:visible; z-index:3; }
+
+    /* Scritta "Riproviamo!" */
+    .annuncio{ position:absolute; left:50%; top:10%; z-index:5; pointer-events:none; white-space:nowrap;
+      font-size:7vmin; font-size:clamp(34px,7vmin,72px); font-weight:900; color:#fff;
+      text-shadow:0 3px 0 #2F5DA8, 0 0 16px rgba(70,140,255,.8); opacity:0; }
+
+    /* Schermata iniziale */
     .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:22px;
-      background:rgba(255,247,251,.94); text-align:center; padding:18px; }
-    .start__img{ width:26vmin; width:clamp(120px,26vmin,190px); height:auto;
+      background:rgba(236,246,255,.93); text-align:center; padding:18px; }
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,32px); font-weight:900; color:var(--bb-burgundy); }
+    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,32px); font-weight:900; color:#2F5DA8; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
 
-    /* "Guarda" / "Tocca tu!" stato in alto */
+    /* Stato nell'header */
     .stato{ font-weight:900; }
-    .stato--guarda{ color:var(--bb-pink); }
+    .stato--guarda{ color:#E8488B; }
     .stato--tocca { color:#3DAA5E; }
-    @supports not (aspect-ratio: 1 / 1){ .simon{ height:86vmin; } }
   </style>
 </head>
 <body>
   <div class="bb-screen">
     <div class="bb-stage">
-      <div class="simon" id="simon">
-        <button class="pad pad--verde"  data-pad="0" aria-label="verde"></button>
-        <button class="pad pad--rosso"  data-pad="1" aria-label="rosso"></button>
-        <button class="pad pad--giallo" data-pad="2" aria-label="giallo"></button>
-        <button class="pad pad--blu"    data-pad="3" aria-label="blu"></button>
-        <div class="centro" id="centro">0</div>
-
-        <div class="start" id="start">
-          <img class="start__img" src="../assets/mascotte/kip.png" alt="">
-          <div class="start__txt">Guarda la sequenza<br>e ripetila!<br>Scegli la difficoltà:</div>
-          <div class="liv-row">
-            <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
-            <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
-            <button class="bb-btn liv-btn" data-liv="difficile">🔥 Difficile</button>
-          </div>
+      <div class="scena" id="scena">
+        <img class="pinguino" id="pinguino" src="img/pinguino.webp" alt="">
+        <div class="pannello" id="pannello">
+          <button class="tasto" data-pad="0" aria-label="verde"></button>
+          <button class="tasto" data-pad="1" aria-label="rosso"></button>
+          <button class="tasto" data-pad="2" aria-label="giallo"></button>
+          <button class="tasto" data-pad="3" aria-label="blu"></button>
+        </div>
+        <svg class="indica" id="indica"></svg>
+        <div class="annuncio" id="annuncio">Riproviamo!</div>
+      </div>
+      <div class="start" id="start">
+        <img class="start__img" src="../assets/icons/sequenza.svg" alt="">
+        <div class="start__txt">Guarda la sequenza<br>e ripetila!<br>Scegli la difficoltà:</div>
+        <div class="liv-row">
+          <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
+          <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
+          <button class="bb-btn liv-btn" data-liv="difficile">🔥 Difficile</button>
         </div>
       </div>
     </div>
@@ -88,33 +103,56 @@
 
   <script src="../assets/shared.js"></script>
   <script>
-    BB.lockScroll();
-    var info = BB.header("🎨 Sequenza colori");
-    BB.idle(60000, BB.home);
-
-    var simon = document.getElementById("simon");
-    var centro = document.getElementById("centro");
-    var startScreen = document.getElementById("start");
-
-    // Un pad = colore + frequenza (nota) distinta
-    var PADS = [
-      { el: simon.querySelector('[data-pad="0"]'), freq: 330 }, // verde  - E4
-      { el: simon.querySelector('[data-pad="1"]'), freq: 392 }, // rosso  - G4
-      { el: simon.querySelector('[data-pad="2"]'), freq: 494 }, // giallo - B4
-      { el: simon.querySelector('[data-pad="3"]'), freq: 587 }  // blu    - D5
-    ];
-
-    // Difficoltà scelta dal bambino: cambia la velocità della sequenza
-    var TAB = {
-      facile:    { flash: 620, gap: 300 },
-      medio:     { flash: 440, gap: 190 },
-      difficile: { flash: 300, gap: 110 }
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      // Difficolta': flash = ms in cui un tasto resta acceso, gap = pausa tra due
+      DIFFICOLTA: {
+        facile:    { flash: 620, gap: 300 },
+        medio:     { flash: 440, gap: 190 },
+        difficile: { flash: 300, gap: 110 }
+      },
+      TENTATIVI: 2,                // errori concessi: al primo si riprova la stessa sequenza
+      TOCCO_MS: 260,               // quanto resta acceso un tasto toccato dal bambino
+      PAUSA_TURNO_MS: 700,         // pausa prima della sequenza successiva
+      INDICA: true,                // il pinguino indica il tasto che si accende
+      INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
     };
-    var DIFF = TAB.facile;
+    // Tasti: colore, nota, posizione del centro sul pannello (frazioni di
+    // pannello.webp, da tools/build_sequenza_sprites.py)
+    var TASTI = [
+      { nome: "verde",  freq: 330, pos: [.2692, .7413], glow: "rgba(126,224,129,.75)" },
+      { nome: "rosso",  freq: 392, pos: [.7557, .2564], glow: "rgba(255,107,107,.75)" },
+      { nome: "giallo", freq: 494, pos: [.7534, .7413], glow: "rgba(255,228,92,.8)" },
+      { nome: "blu",    freq: 587, pos: [.2670, .2540], glow: "rgba(107,195,255,.8)" }
+    ];
+    var PUNTA_PINNA = [.9849, .3714];   // frazioni di pinguino.webp
 
-    var sequenza = [], passo = 0, accetta = false, livello = 0;
+    BB.lockScroll();
+    var info = BB.header("Sequenza colori");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
-    // ---- audio: tono breve per il pad (oltre ai suoni di BB) ----
+    var scena = document.getElementById("scena");
+    var pannello = document.getElementById("pannello");
+    var pinguino = document.getElementById("pinguino");
+    var indica = document.getElementById("indica");
+    var annuncio = document.getElementById("annuncio");
+    var startScreen = document.getElementById("start");
+    var DIFF = CONFIG.DIFFICOLTA.facile;
+
+    var PADS = TASTI.map(function (t, i) {
+      var el = pannello.querySelector('[data-pad="' + i + '"]');
+      el.style.left = t.pos[0] * 100 + "%";
+      el.style.top = t.pos[1] * 100 + "%";
+      el.style.backgroundImage = 'url("img/tasto_' + t.nome + '.webp")';
+      el.style.setProperty("--glow", t.glow);
+      return { el: el, freq: t.freq };
+    });
+
+    var sequenza = [], passo = 0, accetta = false, livello = 0, errori = 0;
+
+    // ---- audio: tono breve per il tasto (oltre ai suoni di BB) ----
     var actx = null;
     function ctx(){ if(actx) return actx; var AC=window.AudioContext||window.webkitAudioContext;
       if(!AC) return null; try{ actx=new AC(); }catch(e){ actx=null; } return actx; }
@@ -129,14 +167,50 @@
     }
 
     function aggiornaInfo(){
+      var vite = "";
+      for (var i = 0; i < CONFIG.TENTATIVI; i++) vite += i < CONFIG.TENTATIVI - errori ? "❤️" : "🤍";
       info.innerHTML = '<span class="stato '+(accetta?"stato--tocca":"stato--guarda")+'">'+
-        (accetta ? "👉 Tocca tu!" : "👀 Guarda…") + '</span>';
+        (accetta ? "👉 Tocca tu!" : "👀 Guarda…") + '</span> &nbsp; 🎵 ' + livello + ' &nbsp; ' + vite;
     }
-    function aggiornaCentro(){ centro.innerHTML = livello + '<small>colori</small>'; }
+
+    // ---- Pinguino: salta, e' perplesso, indica ----
+    var animPinguino = null;
+    function pinguinoAnima(frames, ms){
+      if (animPinguino) animPinguino.cancel();
+      animPinguino = pinguino.animate(frames, { duration: ms, easing: "ease-out" });
+    }
+    function salta(){
+      pinguinoAnima([{ transform: "none" }, { transform: "translateY(-8%) scale(.97,1.04)", offset: .35 },
+                     { transform: "scale(1.04,.95)", offset: .7 }, { transform: "none" }], 460);
+    }
+    function perplesso(){
+      pinguinoAnima([{ transform: "none" }, { transform: "rotate(-6deg)", offset: .25 },
+                     { transform: "rotate(5deg)", offset: .6 }, { transform: "none" }], 700);
+    }
+    // scia luminosa dalla punta della pinna al tasto, con una stellina che la percorre
+    function indicaTasto(i, dur){
+      if (!CONFIG.INDICA) return;
+      var s = scena.getBoundingClientRect(), p = pinguino.getBoundingClientRect(), t = PADS[i].el.getBoundingClientRect();
+      var x0 = p.left - s.left + p.width * PUNTA_PINNA[0], y0 = p.top - s.top + p.height * PUNTA_PINNA[1];
+      var x1 = t.left - s.left + t.width / 2, y1 = t.top - s.top + t.height / 2;
+      var cx = (x0 + x1) / 2, cy = Math.min(y0, y1) - 60;
+      var d = "M" + x0 + " " + y0 + " Q" + cx + " " + cy + " " + x1 + " " + y1;
+      var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.innerHTML = '<path d="' + d + '" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-dasharray="2 20" opacity=".95"/>' +
+        '<circle r="17" fill="#FFE14D" stroke="#fff" stroke-width="4"><animateMotion dur="' + Math.min(dur, 400) + 'ms" fill="freeze" path="' + d + '"/></circle>';
+      indica.appendChild(g);
+      g.animate([{ opacity: 0 }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .75 }, { opacity: 0 }], { duration: dur, fill: "forwards" });
+      setTimeout(function () { g.remove(); }, dur + 30);
+      pinguinoAnima([{ transform: "none" }, { transform: "translateY(-3%) rotate(" + (y1 < y0 ? -3 : 3) + "deg)", offset: .4 },
+                     { transform: "none" }], Math.min(dur, 420));
+    }
 
     function illumina(i, dur){
       var p = PADS[i];
       p.el.classList.add("on");
+      p.el.animate([{ transform: "translate(-50%,-50%) scale(1)" }, { transform: "translate(-50%,-50%) scale(.9)", offset: .25 },
+                    { transform: "translate(-50%,-50%) scale(.93)", offset: .8 }, { transform: "translate(-50%,-50%) scale(1)" }],
+                   { duration: dur });
       tono(p.freq, dur/1000 * 0.9);
       setTimeout(function(){ p.el.classList.remove("on"); }, dur);
     }
@@ -146,11 +220,8 @@
       accetta = false; aggiornaInfo();
       var i = 0;
       (function next(){
-        if (i >= sequenza.length){
-          // Turno del bambino
-          passo = 0; accetta = true; aggiornaInfo();
-          return;
-        }
+        if (i >= sequenza.length){ passo = 0; accetta = true; aggiornaInfo(); return; }
+        indicaTasto(sequenza[i], DIFF.flash);
         illumina(sequenza[i], DIFF.flash);
         i++;
         setTimeout(next, DIFF.flash + DIFF.gap);
@@ -160,31 +231,42 @@
     function nuovoTurno(){
       sequenza.push(BB.rand(0, PADS.length - 1));
       livello = sequenza.length;
-      aggiornaCentro();
+      aggiornaInfo();
       setTimeout(mostraSequenza, 600);
+    }
+
+    function riprova(){
+      annuncio.animate([{ opacity: 0, transform: "translateX(-50%) scale(.5)" },
+                        { opacity: 1, transform: "translateX(-50%) scale(1.1)", offset: .2 },
+                        { opacity: 1, transform: "translateX(-50%) scale(1)", offset: .75 },
+                        { opacity: 0, transform: "translateX(-50%) scale(1)" }], { duration: 1300, fill: "forwards" });
+      setTimeout(mostraSequenza, 1500);
     }
 
     function tocca(i){
       if (!accetta) return;
-      illumina(i, 260);
+      illumina(i, CONFIG.TOCCO_MS);
       if (i === sequenza[passo]){
         passo++;
         if (passo === sequenza.length){
-          // Sequenza completata: avanti di livello
           accetta = false; aggiornaInfo();
           BB.sound("match");
-          setTimeout(nuovoTurno, 700);
+          salta();
+          setTimeout(nuovoTurno, CONFIG.PAUSA_TURNO_MS);
         }
       } else {
-        // Errore: fine partita
         accetta = false;
+        errori++;
         BB.sound("error");
-        simon.classList.add("bb-anim-shake");
-        setTimeout(function(){ simon.classList.remove("bb-anim-shake"); fine(); }, 450);
+        perplesso();
+        pannello.classList.add("bb-anim-shake");
+        setTimeout(function(){ pannello.classList.remove("bb-anim-shake"); }, 450);
+        aggiornaInfo();
+        if (errori < CONFIG.TENTATIVI) setTimeout(riprova, 500);   // seconda possibilita'
+        else setTimeout(fine, 600);
       }
     }
 
-    // Input sui pad (un solo handler per pad, niente doppio fire touch+click)
     PADS.forEach(function(p, i){
       p.el.addEventListener("pointerdown", function(e){ e.preventDefault(); tocca(i); });
     });
@@ -192,21 +274,20 @@
     function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
 
     function avvia(liv){
-      if (TAB[liv]) DIFF = TAB[liv];
+      if (CONFIG.DIFFICOLTA[liv]) DIFF = CONFIG.DIFFICOLTA[liv];
       startScreen.classList.add("bb-hidden");
-      sequenza = []; passo = 0; livello = 0; accetta = false;
-      aggiornaCentro(); aggiornaInfo();
+      sequenza = []; passo = 0; livello = 0; accetta = false; errori = 0;
+      aggiornaInfo();
       nuovoTurno();
     }
 
     function fine(){
-      // Il punteggio è la lunghezza raggiunta (colori ricordati senza errori)
-      var punti = sequenza.length - 1; // l'ultimo è quello sbagliato
-      if (punti < 0) punti = 0;
+      // Il punteggio e' la lunghezza completata (l'ultima non riuscita non conta)
+      var punti = Math.max(0, sequenza.length - 1);
       var record = BB.score("sequenza", punti);
       var nuovoRecord = punti > 0 && punti >= record;
       BB.win({
-        mascotte: nuovoRecord ? null : "../assets/mascotte/kip.png",
+        mascotte: nuovoRecord ? null : "../assets/icons/sequenza.svg",
         emoji: nuovoRecord ? "🏆" : null,
         titolo: nuovoRecord ? "Nuovo record!" : "Bravo!",
         punteggio: punti + " colori",
@@ -218,8 +299,7 @@
     Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
       b.addEventListener("click", function(){ avvia(b.dataset.liv); });
     });
-
-    aggiornaCentro();
+    aggiornaInfo();
   </script>
 </body>
 </html>

@@ -127,7 +127,7 @@ Giochi: memory, talpe, palloncini, frutta, stelle, sequenza, lavagna, labirinto,
 forme, puzzle, tris, hanoi.
 
 - **De-brandizzazione (in corso):** fatta su talpe, palloncini, frutta, memory,
-  stelle; gli altri 6 contengono ancora le vecchie mascotte Fun Planet
+  stelle, sequenza; gli altri 5 contengono ancora le vecchie mascotte Fun Planet
   (kip/stella/bolt/bobo). Vanno **rifatti** con grafica
   coerente all'icona-animale di ogni gioco (i personaggi base del prodotto):
   questo toglie il brand vecchio E alza la qualità al livello dell'icona.
@@ -187,6 +187,9 @@ forme, puzzle, tris, hanoi.
 
 - 2026-09-23 — Acchiappa-stelle rifatto: la volpe col cestino segue il dito,
   stelle sorridenti dell'icona; speciale = **pioggia di stelle** periodica.
+- 2026-09-23 — Sequenza colori rifatta: pinguino + pannello dell'icona;
+  **seconda possibilita'** (2 errori, al primo si ripete la sequenza) e il
+  pinguino **indica** il tasto che si accende (scia dalla pinna).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo menta,
@@ -194,9 +197,10 @@ forme, puzzle, tris, hanoi.
   Aperto: lo sfondo attuale è **1344×768 WebP**, sotto la specifica della sez. 10
   (1920×1080 JPG) — da rigenerare o aggiornare la specifica.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Giochi:** de-brand **fatto** su talpe, palloncini, frutta, memory, stelle
+- **Giochi:** de-brand **fatto** su talpe, palloncini, frutta, memory, stelle,
+  sequenza
   (grafica dall'icona, numeri in `CONFIG` in cima a ogni gioco, sprite da
-  `tools/build_<gioco>_sprites.py`). **Restano:** sequenza, labirinto, forme,
-  puzzle, tris, hanoi (usano ancora le mascotte vecchie).
+  `tools/build_<gioco>_sprites.py`). **Restano:** labirinto, forme, puzzle,
+  tris, hanoi (usano ancora le mascotte vecchie).
 - **Branch:** catena talpe → palloncini → frutta → memory → cleanup-brand →
-  `feature/stelle-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
+  stelle → `feature/sequenza-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.

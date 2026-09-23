@@ -80,6 +80,7 @@
     {
       "id": "sequenza",
       "folder": "sequenza",
+      "version": "2",
       "category": "Giochi web",
       "order": 15,
       "tier": "base",
