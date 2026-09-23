@@ -1,5 +1,5 @@
 /* ============================================================================
-   shared.js — Utility condivise per i giochi "Kids Fun Planet"
+   shared.js — Utility condivise dai giochi del kiosk
    ----------------------------------------------------------------------------
    Espone un oggetto globale `BB` con:
      BB.home()            → ritorno al launcher (AndroidLauncher.goHome o gallery)
@@ -15,7 +15,7 @@
   "use strict";
 
   /* Namespace per le chiavi localStorage, così non collidiamo con altre app */
-  var LS_PREFIX = "bb.kidsfunplanet.";
+  var LS_PREFIX = "kiosk.";
 
   /* --------------------------------------------------------------------------
      WebAudio: un solo AudioContext condiviso, creato pigramente al primo suono

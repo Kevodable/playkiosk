@@ -157,7 +157,7 @@
     }
 
     function bestTime(t){
-      var k="bb.kidsfunplanet.besttime.forme."+total;
+      var k="kiosk.besttime.forme."+total;
       var cur=0; try{ cur=parseFloat(localStorage.getItem(k))||0; }catch(_){}
       if(t!=null && (cur===0 || t<cur)){ try{ localStorage.setItem(k,String(t)); }catch(_){} return t; }
       return cur;
