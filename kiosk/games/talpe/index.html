@@ -76,6 +76,59 @@
       100%{ transform:scale(1,1); }
     }
 
+    /* Martello: compare nel punto toccato, carica e cala. Il perno e'
+       la punta del manico; --colpo e' l'angolo finale (da CONFIG). */
+    .martello{
+      position:fixed; z-index:40;
+      pointer-events:none;
+      animation-name:martellata; animation-timing-function:linear; animation-fill-mode:forwards;
+      filter:drop-shadow(0 6px 6px rgba(0,0,0,.25));
+    }
+    @keyframes martellata{
+      0%{ transform:rotate(-20deg); opacity:0; animation-timing-function:ease-out; }
+      10%{ opacity:1; }
+      30%{ transform:rotate(-28deg); animation-timing-function:cubic-bezier(.6,0,1,.6); }
+      55%{ transform:rotate(calc(var(--colpo) + 6deg)); animation-timing-function:ease-out; }
+      68%{ transform:rotate(var(--colpo)); }
+      85%{ transform:rotate(var(--colpo)); opacity:1; }
+      100%{ transform:rotate(var(--colpo)); opacity:0; }
+    }
+    /* Stelline di stordimento sopra la talpa colpita */
+    .stelline{
+      position:absolute; left:50%; top:4%; width:60%; aspect-ratio:1 / .45;
+      transform:translateX(-50%);
+      pointer-events:none;
+      animation-name:stordita; animation-timing-function:linear; animation-fill-mode:forwards;
+    }
+    .stelline span{
+      position:absolute; width:26%; aspect-ratio:1;
+      background:#FFD23F;
+      clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+    }
+    .stelline span:nth-child(1){ left:0; top:30%; }
+    .stelline span:nth-child(2){ left:37%; top:0; }
+    .stelline span:nth-child(3){ left:74%; top:30%; }
+    @keyframes stordita{
+      0%{ opacity:0; transform:translateX(-50%) scale(.4) rotate(0deg); }
+      20%{ opacity:1; transform:translateX(-50%) scale(1.1) rotate(40deg); }
+      80%{ opacity:1; transform:translateX(-50%) scale(1) rotate(160deg); }
+      100%{ opacity:0; transform:translateX(-50%) scale(.8) rotate(200deg); }
+    }
+    /* Martellata a vuoto: sbuffo di terra nel punto toccato */
+    .sbuffo{
+      position:fixed; z-index:39; width:1px; height:1px;
+      pointer-events:none;
+    }
+    .sbuffo i{
+      position:absolute; left:-9px; top:-9px; width:18px; height:18px; border-radius:50%;
+      background:#8B5A34; opacity:0;
+      animation-name:sbuffo; animation-timing-function:ease-out; animation-fill-mode:forwards;
+    }
+    @keyframes sbuffo{
+      0%{ opacity:.9; transform:translate(0,0) scale(.5); }
+      100%{ opacity:0; transform:translate(var(--dx),var(--dy)) scale(1.4); }
+    }
+
     /* Indicatore "+1" che sale al colpo */
     .plusone{
       position:absolute;
@@ -147,6 +200,11 @@
       },
       SALITA_MS: 150,            // quanto ci mette la talpa a uscire/rientrare
       COLPO_MS: 260,             // animazione della talpa colpita
+      MARTELLO_MS: 380,          // durata totale della martellata
+      MARTELLO_IMPATTO: 0.55,    // in che frazione della martellata il martello tocca
+      MARTELLO_DIMENSIONE: 0.95, // altezza del martello rispetto a una buca
+      MARTELLO_ANGOLO_COLPO: 72, // gradi: posa finale (testa sul punto toccato)
+      STELLINE_MS: 700,          // stelline sopra la talpa colpita
       INATTIVITA_MS: 60000       // senza tocchi: torna al menu giochi
     };
 
@@ -188,7 +246,6 @@
         durata(s, "transition-duration", CONFIG.SALITA_MS);
       });
       durata(buca.querySelector(".talpa-img"), "animation-duration", CONFIG.COLPO_MS);
-      buca.addEventListener("click", colpisci);
       board.appendChild(buca);
       buche.push(buca);
     }
@@ -210,24 +267,84 @@
       var idx;
       do { idx = BB.rand(0, buche.length - 1); } while (idx === attiva && buche.length > 1);
       attiva = idx;
-      buche[idx].classList.remove("colpita");
+      buche[idx].classList.remove("colpita", "presa");
       buche[idx].classList.add("su");
       // Programma la prossima comparsa
       tickTalpa = setTimeout(mostraTalpa, durataTalpa());
     }
 
-    function colpisci(e) {
+    /* Martello disegnato nel punto (x, y): geometria dello sprite
+       martello.webp (334x472 px): perno = punta del manico (62, 465),
+       centro della testa = (175, 138). Si posiziona in modo che, alla posa
+       finale, la testa sia proprio sul punto toccato. */
+    var MARTELLO = { w: 334, h: 472, perno: [62, 465], testa: [175, 138] };
+    function martello(x, y) {
+      var cella = buche[0].getBoundingClientRect().height;
+      var k = CONFIG.MARTELLO_DIMENSIONE * cella / MARTELLO.h;
+      var a = CONFIG.MARTELLO_ANGOLO_COLPO * Math.PI / 180;
+      var vx = MARTELLO.testa[0] - MARTELLO.perno[0], vy = MARTELLO.testa[1] - MARTELLO.perno[1];
+      var rx = vx * Math.cos(a) - vy * Math.sin(a), ry = vx * Math.sin(a) + vy * Math.cos(a);
+      var el = document.createElement("img");
+      el.className = "martello";
+      el.src = "img/martello.webp";
+      el.alt = "";
+      el.style.width = MARTELLO.w * k + "px";
+      el.style.left = x - (MARTELLO.perno[0] + rx) * k + "px";
+      el.style.top = y - (MARTELLO.perno[1] + ry) * k + "px";
+      el.style.transformOrigin = MARTELLO.perno[0] * k + "px " + MARTELLO.perno[1] * k + "px";
+      el.style.setProperty("--colpo", CONFIG.MARTELLO_ANGOLO_COLPO + "deg");
+      durata(el, "animation-duration", CONFIG.MARTELLO_MS);
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); }, CONFIG.MARTELLO_MS + 50);
+    }
+
+    function sbuffo(x, y) {
+      var el = document.createElement("div");
+      el.className = "sbuffo";
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      for (var i = 0; i < 6; i++) {
+        var p = document.createElement("i");
+        var ang = Math.PI * (1.05 + i * 0.18);
+        p.style.setProperty("--dx", Math.cos(ang) * 38 + "px");
+        p.style.setProperty("--dy", Math.sin(ang) * 30 + "px");
+        durata(p, "animation-duration", 420);
+        el.appendChild(p);
+      }
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); }, 480);
+    }
+
+    /* Tocco: il martello appare dove tocca il bambino. Se sotto c'e' una
+       talpa su, il punto conta subito; la talpa reagisce all'impatto. */
+    function tocco(e) {
       if (!inCorso) return;
-      var buca = e.currentTarget;
-      // Conta solo se la talpa è effettivamente su e non già colpita
-      if (!buca.classList.contains("su")) return;
+      var x = e.clientX, y = e.clientY;
+      martello(x, y);
+      var impatto = CONFIG.MARTELLO_MS * CONFIG.MARTELLO_IMPATTO;
+      var buca = e.target.closest ? e.target.closest(".buca") : null;
+      if (buca && buca.classList.contains("su") && !buca.classList.contains("presa")) {
+        buca.classList.add("presa");          // non si puo' colpire due volte
+        punteggio += CONFIG.PUNTI_PER_TALPA;
+        aggiornaInfo();
+        setTimeout(function () { colpita(buca); }, impatto);
+      } else {
+        setTimeout(function () { sbuffo(x, y); }, impatto);   // a vuoto: nessuna penalita'
+      }
+    }
+
+    function colpita(buca) {
       buca.classList.remove("su");
       buca.classList.add("colpita");
       setTimeout(function () { buca.classList.remove("colpita"); }, CONFIG.COLPO_MS);
-
-      punteggio += CONFIG.PUNTI_PER_TALPA;
-      aggiornaInfo();
       BB.sound("pop");
+
+      var stelle = document.createElement("div");
+      stelle.className = "stelline";
+      stelle.innerHTML = "<span></span><span></span><span></span>";
+      durata(stelle, "animation-duration", CONFIG.STELLINE_MS);
+      buca.appendChild(stelle);
+      setTimeout(function () { stelle.remove(); }, CONFIG.STELLINE_MS);
 
       // Mostra "+1" che sale
       var plus = document.createElement("span");
@@ -237,6 +354,7 @@
       buca.appendChild(plus);
       setTimeout(function () { plus.remove(); }, 600);
     }
+    document.querySelector(".bb-stage").addEventListener("pointerdown", tocco);
 
     function mostraStart() { startScreen.classList.remove("bb-hidden"); }
 
