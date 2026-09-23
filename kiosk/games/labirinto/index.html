@@ -8,41 +8,62 @@
   <title>Labirinto</title>
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
+    .bb-screen{
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,.5) 0 3px, transparent 4px) 0 0 / 70px 70px,
+        linear-gradient(to bottom, #E6FAF6 0%, #D3F2EE 60%, #C4EBE6 100%);
+    }
+    .bb-header{ background:rgba(255,255,255,.55); }
     .bb-stage{ padding:8px 14px 16px; }
+    .scena{ position:relative; width:100%; height:100%;
+      display:flex; align-items:center; justify-content:center; gap:3vmin; }
+    /* Il topo grande accanto al labirinto (fa il tifo) */
+    .tifoso{
+      height:52vmin; height:min(52vmin, 520px); width:auto;
+      align-self:flex-end; margin-bottom:3vmin;
+      transform-origin:50% 100%; pointer-events:none;
+    }
+    /* Labirinto: muri turchesi arrotondati, corridoi crema (come l'icona) */
     .arena{
       position:relative;
-      width:86vmin; width:min(86vmin, 560px);
+      width:86vmin; width:min(86vmin, 900px);
       aspect-ratio:1/1;
-      border-radius:22px;
-      background:#fff;
-      box-shadow:var(--bb-shadow-strong);
-      overflow:hidden; touch-action:none;
+      border-radius:5%;
+      background:#5CC6C4;
+      box-shadow:inset 0 -1.2vmin 0 rgba(20,110,110,.35), 0 12px 26px rgba(20,90,90,.28);
+      padding:2.2%;
+      touch-action:none;
     }
     .arena canvas{ display:block; width:100%; height:100%; }
+    /* Scritta tra un livello e l'altro */
+    .annuncio{ position:absolute; left:50%; top:40%; z-index:5; pointer-events:none; white-space:nowrap;
+      font-size:7vmin; font-size:clamp(34px,7vmin,72px); font-weight:900; color:#FFD23F;
+      text-shadow:0 3px 0 #B86A00, 0 0 16px rgba(255,200,60,.8); opacity:0; }
 
     .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:20px;
-      background:rgba(255,247,251,.95); text-align:center; padding:18px; }
-    .start__img{ width:24vmin; width:clamp(110px,24vmin,180px); height:auto;
+      background:rgba(232,250,247,.94); text-align:center; padding:18px; }
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:4.4vmin; font-size:clamp(18px,4.4vmin,30px); font-weight:900; color:var(--bb-burgundy); line-height:1.3; }
+    .start__txt{ font-size:4.4vmin; font-size:clamp(18px,4.4vmin,30px); font-weight:900; color:#1F7A78; line-height:1.3; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
-    @supports not (aspect-ratio: 1 / 1){ .arena{ height:86vmin; } }
   </style>
 </head>
 <body>
   <div class="bb-screen">
     <div class="bb-stage">
-      <div class="arena" id="arena">
-        <canvas id="canvas"></canvas>
-        <div class="start" id="start">
-          <img class="start__img" src="../assets/mascotte/bolt.png" alt="">
-          <div class="start__txt">Porta il topino 🐭 al formaggio 🧀<br>col dito, senza toccare i muri!<br>Scegli la difficoltà:</div>
-          <div class="liv-row">
-            <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
-            <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
-            <button class="bb-btn liv-btn" data-liv="difficile">🔥 Difficile</button>
-          </div>
+      <div class="scena">
+        <img class="tifoso" id="tifoso" src="img/topo.webp" alt="">
+        <div class="arena" id="arena"><canvas id="canvas"></canvas></div>
+        <div class="annuncio" id="annuncio">Bravo!</div>
+      </div>
+      <div class="start" id="start">
+        <img class="start__img" src="../assets/icons/labirinto.svg" alt="">
+        <div class="start__txt">Porta il topolino al formaggio<br>trascinandolo col dito!<br>Scegli la difficoltà:</div>
+        <div class="liv-row">
+          <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
+          <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
+          <button class="bb-btn liv-btn" data-liv="difficile">🔥 Difficile</button>
         </div>
       </div>
     </div>
@@ -50,26 +71,42 @@
 
   <script src="../assets/shared.js"></script>
   <script>
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      // Livelli in fila: per ogni difficolta' le "stanze" per lato di ogni labirinto
+      LIVELLI: {
+        facile:    [4, 5, 6],
+        medio:     [6, 7, 8],
+        difficile: [8, 10, 11]
+      },
+      PRESA_CELLE: 1.3,            // quanto vicino al topo si puo' iniziare a trascinare (in celle)
+      MARGINE_MURO: 0.28,          // tolleranza: frazione di cella in cui sfiorare il muro e' permesso
+      PAUSA_LIVELLO_MS: 1400,      // festa tra un labirinto e il successivo
+      INATTIVITA_MS: 90000         // senza tocchi: torna al menu giochi
+    };
+    var COLORI = { muro: "#5CC6C4", corridoio: "#F7EDCC", bordoCorridoio: "#E9D9A6", scia: "rgba(232,72,139,.55)" };
+
     BB.lockScroll();
-    var info = BB.header("🧩 Labirinto");
-    BB.idle(90000, BB.home);
+    var info = BB.header("Labirinto");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
     var arena  = document.getElementById("arena");
     var canvas = document.getElementById("canvas");
     var ctx    = canvas.getContext("2d");
+    var tifoso = document.getElementById("tifoso");
+    var annuncio = document.getElementById("annuncio");
     var startScreen = document.getElementById("start");
-
-    // Colori
-    var WALL = "#3346D6", PATH = "#FFFFFF", TRAIL = "#E8488B";
-    var START_BG = "#CDEFD6", GOAL_BG = "#FFE9A8";
-
-    // Difficoltà = numero di "stanze" per lato (più stanze = labirinto più grande)
-    var TAB = { facile: 6, medio: 8, difficile: 11 };
+    var imgTopo = new Image(); imgTopo.src = "img/topo.webp";
+    var imgFormaggio = new Image(); imgFormaggio.src = "img/formaggio.webp";
 
     var N = 6, W = 13;        // W = 2*N+1 (griglia fine)
     var open = [];            // open[r][c] = cella percorribile
-    var S = 0, cell = 0;      // lato in px CSS e dimensione cella
-    var attivo = false, last = null, tStart = 0, vintoFlag = false;
+    var S = 0, cell = 0;      // lato del canvas in px CSS e dimensione cella
+    var sfondo = null;        // labirinto disegnato una volta (canvas fuori schermo)
+    var topo = null, scia = [], trascina = false, fermo = false;
+    var livelli = [], livelloIdx = 0, difficolta = "facile", tStart = 0;
 
     // ---- Generazione labirinto (recursive backtracker iterativo) ----
     function genera(n){
@@ -100,121 +137,172 @@
     // ---- Disegno ----
     function fit(){
       var dpr = window.devicePixelRatio || 1;
-      S = arena.clientWidth;
-      canvas.width  = Math.round(S*dpr);
-      canvas.height = Math.round(S*dpr);
+      S = canvas.clientWidth;
+      canvas.width = canvas.height = Math.round(S*dpr);
       ctx.setTransform(dpr,0,0,dpr,0,0);
       cell = S / W;
+      // corridoi come tratti arrotondati tra celle aperte vicine
+      sfondo = document.createElement("canvas");
+      sfondo.width = sfondo.height = Math.round(S*dpr);
+      var g = sfondo.getContext("2d");
+      g.setTransform(dpr,0,0,dpr,0,0);
+      g.fillStyle = COLORI.muro; g.fillRect(0,0,S,S);
+      [[COLORI.bordoCorridoio, 1.0], [COLORI.corridoio, 0.82]].forEach(function (st) {
+        g.strokeStyle = st[0]; g.lineWidth = cell * st[1]; g.lineCap = "round"; g.lineJoin = "round";
+        g.beginPath();
+        for (var r=0;r<W;r++) for (var c=0;c<W;c++){
+          if (!open[r][c]) continue;
+          var x = (c+.5)*cell, y = (r+.5)*cell;
+          g.moveTo(x, y); g.lineTo(x + .01, y);
+          if (c+1<W && open[r][c+1]){ g.moveTo(x, y); g.lineTo(x + cell, y); }
+          if (r+1<W && open[r+1][c]){ g.moveTo(x, y); g.lineTo(x, y + cell); }
+        }
+        g.stroke();
+      });
     }
 
-    function disegnaMaze(){
+    function disegna(){
+      if (!sfondo) return;
       ctx.clearRect(0,0,S,S);
-      ctx.fillStyle = WALL; ctx.fillRect(0,0,S,S);
-      ctx.fillStyle = PATH;
-      for (var r=0;r<W;r++) for (var c=0;c<W;c++)
-        if (open[r][c]) ctx.fillRect(c*cell, r*cell, cell+0.6, cell+0.6);
-
-      // evidenzia partenza e arrivo
-      ctx.fillStyle = START_BG; ctx.fillRect(1*cell, 1*cell, cell, cell);
-      ctx.fillStyle = GOAL_BG;  ctx.fillRect((W-2)*cell, (W-2)*cell, cell, cell);
-
-      // marcatori
-      ctx.font = Math.floor(cell*0.8) + "px sans-serif";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("🐭", 1.5*cell, 1.5*cell);
-      ctx.fillText("🧀", (W-1.5)*cell, (W-1.5)*cell);
+      ctx.drawImage(sfondo, 0, 0, S, S);
+      // scia rosa del percorso
+      if (scia.length > 1){
+        ctx.strokeStyle = COLORI.scia; ctx.lineWidth = cell * .32; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.beginPath(); ctx.moveTo(scia[0].x, scia[0].y);
+        for (var i=1;i<scia.length;i++) ctx.lineTo(scia[i].x, scia[i].y);
+        ctx.stroke();
+      }
+      // formaggio nell'ultima stanza, topo dov'e'
+      var fz = cell * 1.25;
+      ctx.drawImage(imgFormaggio, (W-1.5)*cell - fz/2, (W-1.5)*cell - fz/2, fz, fz);
+      var th = cell * 1.35, tw = th * 354 / 406;
+      ctx.drawImage(imgTopo, topo.x - tw/2, topo.y - th*.62, tw, th);
     }
 
-    // ---- Util coordinate ----
-    function pos(e){ var rc=canvas.getBoundingClientRect(); return { x:e.clientX-rc.left, y:e.clientY-rc.top }; }
-    function cellOf(p){ return { row: Math.floor(p.y/cell), col: Math.floor(p.x/cell) }; }
-    function isGoal(rc){ return rc.row===W-2 && rc.col===W-2; }
-    function isStart(rc){ return rc.row===1 && rc.col===1; }
-
-    // Muro colpito? con tolleranza ai bordi (perdona lo sfioramento)
-    function muro(p){
+    // ---- Movimento: il topo segue il dito, i muri lo fermano (senza penalita') ----
+    function pos(e){ var rc=canvas.getBoundingClientRect(); return { x:(e.clientX-rc.left)*S/rc.width, y:(e.clientY-rc.top)*S/rc.height }; }
+    function libero(p){
       var col=Math.floor(p.x/cell), row=Math.floor(p.y/cell);
-      if (row<0||row>=W||col<0||col>=W) return true;
-      if (open[row][col]) return false;
-      var fx = p.x/cell - col, fy = p.y/cell - row;
-      return (fx>0.22 && fx<0.78 && fy>0.22 && fy<0.78);
+      if (row<0||row>=W||col<0||col>=W) return false;
+      if (open[row][col]) return true;
+      // sfiorare un muro e' permesso solo sul lato che confina con un corridoio
+      var fx = p.x/cell - col, fy = p.y/cell - row, m = CONFIG.MARGINE_MURO;
+      function aperta(r, c){ return r>=0 && r<W && c>=0 && c<W && open[r][c]; }
+      return (fx < m && aperta(row, col-1)) || (fx > 1-m && aperta(row, col+1)) ||
+             (fy < m && aperta(row-1, col)) || (fy > 1-m && aperta(row+1, col));
+    }
+    var ultimoBump = 0;
+    function bump(){
+      var now = performance.now();
+      if (now - ultimoBump < 500) return;
+      ultimoBump = now;
+      BB.sound("error");
+    }
+    // Avanza a piccoli passi verso il dito; se un passo e' bloccato prova a
+    // scivolare lungo il muro (solo x o solo y), altrimenti si ferma.
+    function muoviVerso(p){
+      var dx = p.x - topo.x, dy = p.y - topo.y, dist = Math.sqrt(dx*dx+dy*dy);
+      var steps = Math.max(1, Math.ceil(dist / (cell*.15))), bloccato = false;
+      for (var k=0;k<steps;k++){
+        var sx = dx/steps, sy = dy/steps, q = { x: topo.x+sx, y: topo.y+sy };
+        if (!libero(q)){
+          if (libero({ x: topo.x+sx, y: topo.y })) q = { x: topo.x+sx, y: topo.y };
+          else if (libero({ x: topo.x, y: topo.y+sy })) q = { x: topo.x, y: topo.y+sy };
+          else { bloccato = true; break; }
+        }
+        topo = q;
+        var ultimo = scia[scia.length-1];
+        if (!ultimo || Math.abs(ultimo.x-q.x)+Math.abs(ultimo.y-q.y) > cell*.08) scia.push(q);
+        if (Math.floor(q.y/cell) === W-2 && Math.floor(q.x/cell) === W-2){ disegna(); return arrivato(); }
+      }
+      if (bloccato) bump();
+      disegna();
     }
 
-    // ---- Interazione (traccia col dito) ----
     canvas.addEventListener("pointerdown", function(e){
-      if (vintoFlag) return;
-      var p=pos(e);
-      if (!isStart(cellOf(p))) return;     // si parte solo dal topino
+      if (fermo || !topo) return;
+      var p = pos(e);
+      if (Math.hypot(p.x-topo.x, p.y-topo.y) > cell*CONFIG.PRESA_CELLE) return;   // si trascina il topo
       e.preventDefault();
-      attivo=true; last=p; tStart=performance.now();
-      ctx.strokeStyle=TRAIL; ctx.lineWidth=Math.max(6, cell*0.42);
-      ctx.lineCap="round"; ctx.lineJoin="round";
+      trascina = true;
+      if (!tStart) tStart = performance.now();
       if (canvas.setPointerCapture){ try{ canvas.setPointerCapture(e.pointerId); }catch(_){ } }
     });
-
     canvas.addEventListener("pointermove", function(e){
-      if (!attivo) return;
+      if (!trascina || fermo) return;
       e.preventDefault();
-      var p=pos(e);
-      var dx=p.x-last.x, dy=p.y-last.y, dist=Math.sqrt(dx*dx+dy*dy);
-      var steps=Math.max(1, Math.ceil(dist/(cell*0.45)));
-      for (var k=1;k<=steps;k++){
-        var q={ x:last.x+dx*k/steps, y:last.y+dy*k/steps };
-        var rc=cellOf(q);
-        if (isGoal(rc)){ traccia(q); return vinto(); }
-        if (muro(q)) return fallita();
-      }
-      traccia(p);
+      muoviVerso(pos(e));
     }, { passive:false });
+    function lascia(){ trascina = false; }
+    canvas.addEventListener("pointerup", lascia);
+    canvas.addEventListener("pointercancel", lascia);
 
-    function fineTocco(){ if (attivo && !vintoFlag){ attivo=false; disegnaMaze(); } }
-    canvas.addEventListener("pointerup", fineTocco);
-    canvas.addEventListener("pointercancel", fineTocco);
-    canvas.addEventListener("pointerleave", fineTocco);
+    // ---- Livelli in fila ----
+    function aggiornaInfo(){ info.innerHTML = "🐭 Livello " + (livelloIdx+1) + " di " + livelli.length; }
 
-    function traccia(p){ ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; }
-
-    function fallita(){
-      attivo=false;
-      BB.sound("error");
-      arena.classList.add("bb-anim-shake");
-      setTimeout(function(){ arena.classList.remove("bb-anim-shake"); disegnaMaze(); }, 420);
+    function caricaLivello(){
+      N = livelli[livelloIdx];
+      genera(N); fit();
+      topo = { x: 1.5*cell, y: 1.5*cell }; scia = [topo]; trascina = false; fermo = false;
+      aggiornaInfo(); disegna();
     }
 
-    // Record = tempo minimo (più basso è meglio), salvato a mano in localStorage
+    function arrivato(){
+      fermo = true; trascina = false;
+      BB.sound("match");
+      tifoso.animate([{ transform: "none" }, { transform: "translateY(-10%) rotate(-4deg)", offset: .25 },
+                      { transform: "none", offset: .5 }, { transform: "translateY(-8%) rotate(4deg)", offset: .75 },
+                      { transform: "none" }], { duration: 900, easing: "ease-out" });
+      if (livelloIdx < livelli.length - 1){
+        annuncio.textContent = "Bravo! Ancora uno!";
+        annuncio.animate([{ opacity: 0, transform: "translateX(-50%) scale(.5)" },
+                          { opacity: 1, transform: "translateX(-50%) scale(1.1)", offset: .2 },
+                          { opacity: 1, transform: "translateX(-50%) scale(1)", offset: .8 },
+                          { opacity: 0, transform: "translateX(-50%) scale(1)" }], { duration: CONFIG.PAUSA_LIVELLO_MS, fill: "forwards" });
+        setTimeout(function(){ livelloIdx++; caricaLivello(); }, CONFIG.PAUSA_LIVELLO_MS);
+      } else {
+        setTimeout(vinto, 800);
+      }
+    }
+
+    // Record = tempo minimo per difficolta' (piu' basso e' meglio)
     function bestTime(t){
-      var k="kiosk.besttime.labirinto." + N;
+      var k = "kiosk.besttime.labirinto." + difficolta;
       var cur=0; try{ cur=parseFloat(localStorage.getItem(k))||0; }catch(_){}
       if (t!=null && (cur===0 || t<cur)){ try{ localStorage.setItem(k,String(t)); }catch(_){} return t; }
       return cur;
     }
 
     function vinto(){
-      attivo=false; vintoFlag=true;
       var t = Math.round((performance.now()-tStart)/100)/10;   // secondi, 1 decimale
       var prima = bestTime();
       var record = bestTime(t);
       var nuovoRecord = (prima===0 || t<=prima);
       BB.win({
-        emoji: nuovoRecord ? "🏆" : "🧀",
+        mascotte: nuovoRecord ? null : "../assets/icons/labirinto.svg",
+        emoji: nuovoRecord ? "🏆" : null,
         titolo: nuovoRecord ? "Nuovo record!" : "Evviva, formaggio!",
-        punteggio: "Tempo: " + t + "s",
+        punteggio: livelli.length + " labirinti in " + t + "s",
         record: "miglior tempo " + record + "s",
         rigioca: mostraStart
       });
     }
 
-    function mostraStart(){ vintoFlag=false; startScreen.classList.remove("bb-hidden"); }
+    function mostraStart(){ fermo = true; startScreen.classList.remove("bb-hidden"); }
 
     function avvia(liv){
-      N = TAB[liv] || 6;
+      difficolta = CONFIG.LIVELLI[liv] ? liv : "facile";
+      livelli = CONFIG.LIVELLI[difficolta];
+      livelloIdx = 0; tStart = 0;
       startScreen.classList.add("bb-hidden");
-      vintoFlag=false; attivo=false; last=null;
-      genera(N); fit(); disegnaMaze();
-      info.innerHTML = "🐭 → 🧀";
+      caricaLivello();
     }
 
-    window.addEventListener("resize", function(){ if (!startScreen.classList.contains("bb-hidden")) return; fit(); disegnaMaze(); });
+    window.addEventListener("resize", function(){
+      if (!topo || !startScreen.classList.contains("bb-hidden")) return;
+      var fx = topo.x/S, fy = topo.y/S, sc = scia.map(function(q){ return { x:q.x/S, y:q.y/S }; });
+      fit(); topo = { x: fx*S, y: fy*S }; scia = sc.map(function(q){ return { x:q.x*S, y:q.y*S }; }); disegna();
+    });
 
     Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
       b.addEventListener("click", function(){ avvia(b.dataset.liv); });

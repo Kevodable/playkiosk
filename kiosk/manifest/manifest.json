@@ -109,6 +109,7 @@
     {
       "id": "labirinto",
       "folder": "labirinto",
+      "version": "2",
       "category": "Giochi web",
       "order": 17,
       "tier": "base",
