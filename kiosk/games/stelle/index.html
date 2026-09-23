@@ -9,34 +9,46 @@
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
     .bb-stage{ padding:0; }
+    .bb-header{ background:rgba(255,255,255,.55); }
+    /* Cielo al tramonto con stelline che brillano, coerente con l'icona */
     .campo{
       position:absolute; top:0; right:0; bottom:0; left:0; overflow:hidden;
       touch-action:none;
-      background:
-        radial-gradient(circle at 50% 0%, var(--bb-blue-soft), transparent 60%),
-        radial-gradient(circle at 80% 100%, var(--bb-pink-soft), transparent 55%),
-        var(--bb-paper);
+      background:linear-gradient(to bottom, #6E7BD8 0%, #A99BE6 38%, #F2B7C6 72%, #FFD9A8 100%);
     }
-    /* Oggetto che cade (stella/caramella) */
-    .cosa{ position:absolute; left:0; top:0; font-size:var(--size,56px); line-height:1;
-      will-change:transform; user-select:none; filter:drop-shadow(0 4px 6px rgba(0,0,0,.15)); }
-    /* Cesto che segue il dito */
-    .cesto{
-      position:absolute; bottom:22px; width:132px; height:58px;
-      background:repeating-linear-gradient(90deg,#F6B400 0 10px,#E8A11f 10px 20px);
-      border:6px solid #7A1F3D; border-radius:10px 10px 30px 30px;
-      box-shadow:var(--bb-shadow); will-change:left;
+    .brillio{
+      position:absolute; width:6px; height:6px; border-radius:50%;
+      background:#fff; box-shadow:0 0 8px 2px rgba(255,255,255,.8);
+      pointer-events:none;
     }
-    .cesto::before{ content:""; position:absolute; left:-6px; right:-6px; top:-12px; height:14px;
-      background:#7A1F3D; border-radius:8px; }
+    /* prato in fondo */
+    .prato{
+      position:absolute; left:-5%; right:-5%; bottom:-6vmin; height:16vmin;
+      background:#8FD27A; border-radius:50% 50% 0 0 / 60% 60% 0 0;
+      box-shadow:inset 0 10px 0 #A7E08F;
+      pointer-events:none;
+    }
+    /* Stella che cade (sprite dell'icona) */
+    .cosa{ position:absolute; left:0; top:0; width:var(--size,64px); height:var(--size,64px);
+      will-change:transform; user-select:none; pointer-events:none;
+      filter:drop-shadow(0 0 10px rgba(255,230,120,.7)) drop-shadow(0 4px 6px rgba(0,0,0,.15)); }
+    /* La volpe col cestino segue il dito */
+    .volpe{
+      position:absolute; left:0; bottom:2vmin;
+      height:32vmin; height:clamp(170px,32vmin,340px);
+      aspect-ratio:371 / 512;
+      will-change:left;
+      z-index:2;
+    }
+    .volpe img{ width:100%; height:100%; display:block; transform-origin:50% 100%; pointer-events:none; }
     .scintilla{ position:absolute; width:14px; height:14px; border-radius:50%;
-      pointer-events:none; will-change:transform,opacity; }
+      pointer-events:none; will-change:transform,opacity; z-index:3; }
     .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:22px;
-      background:rgba(255,247,251,.92); text-align:center; }
-    .start__img{ width:28vmin; width:clamp(120px,28vmin,200px); height:auto;
+      background:rgba(255,244,230,.9); text-align:center; }
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:var(--bb-burgundy); }
+    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:#C4561B; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
   </style>
 </head>
@@ -44,10 +56,11 @@
   <div class="bb-screen">
     <div class="bb-stage">
       <div class="campo" id="campo">
-        <div class="cesto" id="cesto"></div>
+        <div class="prato"></div>
+        <div class="volpe" id="volpe"><img src="img/volpe.webp" alt=""></div>
         <div class="start" id="start">
-          <img class="start__img" src="../assets/mascotte/stella.png" alt="">
-          <div class="start__txt">Sposta il cesto e prendi le stelle!<br>Scegli la difficoltà:</div>
+          <img class="start__img" src="../assets/icons/stelle.svg" alt="">
+          <div class="start__txt">Sposta la volpe e prendi le stelle!<br>Scegli la difficoltà:</div>
           <div class="liv-row">
             <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
             <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
@@ -60,47 +73,77 @@
 
   <script src="../assets/shared.js"></script>
   <script>
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      DURATA_PARTITA: 60,          // secondi di partita
+      PUNTI_PER_STELLA: 1,
+      // Difficolta': v = velocita' di caduta (px/s, cresce di vScore per ogni
+      // secondo di gioco); spawnBase/spawnMin = ms tra una stella e l'altra
+      // (cala di SPAWN_CALO_MS per ogni secondo di gioco, fino a spawnMin)
+      DIFFICOLTA: {
+        facile:    { vMin: 180, vMax: 260, vScore: 1.5, spawnBase: 900, spawnMin: 520 },
+        medio:     { vMin: 240, vMax: 340, vScore: 2.5, spawnBase: 750, spawnMin: 400 },
+        difficile: { vMin: 320, vMax: 460, vScore: 3.5, spawnBase: 600, spawnMin: 300 }
+      },
+      SPAWN_CALO_MS: 6,
+      DIMENSIONE_MIN: 56,          // lato della stella in px
+      DIMENSIONE_MAX: 84,
+      BRILLII: 28,                 // stelline di sfondo
+      INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
+    };
+    // Geometria di volpe.webp (frazioni, da tools/build_stelle_sprites.py)
+    var VOLPE = { cesto: [.4744, .6582], presaX: [.2399, .7385], testa: .12 };
+    var STELLE = ["img/stella_0.webp", "img/stella_1.webp", "img/stella_2.webp", "img/stella_3.webp"];
+
     BB.lockScroll();
-    var info = BB.header("⭐ Acchiappa-stelle");
-    BB.idle(60000, BB.home);
+    var info = BB.header("Acchiappa-stelle");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
     var campo = document.getElementById("campo");
-    var cesto = document.getElementById("cesto");
+    var volpe = document.getElementById("volpe");
+    var volpeImg = volpe.querySelector("img");
     var startScreen = document.getElementById("start");
-    var DURATA = 60;
+    var DIFF = CONFIG.DIFFICOLTA.facile;
 
-    // Difficoltà scelta dal bambino (pulsanti start)
-    var TAB = {
-      facile:    { vMin: 180, vMax: 260, vScore: 1.5, spawnBase: 900, spawnMin: 520 },
-      medio:     { vMin: 240, vMax: 340, vScore: 2.5, spawnBase: 750, spawnMin: 400 },
-      difficile: { vMin: 320, vMax: 460, vScore: 3.5, spawnBase: 600, spawnMin: 300 }
-    };
-    var DIFF = TAB.facile;
-
-    var COSE = ["⭐","🌟","🍬","🍭","💛","🍪"];
-    var punteggio = 0, tempo = DURATA, inCorso = false;
+    var punteggio = 0, tempo = CONFIG.DURATA_PARTITA, inCorso = false;
     var cose = [], rafId = null, tickTimer = null, lastTs = 0, ultimoSpawn = 0, spawnOgni = 900;
-    var bx = 0;  // posizione (left) del cesto
+    var bx = 0;  // posizione (left) della volpe
+
+    // Stelline di sfondo che brillano (Web Animations: non risentono di "riduci movimento")
+    for (var n = 0; n < CONFIG.BRILLII; n++) {
+      var b = document.createElement("span");
+      b.className = "brillio";
+      b.style.left = BB.rand(2, 98) + "%";
+      b.style.top = BB.rand(3, 62) + "%";
+      var sc = (BB.rand(5, 12) / 10);
+      b.animate([{ opacity: .25, transform: "scale(" + sc * .6 + ")" }, { opacity: 1, transform: "scale(" + sc + ")" }],
+                { duration: BB.rand(900, 2200), direction: "alternate", iterations: Infinity, easing: "ease-in-out",
+                  delay: -BB.rand(0, 2000) });
+      campo.insertBefore(b, campo.firstChild);
+    }
 
     function aggiornaInfo(){ info.innerHTML = "⭐ " + punteggio + " &nbsp; ⏱ " + tempo + "s"; }
 
-    function clampCesto(x){
-      var bw = cesto.offsetWidth, W = campo.clientWidth;
-      bx = Math.max(0, Math.min(W - bw, x - bw/2));
-      cesto.style.left = bx + "px";
+    function clampVolpe(x){
+      var bw = volpe.offsetWidth, W = campo.clientWidth;
+      bx = Math.max(0, Math.min(W - bw, x - bw * VOLPE.cesto[0]));
+      volpe.style.left = bx + "px";
     }
-    // Il cesto segue il dito
+    // La volpe segue il dito
     function rel(e){ var r=campo.getBoundingClientRect(); var t=(e.touches&&e.touches[0])||e; return t.clientX - r.left; }
-    function muovi(e){ if(!inCorso) return; e.preventDefault(); clampCesto(rel(e)); }
+    function muovi(e){ if(!inCorso) return; e.preventDefault(); clampVolpe(rel(e)); }
     campo.addEventListener("pointerdown", muovi);
     campo.addEventListener("pointermove", muovi, { passive:false });
     campo.addEventListener("touchstart", muovi, { passive:false });
     campo.addEventListener("touchmove", muovi, { passive:false });
 
     function spawn(){
-      var size = BB.rand(48, 70);
-      var el = document.createElement("div");
-      el.className = "cosa"; el.textContent = COSE[BB.rand(0, COSE.length-1)];
+      var size = BB.rand(CONFIG.DIMENSIONE_MIN, CONFIG.DIMENSIONE_MAX);
+      var el = document.createElement("img");
+      el.className = "cosa"; el.alt = "";
+      el.src = STELLE[BB.rand(0, STELLE.length-1)];
       el.style.setProperty("--size", size + "px");
       campo.appendChild(el);
       var W = campo.clientWidth;
@@ -108,17 +151,18 @@
         el: el, size: size,
         x: BB.rand(6, Math.max(6, W - size - 6)),
         y: -size,
-        vy: BB.rand(DIFF.vMin, DIFF.vMax) + (DURATA - tempo) * DIFF.vScore,
+        vy: BB.rand(DIFF.vMin, DIFF.vMax) + (CONFIG.DURATA_PARTITA - tempo) * DIFF.vScore,
+        rot: BB.rand(-20, 20), vrot: BB.rand(-60, 60),
         presa: false
       };
-      el.style.transform = "translate("+p.x+"px,"+p.y+"px)";
+      el.style.transform = "translate("+p.x+"px,"+p.y+"px) rotate("+p.rot+"deg)";
       cose.push(p);
     }
 
     function scintille(cx, cy){
       for (var i=0;i<8;i++){
         var s=document.createElement("span"); s.className="scintilla";
-        s.style.background = i%2 ? "#FFD23F" : "#E8488B";
+        s.style.background = i%2 ? "#FFD23F" : "#FFF3B0";
         s.style.left=cx+"px"; s.style.top=cy+"px"; campo.appendChild(s);
         var ang=Math.random()*Math.PI*2, dist=BB.rand(30,80);
         s.animate([{transform:"translate(0,0) scale(1)",opacity:1},
@@ -128,6 +172,30 @@
       }
     }
 
+    // La volpe salta a ogni presa
+    var saltoVolpe = null;
+    function saltella(){
+      if (saltoVolpe && saltoVolpe.playState === "running") return;
+      saltoVolpe = volpeImg.animate([{ transform: "none" }, { transform: "translateY(-7%) scale(.98,1.03)", offset: .35 },
+        { transform: "scale(1.04,.95)", offset: .7 }, { transform: "none" }], { duration: 340, easing: "ease-out" });
+    }
+
+    // Presa: la stella vola nel cestino rimpicciolendo, poi scintille
+    function prendi(p){
+      p.presa = true;
+      punteggio += CONFIG.PUNTI_PER_STELLA; aggiornaInfo(); BB.sound("pop");
+      var i = cose.indexOf(p); if (i >= 0) cose.splice(i, 1);
+      var r = volpe.getBoundingClientRect(), c = campo.getBoundingClientRect();
+      var mx = r.left - c.left + r.width * VOLPE.cesto[0], my = r.top - c.top + r.height * VOLPE.cesto[1];
+      var dx = mx - (p.x + p.size / 2), dy = my - (p.y + p.size / 2);
+      var base = "translate(" + p.x + "px," + p.y + "px) rotate(" + p.rot + "deg)";
+      p.el.animate([{ transform: base + " scale(1)" },
+                    { transform: "translate(" + (p.x + dx) + "px," + (p.y + dy) + "px) rotate(" + (p.rot + 180) + "deg) scale(.25)" }],
+                   { duration: 220, easing: "ease-in", fill: "forwards" });
+      setTimeout(function () { if (p.el.parentNode) p.el.remove(); scintille(mx, my); }, 220);
+      saltella();
+    }
+
     function removeCosa(p){ var i=cose.indexOf(p); if(i>=0) cose.splice(i,1); if(p.el.parentNode) p.el.remove(); }
 
     function loop(ts){
@@ -135,28 +203,21 @@
       if(!lastTs) lastTs=ts;
       var dt=(ts-lastTs)/1000; if(dt>0.05) dt=0.05; lastTs=ts;
       ultimoSpawn += (ts-(loop._prev||ts)); loop._prev=ts;
-      spawnOgni = Math.max(DIFF.spawnMin, DIFF.spawnBase - (DURATA-tempo)*6);
+      spawnOgni = Math.max(DIFF.spawnMin, DIFF.spawnBase - (CONFIG.DURATA_PARTITA-tempo)*CONFIG.SPAWN_CALO_MS);
       if (ultimoSpawn > spawnOgni){ ultimoSpawn=0; spawn(); }
 
       var H = campo.clientHeight;
-      var bw = cesto.offsetWidth;
-      var catchTop = H - 22 - cesto.offsetHeight;   // bordo superiore del cesto
+      var vw = volpe.offsetWidth, vh = volpe.offsetHeight;
+      var testa = volpe.offsetTop + vh * VOLPE.testa;   // linea di presa: sopra la testa della volpe
+      var x0 = bx + vw * VOLPE.presaX[0], x1 = bx + vw * VOLPE.presaX[1];
       for (var i=cose.length-1;i>=0;i--){
         var p = cose[i];
-        p.y += p.vy*dt;
-        p.el.style.transform = "translate("+p.x+"px,"+p.y+"px)";
-        if (!p.presa){
-          var cxItem = p.x + p.size/2;
-          var bordoBasso = p.y + p.size;
-          // entra nel cesto?
-          if (bordoBasso >= catchTop && p.y < catchTop + 30 &&
-              cxItem >= bx && cxItem <= bx + bw){
-            p.presa = true; punteggio++; aggiornaInfo(); BB.sound("pop");
-            scintille(cxItem, catchTop);
-            removeCosa(p); continue;
-          }
-        }
-        if (p.y > H + 40){ removeCosa(p); }  // mancata: nessuna penalità
+        p.y += p.vy*dt; p.rot += p.vrot*dt;
+        p.el.style.transform = "translate("+p.x+"px,"+p.y+"px) rotate("+p.rot+"deg)";
+        var cx = p.x + p.size/2, basso = p.y + p.size;
+        // arriva sulla volpe?
+        if (basso >= testa && p.y < testa + 40 && cx >= x0 && cx <= x1){ prendi(p); continue; }
+        if (p.y > H + 40){ removeCosa(p); }  // mancata: nessuna penalita'
       }
       rafId = requestAnimationFrame(loop);
     }
@@ -164,11 +225,11 @@
     function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
 
     function avvia(liv){
-      if (TAB[liv]) DIFF = TAB[liv];
+      if (CONFIG.DIFFICOLTA[liv]) DIFF = CONFIG.DIFFICOLTA[liv];
       startScreen.classList.add("bb-hidden");
       cose.forEach(function(p){ if(p.el.parentNode) p.el.remove(); }); cose=[];
-      punteggio=0; tempo=DURATA; inCorso=true; ultimoSpawn=9999; lastTs=0; loop._prev=0;
-      clampCesto(campo.clientWidth/2);
+      punteggio=0; tempo=CONFIG.DURATA_PARTITA; inCorso=true; ultimoSpawn=9999; lastTs=0; loop._prev=0;
+      clampVolpe(campo.clientWidth/2);
       aggiornaInfo();
       rafId = requestAnimationFrame(loop);
       tickTimer = setInterval(function(){ tempo--; aggiornaInfo(); if(tempo<=0) fine(); }, 1000);
@@ -180,7 +241,7 @@
       var record = BB.score("stelle", punteggio);
       var nuovoRecord = punteggio>0 && punteggio>=record;
       BB.win({
-        mascotte: nuovoRecord ? null : "../assets/mascotte/stella.png",
+        mascotte: nuovoRecord ? null : "../assets/icons/stelle.svg",
         emoji: nuovoRecord ? "🏆" : null,
         titolo: nuovoRecord ? "Nuovo record!" : "Tempo scaduto!",
         punteggio: punteggio + " stelle",
@@ -189,6 +250,7 @@
       });
     }
 
+    clampVolpe(campo.clientWidth/2);
     Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
       b.addEventListener("click", function(){ avvia(b.dataset.liv); });
     });

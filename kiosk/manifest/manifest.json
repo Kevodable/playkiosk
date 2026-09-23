@@ -65,6 +65,7 @@
     {
       "id": "stelle",
       "folder": "stelle",
+      "version": "2",
       "category": "Giochi web",
       "order": 14,
       "tier": "base",
