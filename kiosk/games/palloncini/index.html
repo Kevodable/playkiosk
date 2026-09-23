@@ -67,6 +67,24 @@
       transform-origin:50% 0;
     }
 
+    /* Palloncino speciale: dorato, con stella e bagliore; scoppiando fa
+       scoppiare anche i palloncini vicini */
+    .palloncino.speciale .palloncino__corpo{
+      filter:drop-shadow(0 0 calc(var(--size,96px) * .12) rgba(255,210,63,.95)) drop-shadow(0 6px 8px rgba(40,70,110,.18));
+    }
+    .palloncino__stella{
+      position:absolute; left:26%; top:24%; width:48%; aspect-ratio:1;
+      pointer-events:none;
+      filter:drop-shadow(0 1px 2px rgba(150,90,0,.6));
+    }
+    /* Onda d'urto dello speciale */
+    .onda{
+      position:absolute; border-radius:50%;
+      border:6px solid #FFD23F;
+      box-shadow:0 0 18px rgba(255,210,63,.8), inset 0 0 18px rgba(255,210,63,.6);
+      pointer-events:none;
+    }
+
     /* Scoppio (come nell'icona): raggi, coriandoli e brandelli di gomma */
     .scoppio{
       position:absolute; width:1px; height:1px;
@@ -131,12 +149,23 @@
       ONDEGGIAMENTO_PX: 18,        // quanto il palloncino ondeggia a destra e sinistra
       ONDEGGIAMENTO_VELOCITA: 1.6, // oscillazioni al secondo x 2pi (piu' alto = piu' veloce)
       INCLINAZIONE: 6,             // gradi di inclinazione mentre ondeggia
+      SPECIALE_PROBABILITA: 0.08,  // quanti palloncini nascono speciali (dorati con stella)
+      SPECIALE_RAGGIO: 3.2,        // raggio dell'onda, in larghezze del palloncino speciale
+      SPECIALE_ONDA_MS: 420,       // quanto ci mette l'onda ad arrivare al bordo del raggio
       NUVOLE: 4,
       INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
     };
     // colore di raggi e brandelli dello scoppio, per ogni palloncino
     var TINTA = { rosso: "#E8424F", giallo: "#F4C21B", blu: "#3E8BE0", verde: "#3DBE52",
                   viola: "#9B4FD8", arancio: "#F28A2E", rosa: "#E84C9A" };
+    var STELLA = (function () {       // punti di una stella a 5 punte (raggio 44)
+      var pts = [];
+      for (var i = 0; i < 10; i++) {
+        var r = i % 2 ? 19 : 44, a = (-90 + i * 36) * Math.PI / 180;
+        pts.push((Math.cos(a) * r).toFixed(1) + "," + (Math.sin(a) * r).toFixed(1));
+      }
+      return pts.join(" ");
+    })();
     var CORIANDOLI = ["#E8424F", "#9B5DC9", "#FFD23F", "#3FA7E8", "#FF8A3D", "#58C27D"];
 
     BB.lockScroll();
@@ -178,15 +207,23 @@
     // Crea un palloncino in basso e lo registra nel game loop
     function spawn() {
       var size = BB.rand(CONFIG.DIMENSIONE_MIN, CONFIG.DIMENSIONE_MAX);
-      var colore = CONFIG.COLORI[BB.rand(0, CONFIG.COLORI.length - 1)];
+      var speciale = Math.random() < CONFIG.SPECIALE_PROBABILITA;
+      var colore = speciale ? "giallo" : CONFIG.COLORI[BB.rand(0, CONFIG.COLORI.length - 1)];
       var el = document.createElement("button");
-      el.className = "palloncino";
+      el.className = "palloncino" + (speciale ? " speciale" : "");
       el.style.setProperty("--size", size + "px");
       el.innerHTML =
         '<svg class="palloncino__filo" viewBox="0 0 30 75" preserveAspectRatio="none">' +
           '<path d="M15 0 Q24 18 15 36 Q6 54 15 75" fill="none" stroke="#4A2C22" stroke-width="1.6" ' +
           'stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>' +
-        '<img class="palloncino__corpo" src="img/palloncino_' + colore + '.webp" alt="">';
+        '<img class="palloncino__corpo" src="img/palloncino_' + colore + '.webp" alt="">' +
+        (speciale ? '<svg class="palloncino__stella" viewBox="-50 -50 100 100"><polygon points="' + STELLA +
+                    '" fill="#fff" stroke="#E0A000" stroke-width="5" stroke-linejoin="round"/></svg>' : "");
+      if (speciale) {   // la stella pulsa
+        el.querySelector(".palloncino__stella").animate(
+          [{ transform: "scale(.9) rotate(-8deg)" }, { transform: "scale(1.12) rotate(8deg)" }],
+          { duration: 600, direction: "alternate", iterations: Infinity, easing: "ease-in-out" });
+      }
       // il filo ondeggia (Web Animations: non risente di "riduci movimento")
       el.querySelector(".palloncino__filo").animate(
         [{ transform: "rotate(" + -CONFIG.FILO_OSCILLAZIONE + "deg)" },
@@ -205,6 +242,8 @@
         drift: CONFIG.ONDEGGIAMENTO_PX * (0.5 + Math.random() * 0.5),   // ampiezza di questo palloncino
         phase: Math.random() * Math.PI * 2,
         colore: colore,
+        speciale: speciale,
+        ox: 0,
         popped: false
       };
       el.style.transform = "translate(" + p.x + "px," + p.y + "px)";
@@ -264,15 +303,38 @@
       BB.sound("pop");
 
       // Centro del palloncino (la parte gonfia, non il filo)
-      var cx = p.x + p.size / 2;
+      var cx = p.x + p.ox + p.size / 2;
       var cy = p.y + p.size * .6;
       scoppio(cx, cy, p.size, p.colore);
       sobbalza();
+      if (p.speciale) onda(cx, cy, p.size);
 
       p.el.animate([{ transform: p.el.style.transform + " scale(1)", opacity: 1 },
                     { transform: p.el.style.transform + " scale(1.25)", opacity: 0 }],
                    { duration: 120, fill: "forwards" });
       removePalloncino(p);
+    }
+
+    // Onda dello speciale: fa scoppiare i palloncini entro il raggio, prima i
+    // piu' vicini; se ne prende un altro speciale, parte un'altra onda.
+    function onda(cx, cy, size) {
+      var R = size * CONFIG.SPECIALE_RAGGIO;
+      var el = document.createElement("div");
+      el.className = "onda";
+      el.style.left = cx - R + "px";
+      el.style.top = cy - R + "px";
+      el.style.width = el.style.height = 2 * R + "px";
+      campo.appendChild(el);
+      el.animate([{ transform: "scale(.1)", opacity: 1 }, { transform: "scale(1)", opacity: .9, offset: .85 },
+                  { transform: "scale(1.05)", opacity: 0 }],
+                 { duration: CONFIG.SPECIALE_ONDA_MS * 1.2, easing: "ease-out", fill: "forwards" });
+      setTimeout(function () { el.remove(); }, CONFIG.SPECIALE_ONDA_MS * 1.2 + 30);
+      BB.sound("match");
+      palloncini.slice().forEach(function (q) {
+        if (q.popped) return;
+        var d = Math.hypot(q.x + q.ox + q.size / 2 - cx, q.y + q.size * .6 - cy);
+        if (d <= R) setTimeout(function () { scoppia(q); }, CONFIG.SPECIALE_ONDA_MS * d / R);
+      });
     }
 
     function removePalloncino(p) {
@@ -304,7 +366,7 @@
         if (p.popped) continue;
         p.y -= p.vy * dt;
         p.phase += dt * CONFIG.ONDEGGIAMENTO_VELOCITA;
-        var ox = Math.sin(p.phase) * p.drift;
+        var ox = p.ox = Math.sin(p.phase) * p.drift;
         var tilt = Math.cos(p.phase) * CONFIG.INCLINAZIONE * (p.drift / CONFIG.ONDEGGIAMENTO_PX);
         p.el.style.transform = "translate(" + (p.x + ox) + "px," + p.y + "px) rotate(" + tilt.toFixed(2) + "deg)";
         // Uscito in cima senza essere scoppiato → rimuovi (nessuna penalità)
