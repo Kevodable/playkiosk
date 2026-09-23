@@ -38,17 +38,17 @@ for sheet, names in zip(args[0::2], args[1::2]):
     for i, name in enumerate(names):
         r, c = divmod(i, 3)
         x0, x1, y0, y1 = W * c // 3, W * (c + 1) // 3, H * r // 3, H * (r + 1) // 3
-        cell = np.zeros_like(alpha)
-        cell[y0:y1, x0:x1] = alpha[y0:y1, x0:x1]
+        cell = alpha[y0:y1, x0:x1]                 # work on this cell only (fast)
         # the biggest object in the cell: start from its most central opaque pixel
         ys, xs = np.nonzero(cell)
         if not len(xs):
             print("VUOTA", name); continue
-        k = np.argmin((xs - (x0 + x1) / 2) ** 2 + (ys - (y0 + y1) / 2) ** 2)
-        obj = connected(cell, (int(xs[k]), int(ys[k])))
-        # keep small detached bits close to it (eyes, sparkles of the same icon)
-        near = dilate(obj, 12) & cell
-        obj = obj | (near & ~obj)
+        k = np.argmin((xs - (x1 - x0) / 2) ** 2 + (ys - (y1 - y0) / 2) ** 2)
+        part = connected(cell, (int(xs[k]), int(ys[k])))
+        # keep small detached bits close to it (eyes, a whale's spout...)
+        part = part | (dilate(part, 30) & cell)
+        obj = np.zeros_like(alpha)
+        obj[y0:y1, x0:x1] = part
         out = rgba.copy()
         out[..., 3] = np.where(obj, rgba[..., 3], 0)
         bx0, by0, bx1, by1 = crop_box(obj, 4)

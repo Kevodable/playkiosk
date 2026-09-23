@@ -16,7 +16,13 @@ def load_cutout(path, thresh=40, rim=5, seeds=()):
     is from white and is un-premultiplied, so no pale halo shows on the
     mint menu background.
     """
-    im = Image.open(path).convert("RGB")
+    im = Image.open(path)
+    if im.mode in ("RGBA", "LA", "P"):          # already transparent: flatten on white first
+        im = im.convert("RGBA")
+        bg = Image.new("RGBA", im.size, (255, 255, 255, 255))
+        bg.alpha_composite(im)
+        im = bg
+    im = im.convert("RGB")
     W, H = im.size
     flood = im.copy()
     magenta = (255, 0, 255)
