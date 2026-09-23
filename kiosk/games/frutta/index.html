@@ -9,36 +9,56 @@
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
     .bb-stage{ padding:0; }
+    .bb-header{ background:rgba(255,255,255,.55); }
+    /* Dojo di bambu', coerente con il panda ninja dell'icona */
     .campo{
       position:absolute; top:0; right:0; bottom:0; left:0; overflow:hidden;
       touch-action:none;            /* lo swipe non deve scrollare */
-      background:
-        radial-gradient(circle at 25% 12%, var(--bb-blue-soft), transparent 55%),
-        radial-gradient(circle at 85% 90%, var(--bb-pink-soft), transparent 55%),
-        var(--bb-paper);
+      background:linear-gradient(to bottom, #FFF6DF 0%, #F1F7DA 55%, #D9F0C4 100%);
     }
-    /* Frutto: emoji grande, ruota mentre vola */
+    /* canne di bambu' ai lati, discrete */
+    .bambu{
+      position:absolute; top:-2%; bottom:-2%; width:var(--w,26px);
+      pointer-events:none; opacity:.55;
+      background:
+        repeating-linear-gradient(to bottom, transparent 0 calc(var(--nodo,120px) - 6px),
+          rgba(70,120,40,.55) calc(var(--nodo,120px) - 6px) var(--nodo,120px)),
+        linear-gradient(to right, #8CC96A, #B5DE8F 45%, #7DBB5C);
+      border-radius:10px;
+    }
+    /* Panda ninja in basso a sinistra */
+    .panda{
+      position:absolute; left:1vmin; bottom:0;
+      height:34vmin; height:clamp(170px,34vmin,340px); width:auto;
+      pointer-events:none;
+      transform-origin:50% 100%;
+      z-index:2;
+    }
+    /* Frutto: sprite dell'icona, ruota mentre vola */
     .frutto{
       position:absolute; left:0; top:0;
-      font-size:var(--size,84px); line-height:1;
-      will-change:transform; user-select:none;
+      width:var(--size,96px); height:auto;
+      will-change:transform; user-select:none; pointer-events:none;
       filter:drop-shadow(0 6px 8px rgba(0,0,0,.18));
+      z-index:3;
     }
-    .frutto.tagliato{ pointer-events:none; }
+    /* Mezzo frutto dopo il taglio (ritagliato con clip-path) */
+    .meta{ position:absolute; left:0; top:0; pointer-events:none; z-index:3;
+      filter:drop-shadow(0 4px 6px rgba(0,0,0,.18)); }
     /* Goccia di succo */
     .succo{ position:absolute; width:16px; height:16px; border-radius:50%;
-      pointer-events:none; will-change:transform,opacity; }
+      pointer-events:none; will-change:transform,opacity; z-index:4; }
     /* Scia della "lama" */
     .lama{ position:absolute; width:18px; height:18px; border-radius:50%;
-      background:rgba(255,255,255,.85); pointer-events:none;
+      background:rgba(255,255,255,.85); pointer-events:none; z-index:5;
       box-shadow:0 0 10px rgba(255,255,255,.9); will-change:transform,opacity; }
     /* Schermata start */
     .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:22px;
-      background:rgba(255,247,251,.92); text-align:center; }
-    .start__img{ width:28vmin; width:clamp(120px,28vmin,200px); height:auto;
+      background:rgba(255,248,230,.9); text-align:center; }
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:var(--bb-burgundy); }
+    .start__txt{ font-size:5vmin; font-size:clamp(20px,5vmin,34px); font-weight:900; color:#B3261E; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
   </style>
 </head>
@@ -47,8 +67,13 @@
     <!-- header iniettato da JS -->
     <div class="bb-stage">
       <div class="campo" id="campo">
+        <div class="bambu" style="left:1.5%; --w:24px; --nodo:130px"></div>
+        <div class="bambu" style="left:4.5%; --w:16px; --nodo:95px; top:18%"></div>
+        <div class="bambu" style="right:2%; --w:26px; --nodo:140px"></div>
+        <div class="bambu" style="right:5.5%; --w:15px; --nodo:100px; top:30%"></div>
+        <img class="panda" id="panda" src="img/panda.webp" alt="">
         <div class="start" id="start">
-          <img class="start__img" src="../assets/mascotte/bobo.png" alt="">
+          <img class="start__img" src="../assets/icons/frutta.svg" alt="">
           <div class="start__txt">Taglia la frutta!<br>Scegli la difficoltà:</div>
           <div class="liv-row">
             <button class="bb-btn bb-btn--blue liv-btn" data-liv="facile">😊 Facile</button>
@@ -62,50 +87,64 @@
 
   <script src="../assets/shared.js"></script>
   <script>
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      DURATA_PARTITA: 60,          // secondi di partita
+      PUNTI_PER_FRUTTO: 1,
+      // Difficoltà: ms tra un lancio e l'altro (cala di SPAWN_CALO_MS per ogni
+      // secondo di gioco fino a spawnMin); doppio = probabilita' di due frutti insieme
+      DIFFICOLTA: {
+        facile:    { spawnBase: 1100, spawnMin: 600, doppio: 0.10 },
+        medio:     { spawnBase: 850,  spawnMin: 430, doppio: 0.22 },
+        difficile: { spawnBase: 650,  spawnMin: 320, doppio: 0.38 }
+      },
+      SPAWN_CALO_MS: 7,
+      GRAVITA: 2000,               // px/s^2
+      SPINTA_MIN: 1150,            // velocita' iniziale verso l'alto (px/s)
+      SPINTA_MAX: 1450,
+      DIMENSIONE_MIN: 96,          // larghezza del frutto in px
+      DIMENSIONE_MAX: 132,
+      META_MS: 700,                // quanto restano visibili le due meta' dopo il taglio
+      INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
+    };
+
+    // Frutti dell'icona: sprite + colore del succo
+    var FRUTTI = [
+      { img: "img/mela.webp",    c: "#FF5A5A", ratio: 223 / 199 },
+      { img: "img/arancia.webp", c: "#FFA11C", ratio: 191 / 173 },
+      { img: "img/kiwi.webp",    c: "#8CCB3F", ratio: 1 }
+    ];
+
     BB.lockScroll();
-    var info = BB.header("🍉 Taglia la Frutta");
-    BB.idle(60000, BB.home);
+    var info = BB.header("Taglia la Frutta");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
     var campo = document.getElementById("campo");
     var startScreen = document.getElementById("start");
-    var DURATA = 60;
+    var DIFF = CONFIG.DIFFICOLTA.facile;
 
-    // Difficoltà scelta dal bambino a inizio partita (pulsanti nella schermata start).
-    var TAB = {
-      facile:    { spawnBase: 1100, spawnMin: 600, doppio: 0.10 },
-      medio:     { spawnBase: 850,  spawnMin: 430, doppio: 0.22 },
-      difficile: { spawnBase: 650,  spawnMin: 320, doppio: 0.38 }
-    };
-    var DIFF = TAB.facile;
-
-    // Frutti: emoji + colore del succo
-    var FRUTTI = [
-      { e:"🍉", c:"#FF4D6D" }, { e:"🍓", c:"#E8488B" }, { e:"🍌", c:"#FFD23F" },
-      { e:"🍎", c:"#FF4D4D" }, { e:"🍊", c:"#FFB020" }, { e:"🍇", c:"#9B59B6" },
-      { e:"🥝", c:"#7BCB4F" }, { e:"🍑", c:"#FF9AA2" }
-    ];
-
-    var G = 2000;            // gravità px/s^2
-    var punteggio = 0, tempo = DURATA, inCorso = false;
+    var punteggio = 0, tempo = CONFIG.DURATA_PARTITA, inCorso = false;
     var frutti = [], rafId = null, tickTimer = null, lastTs = 0, ultimoSpawn = 0, spawnOgni = 1000;
 
-    function aggiornaInfo(){ info.innerHTML = "🍉 " + punteggio + " &nbsp; ⏱ " + tempo + "s"; }
+    function aggiornaInfo(){ info.innerHTML = "🍎 " + punteggio + " &nbsp; ⏱ " + tempo + "s"; }
 
     // Lancia un frutto dal basso con un arco verso l'alto
     function spawn(){
       var f = FRUTTI[BB.rand(0, FRUTTI.length-1)];
-      var size = BB.rand(70, 104);
-      var el = document.createElement("div");
-      el.className = "frutto"; el.textContent = f.e;
+      var size = BB.rand(CONFIG.DIMENSIONE_MIN, CONFIG.DIMENSIONE_MAX);
+      var el = document.createElement("img");
+      el.className = "frutto"; el.src = f.img; el.alt = "";
       el.style.setProperty("--size", size + "px");
       campo.appendChild(el);
       var W = campo.clientWidth, H = campo.clientHeight;
       var p = {
-        el: el, size: size, color: f.c,
-        x: BB.rand(Math.round(W*0.15), Math.round(W*0.85)),
+        el: el, size: size, h: size * f.ratio, color: f.c, img: f.img,
+        x: BB.rand(Math.round(W*0.18), Math.round(W*0.82)),
         y: H + 40,
         vx: (Math.random()-0.5) * 220,
-        vy: -(BB.rand(1150, 1450)),   // spinta verso l'alto
+        vy: -(BB.rand(CONFIG.SPINTA_MIN, CONFIG.SPINTA_MAX)),   // spinta verso l'alto
         rot: 0, vrot: (Math.random()-0.5)*360,
         sliced: false
       };
@@ -113,22 +152,52 @@
       frutti.push(p);
     }
 
-    function centro(p){ return { x: p.x + p.size/2, y: p.y + p.size/2 }; }
+    function centro(p){ return { x: p.x + p.size/2, y: p.y + p.h/2 }; }
+
+    // angolo (radianti) del gesto che ha tagliato, per dividere il frutto lungo di esso
+    var angoloTaglio = 0;
 
     function taglia(p){
       if (p.sliced || !inCorso) return;
       p.sliced = true;
-      punteggio++; aggiornaInfo(); BB.sound("match");
+      punteggio += CONFIG.PUNTI_PER_FRUTTO; aggiornaInfo(); BB.sound("match");
       var c = centro(p);
       succhi(c.x, c.y, p.color);
-      // il frutto schizza via e svanisce
-      p.vy = -BB.rand(150,350); p.vx *= 1.6; p.vrot = (Math.random()-0.5)*900;
-      p.el.classList.add("tagliato");
-      p.el.animate(
-        [{ opacity:1 }, { opacity:0 }],
-        { duration:380, easing:"ease-out", fill:"forwards" }
-      );
-      setTimeout(function(){ removeFrutto(p); }, 360);
+      dividi(p);
+      removeFrutto(p);
+    }
+
+    // Il frutto si divide in due meta' lungo la direzione del taglio, che
+    // si allontanano e cadono ruotando
+    function dividi(p){
+      var local = angoloTaglio * 180 / Math.PI - p.rot;      // angolo del taglio nello sprite
+      var nx = -Math.sin(angoloTaglio), ny = Math.cos(angoloTaglio);   // normale al taglio
+      [1, -1].forEach(function (lato) {
+        var m = document.createElement("div");
+        m.className = "meta";
+        m.style.width = p.size + "px"; m.style.height = p.h + "px";
+        // meta' = semipiano: un rettangolo enorme ruotato lungo il taglio
+        m.innerHTML = '<img src="' + p.img + '" alt="" style="width:100%;height:100%;display:block;' +
+          'clip-path:polygon(' + semipiano(local, lato) + ')">';
+        campo.appendChild(m);
+        var base = "translate(" + p.x + "px," + p.y + "px) rotate(" + p.rot + "deg)";
+        var d = p.size * .35;
+        m.animate([
+          { transform: base, opacity: 1 },
+          { transform: "translate(" + (p.x + nx * d * lato) + "px," + (p.y + ny * d * lato - p.size * .2) + "px) rotate(" + (p.rot + 25 * lato) + "deg)", opacity: 1, offset: .35 },
+          { transform: "translate(" + (p.x + nx * d * lato * 1.6) + "px," + (p.y + p.size * 1.8) + "px) rotate(" + (p.rot + 70 * lato) + "deg)", opacity: 0 }
+        ], { duration: CONFIG.META_MS, easing: "ease-in", fill: "forwards" });
+        setTimeout(function () { m.remove(); }, CONFIG.META_MS + 30);
+      });
+    }
+    // poligono (in % dello sprite) del semipiano da un lato della retta per il
+    // centro con inclinazione "gradi"
+    function semipiano(gradi, lato){
+      var a = gradi * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a);
+      var nx = -dy * lato, ny = dx * lato, L = 300;
+      var pts = [[50 + dx*L, 50 + dy*L], [50 + dx*L + nx*L, 50 + dy*L + ny*L],
+                 [50 - dx*L + nx*L, 50 - dy*L + ny*L], [50 - dx*L, 50 - dy*L]];
+      return pts.map(function (q) { return q[0].toFixed(1) + "% " + q[1].toFixed(1) + "%"; }).join(",");
     }
 
     function removeFrutto(p){
@@ -157,9 +226,9 @@
     // ---- Lama / swipe ----
     var giu = false, lastX = 0, lastY = 0;
     function puntoSuFrutta(x, y){
-      for (var i=0;i<frutti.length;i++){
+      for (var i=frutti.length-1;i>=0;i--){
         var p = frutti[i]; if (p.sliced) continue;
-        var c = centro(p), r = p.size*0.62;
+        var c = centro(p), r = p.size*0.55;
         var dx = x-c.x, dy = y-c.y;
         if (dx*dx + dy*dy <= r*r) taglia(p);
       }
@@ -182,6 +251,7 @@
       if (!giu || !inCorso) return;
       e.preventDefault();
       var p = rel(e);
+      if (p.x !== lastX || p.y !== lastY) angoloTaglio = Math.atan2(p.y - lastY, p.x - lastX);
       // campiona alcuni punti lungo il segmento per non "saltare" i frutti con swipe veloci
       var steps = 4;
       for (var i=1;i<=steps;i++){
@@ -207,7 +277,7 @@
       var dt = (ts - lastTs)/1000; if (dt>0.05) dt=0.05; lastTs = ts;
 
       ultimoSpawn += (ts - (loop._prev||ts)); loop._prev = ts;
-      spawnOgni = Math.max(DIFF.spawnMin, DIFF.spawnBase - (DURATA-tempo)*7);
+      spawnOgni = Math.max(DIFF.spawnMin, DIFF.spawnBase - (CONFIG.DURATA_PARTITA-tempo)*CONFIG.SPAWN_CALO_MS);
       if (ultimoSpawn > spawnOgni){
         ultimoSpawn = 0; spawn();
         if (Math.random() < DIFF.doppio) spawn();
@@ -216,9 +286,9 @@
       var H = campo.clientHeight;
       for (var i=frutti.length-1;i>=0;i--){
         var p = frutti[i];
-        p.vy += G*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.rot += p.vrot*dt;
+        p.vy += CONFIG.GRAVITA*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.rot += p.vrot*dt;
         p.el.style.transform = "translate("+p.x+"px,"+p.y+"px) rotate("+p.rot+"deg)";
-        if (p.y > H + 120){ removeFrutto(p); }   // caduto giù: nessuna penalità
+        if (p.y > H + 160){ removeFrutto(p); }   // caduto giù: nessuna penalità
       }
       rafId = requestAnimationFrame(loop);
     }
@@ -226,10 +296,10 @@
     function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
 
     function avvia(liv){
-      if (TAB[liv]) DIFF = TAB[liv];   // difficoltà scelta dal bambino
+      if (CONFIG.DIFFICOLTA[liv]) DIFF = CONFIG.DIFFICOLTA[liv];   // difficoltà scelta dal bambino
       startScreen.classList.add("bb-hidden");
       frutti.forEach(function(p){ if(p.el.parentNode) p.el.remove(); });
-      frutti = []; punteggio = 0; tempo = DURATA; inCorso = true;
+      frutti = []; punteggio = 0; tempo = CONFIG.DURATA_PARTITA; inCorso = true;
       ultimoSpawn = 9999; lastTs = 0; loop._prev = 0;
       aggiornaInfo();
       rafId = requestAnimationFrame(loop);
@@ -243,7 +313,7 @@
       var record = BB.score("frutta", punteggio);
       var nuovoRecord = punteggio>0 && punteggio>=record;
       BB.win({
-        mascotte: nuovoRecord ? null : "../assets/mascotte/bobo.png",
+        mascotte: nuovoRecord ? null : "../assets/icons/frutta.svg",
         emoji: nuovoRecord ? "🏆" : null,
         titolo: nuovoRecord ? "Nuovo record!" : "Tempo scaduto!",
         punteggio: punteggio + " frutti",
