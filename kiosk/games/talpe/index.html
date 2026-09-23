@@ -129,6 +129,24 @@
       100%{ opacity:0; transform:translate(var(--dx),var(--dy)) scale(1.4); }
     }
 
+    /* Colpo speciale: la talpa scappata balza verso lo schermo (solo
+       scena, non si tocca e non toglie punti) e poi rientra. */
+    .balzo{
+      position:fixed; z-index:45;
+      pointer-events:none;
+      animation-name:balzo; animation-fill-mode:forwards;
+      /* lo sprite e' tagliato dove entra nella terra: sfumiamo il fondo */
+      -webkit-mask-image:linear-gradient(to bottom, #000 72%, transparent 97%);
+      mask-image:linear-gradient(to bottom, #000 72%, transparent 97%);
+    }
+    @keyframes balzo{
+      0%{ transform:translateY(0) scale(1) rotate(0deg); animation-timing-function:cubic-bezier(.2,.8,.3,1.2); }
+      35%{ transform:translateY(-18%) scale(var(--scala)) rotate(-6deg); }
+      50%{ transform:translateY(-16%) scale(var(--scala)) rotate(5deg); animation-timing-function:ease-in; }
+      85%{ transform:translateY(20%) scale(1) rotate(0deg); opacity:1; }
+      100%{ transform:translateY(70%) scale(.9); opacity:0; }
+    }
+
     /* Indicatore "+1" che sale al colpo */
     .plusone{
       position:absolute;
@@ -205,6 +223,9 @@
       MARTELLO_DIMENSIONE: 0.95, // altezza del martello rispetto a una buca
       MARTELLO_ANGOLO_COLPO: 72, // gradi: posa finale (testa sul punto toccato)
       STELLINE_MS: 700,          // stelline sopra la talpa colpita
+      BALZO_PROBABILITA: 0.2,    // talpa scappata: probabilita' che balzi verso lo schermo
+      BALZO_MS: 750,             // durata del balzo (piu' basso = piu' veloce)
+      BALZO_SCALA: 2.4,          // quanto si ingrandisce venendo verso lo schermo
       INATTIVITA_MS: 60000       // senza tocchi: torna al menu giochi
     };
 
@@ -261,8 +282,14 @@
 
     function mostraTalpa() {
       if (!inCorso) return;
-      // Nascondi l'eventuale talpa attiva
-      if (attiva >= 0) buche[attiva].classList.remove("su");
+      // Nascondi l'eventuale talpa attiva; se e' scappata senza essere
+      // colpita, a volte fa il balzo (solo effetto, nessuna penalita')
+      if (attiva >= 0) {
+        var prima = buche[attiva];
+        var scappata = prima.classList.contains("su") && !prima.classList.contains("presa");
+        if (scappata && Math.random() < CONFIG.BALZO_PROBABILITA) balzo(prima);
+        prima.classList.remove("su");
+      }
       // Scegli una buca diversa dalla precedente
       var idx;
       do { idx = BB.rand(0, buche.length - 1); } while (idx === attiva && buche.length > 1);
@@ -355,6 +382,28 @@
       setTimeout(function () { plus.remove(); }, 600);
     }
     document.querySelector(".bb-stage").addEventListener("pointerdown", tocco);
+
+    function balzo(buca) {
+      var r = buca.querySelector(".talpa-img").getBoundingClientRect();
+      var el = document.createElement("img");
+      el.className = "balzo";
+      el.src = "img/talpa.webp";
+      el.alt = "";
+      el.style.left = r.left + "px";
+      el.style.top = r.top + "px";
+      el.style.width = r.width + "px";
+      el.style.height = r.height + "px";
+      el.style.setProperty("--scala", CONFIG.BALZO_SCALA);
+      // Cresce dal fondo verso l'alto; per le buche in alto sposta il punto
+      // di crescita cosi' la testa non esce dallo schermo.
+      var margine = 8, sale = 0.18 * r.height;
+      var f = (r.top - margine - sale) / (r.height * (CONFIG.BALZO_SCALA - 1));
+      f = Math.max(0, Math.min(1, f));
+      el.style.transformOrigin = "50% " + f * 100 + "%";
+      durata(el, "animation-duration", CONFIG.BALZO_MS);
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); }, CONFIG.BALZO_MS + 50);
+    }
 
     function mostraStart() { startScreen.classList.remove("bb-hidden"); }
 
