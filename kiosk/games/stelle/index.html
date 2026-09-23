@@ -43,6 +43,12 @@
     .volpe img{ width:100%; height:100%; display:block; transform-origin:50% 100%; pointer-events:none; }
     .scintilla{ position:absolute; width:14px; height:14px; border-radius:50%;
       pointer-events:none; will-change:transform,opacity; z-index:3; }
+    /* Pioggia di stelle: cielo dorato + scritta */
+    .luce{ position:absolute; inset:0; pointer-events:none; opacity:0; z-index:1;
+      background:radial-gradient(ellipse at 50% 0%, rgba(255,226,120,.75), rgba(255,200,90,.25) 55%, transparent 80%); }
+    .annuncio{ position:absolute; left:50%; top:18%; z-index:4; pointer-events:none; white-space:nowrap;
+      font-size:7vmin; font-size:clamp(34px,7vmin,76px); font-weight:900; color:#FFE14D;
+      text-shadow:0 3px 0 #C4561B, 0 0 18px rgba(255,210,80,.9); opacity:0; }
     .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:22px;
       background:rgba(255,244,230,.9); text-align:center; }
@@ -57,6 +63,8 @@
     <div class="bb-stage">
       <div class="campo" id="campo">
         <div class="prato"></div>
+        <div class="luce" id="luce"></div>
+        <div class="annuncio" id="annuncio">Pioggia di stelle!</div>
         <div class="volpe" id="volpe"><img src="img/volpe.webp" alt=""></div>
         <div class="start" id="start">
           <img class="start__img" src="../assets/icons/stelle.svg" alt="">
@@ -91,6 +99,11 @@
       DIMENSIONE_MIN: 56,          // lato della stella in px
       DIMENSIONE_MAX: 84,
       BRILLII: 28,                 // stelline di sfondo
+      PIOGGIA_PRIMA_S: 15,         // secondi di gioco prima della prima pioggia di stelle
+      PIOGGIA_OGNI_S: 20,          // poi una pioggia ogni tanti secondi
+      PIOGGIA_DURATA_S: 4,         // quanto dura la pioggia
+      PIOGGIA_SPAWN_MS: 110,       // durante la pioggia: una stella ogni tanti ms
+      PIOGGIA_LENTEZZA: 0.8,       // le stelle della pioggia cadono a questa frazione di velocita'
       INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
     };
     // Geometria di volpe.webp (frazioni, da tools/build_stelle_sprites.py)
@@ -110,6 +123,8 @@
     var punteggio = 0, tempo = CONFIG.DURATA_PARTITA, inCorso = false;
     var cose = [], rafId = null, tickTimer = null, lastTs = 0, ultimoSpawn = 0, spawnOgni = 900;
     var bx = 0;  // posizione (left) della volpe
+    var prossimaPioggia = 0, finePioggia = 0;   // in secondi di gioco trascorsi
+    var luce = document.getElementById("luce"), annuncio = document.getElementById("annuncio");
 
     // Stelline di sfondo che brillano (Web Animations: non risentono di "riduci movimento")
     for (var n = 0; n < CONFIG.BRILLII; n++) {
@@ -151,7 +166,7 @@
         el: el, size: size,
         x: BB.rand(6, Math.max(6, W - size - 6)),
         y: -size,
-        vy: BB.rand(DIFF.vMin, DIFF.vMax) + (CONFIG.DURATA_PARTITA - tempo) * DIFF.vScore,
+        vy: (BB.rand(DIFF.vMin, DIFF.vMax) + (CONFIG.DURATA_PARTITA - tempo) * DIFF.vScore) * (inPioggia() ? CONFIG.PIOGGIA_LENTEZZA : 1),
         rot: BB.rand(-20, 20), vrot: BB.rand(-60, 60),
         presa: false
       };
@@ -196,6 +211,26 @@
       saltella();
     }
 
+    // ---- Pioggia di stelle ----
+    var trascorso = 0;                       // secondi di gioco (dal game loop)
+    function inPioggia(){ return trascorso < finePioggia; }
+    function iniziaPioggia(){
+      finePioggia = trascorso + CONFIG.PIOGGIA_DURATA_S;
+      prossimaPioggia = trascorso + CONFIG.PIOGGIA_OGNI_S;
+      var ms = CONFIG.PIOGGIA_DURATA_S * 1000;
+      luce.animate([{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .85 }, { opacity: 0 }],
+                   { duration: ms, fill: "forwards" });
+      annuncio.animate([{ opacity: 0, transform: "translateX(-50%) scale(.5)" },
+                        { opacity: 1, transform: "translateX(-50%) scale(1.1)", offset: .15 },
+                        { opacity: 1, transform: "translateX(-50%) scale(1)", offset: .3 },
+                        { opacity: 0, transform: "translateX(-50%) scale(1)", offset: .45 },
+                        { opacity: 0, transform: "translateX(-50%) scale(1)" }], { duration: ms, fill: "forwards" });
+      BB.sound("win");
+      volpeImg.animate([{ transform: "none" }, { transform: "translateY(-12%) rotate(-5deg)", offset: .25 },
+                        { transform: "none", offset: .5 }, { transform: "translateY(-10%) rotate(5deg)", offset: .75 },
+                        { transform: "none" }], { duration: 900, easing: "ease-out" });
+    }
+
     function removeCosa(p){ var i=cose.indexOf(p); if(i>=0) cose.splice(i,1); if(p.el.parentNode) p.el.remove(); }
 
     function loop(ts){
@@ -203,7 +238,10 @@
       if(!lastTs) lastTs=ts;
       var dt=(ts-lastTs)/1000; if(dt>0.05) dt=0.05; lastTs=ts;
       ultimoSpawn += (ts-(loop._prev||ts)); loop._prev=ts;
-      spawnOgni = Math.max(DIFF.spawnMin, DIFF.spawnBase - (CONFIG.DURATA_PARTITA-tempo)*CONFIG.SPAWN_CALO_MS);
+      trascorso += dt;
+      if (trascorso >= prossimaPioggia) iniziaPioggia();
+      spawnOgni = inPioggia() ? CONFIG.PIOGGIA_SPAWN_MS
+        : Math.max(DIFF.spawnMin, DIFF.spawnBase - (CONFIG.DURATA_PARTITA-tempo)*CONFIG.SPAWN_CALO_MS);
       if (ultimoSpawn > spawnOgni){ ultimoSpawn=0; spawn(); }
 
       var H = campo.clientHeight;
@@ -229,6 +267,7 @@
       startScreen.classList.add("bb-hidden");
       cose.forEach(function(p){ if(p.el.parentNode) p.el.remove(); }); cose=[];
       punteggio=0; tempo=CONFIG.DURATA_PARTITA; inCorso=true; ultimoSpawn=9999; lastTs=0; loop._prev=0;
+      trascorso = 0; finePioggia = 0; prossimaPioggia = CONFIG.PIOGGIA_PRIMA_S;
       clampVolpe(campo.clientWidth/2);
       aggiornaInfo();
       rafId = requestAnimationFrame(loop);
@@ -237,6 +276,7 @@
 
     function fine(){
       inCorso=false; cancelAnimationFrame(rafId); clearInterval(tickTimer);
+      luce.getAnimations().concat(annuncio.getAnimations()).forEach(function (a) { a.cancel(); });
       cose.forEach(function(p){ if(p.el.parentNode) p.el.remove(); }); cose=[];
       var record = BB.score("stelle", punteggio);
       var nuovoRecord = punteggio>0 && punteggio>=record;
