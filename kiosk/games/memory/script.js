@@ -27,6 +27,50 @@ BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 var board = document.getElementById("board");
 var startScreen = document.getElementById("start");
 
+/* ---- Gufo che reagisce (Web Animations: non risente di "riduci movimento") ---- */
+var gufo = document.getElementById("gufo");
+var gufoAnim = null;
+function gufoAnima(frames, ms) {
+  if (gufoAnim) gufoAnim.cancel();
+  gufoAnim = gufo.animate(frames, { duration: ms, easing: "ease-out" });
+}
+function gufoSalta() {
+  gufoAnima([{ transform: "none" }, { transform: "translateY(-9%) scale(.97,1.04)", offset: .35 },
+             { transform: "scale(1.05,.94)", offset: .7 }, { transform: "none" }], 460);
+  stelline(4);
+}
+function gufoPerplesso() {
+  gufoAnima([{ transform: "none" }, { transform: "rotate(-7deg)", offset: .25 },
+             { transform: "rotate(6deg)", offset: .6 }, { transform: "none" }], 700);
+}
+function gufoFesta() {
+  gufoAnima([{ transform: "none" }, { transform: "translateY(-12%) rotate(-5deg)", offset: .15 },
+             { transform: "none", offset: .3 }, { transform: "translateY(-12%) rotate(5deg)", offset: .45 },
+             { transform: "none", offset: .6 }, { transform: "translateY(-8%)", offset: .75 }, { transform: "none" }], 1300);
+  stelline(8);
+}
+function stelline(n) {
+  var r = gufo.getBoundingClientRect(), st = gufo.parentNode.getBoundingClientRect();
+  var cx = r.left - st.left + r.width / 2, cy = r.top - st.top + r.height * .3;
+  var svg = "";
+  for (var i = 0; i < n; i++) {
+    var a = (-160 + i * 140 / Math.max(1, n - 1)) * Math.PI / 180, d = r.width * (.45 + (i % 2) * .12);
+    var x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, R = 14 + (i % 3) * 5, pts = [];
+    for (var k = 0; k < 10; k++) {
+      var rr = k % 2 ? R * .45 : R, b = (-90 + k * 36) * Math.PI / 180;
+      pts.push((x + Math.cos(b) * rr).toFixed(1) + "," + (y + Math.sin(b) * rr).toFixed(1));
+    }
+    svg += '<polygon points="' + pts.join(" ") + '" fill="#FFD23F" stroke="#3E5FAE" stroke-width="3" stroke-linejoin="round"/>';
+  }
+  var el = document.createElement("div");
+  el.className = "stelline";
+  el.innerHTML = '<svg width="1" height="1" style="overflow:visible">' + svg + "</svg>";
+  gufo.parentNode.appendChild(el);
+  el.animate([{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(1.1)", opacity: 1, offset: .3 },
+              { transform: "scale(1) translateY(-20px)", opacity: 0 }], { duration: 800, easing: "ease-out", fill: "forwards" });
+  setTimeout(function () { el.remove(); }, 820);
+}
+
 var CARD_VALUES = FIGURE.map(function (f) { return { nome: f[0], emoji: f[1] }; });
 
 var flipped = [];
@@ -107,11 +151,15 @@ function checkMatch() {
     BB.sound("match");
     if (matchedCount === totalPairs) {
       stopTimer();
-      setTimeout(fine, 600);
+      gufoFesta();
+      setTimeout(fine, 1300);
+    } else {
+      gufoSalta();
     }
   } else {
     lockBoard = true;
     BB.sound("error");
+    gufoPerplesso();
     first.classList.add("mismatch");
     second.classList.add("mismatch");
     setTimeout(function () {
