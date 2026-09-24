@@ -139,6 +139,7 @@
     {
       "id": "puzzle",
       "folder": "puzzle",
+      "version": "2",
       "category": "Giochi web",
       "order": 19,
       "tier": "base",

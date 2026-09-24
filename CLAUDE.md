@@ -122,15 +122,14 @@ Due cartelle:
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL
   dell'iframe (`?v=`); le icone hanno `?v=` nel path. Alzarli a ogni modifica.
 
-## 9. I 12 giochi + re-skin (fase in corso)
+## 9. I 12 giochi + re-skin
 Giochi: memory, talpe, palloncini, frutta, stelle, sequenza, lavagna, labirinto,
 forme, puzzle, tris, hanoi.
 
-- **De-brandizzazione (in corso):** fatta su talpe, palloncini, frutta, memory,
-  stelle, sequenza, labirinto, forme, tris, hanoi; resta il puzzle, che contiene ancora le vecchie mascotte Fun Planet
-  (kip/stella/bolt/bobo). Vanno **rifatti** con grafica
-  coerente all'icona-animale di ogni gioco (i personaggi base del prodotto):
-  questo toglie il brand vecchio E alza la qualità al livello dell'icona.
+- **De-brandizzazione: FATTA su tutti e 12** (2026-09-24). Ogni gioco ha la
+  grafica del suo animale (i personaggi base del prodotto), numeri in `CONFIG`
+  in cima al file, sprite da `tools/build_<gioco>_sprites.py`. Nessun gioco usa
+  piu' le mascotte Fun Planet; `games/assets/mascotte/` e' orfana.
 - **Metodo (obbligatorio):** UN gioco alla volta, mai tutti insieme, mai auto
   mode. Per ciascuno: inventario → arte in Scenario coerente → verifica asset →
   il CLI monta senza rompere il gameplay → test → commit.
@@ -202,6 +201,10 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Torre di Hanoi rifatta: elefantino dell'icona, aste e anelli
   vettoriali; l'anello si **solleva e vola ad arco** sull'asta scelta (mossa non
   valida: rimbalza) e pulsante **Aiuto** che indica la prossima mossa ottimale.
+- 2026-09-24 — Rompicapo rifatto: tartaruga dell'icona, vassoio di legno;
+  immagini = le scene della **famiglia di animali** (una a caso per partita),
+  tessere che **scorrono**, pulsante **Sbircia**, numeri solo nel facile.
+  Re-skin dei 12 giochi completato.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo menta,
@@ -209,9 +212,9 @@ forme, puzzle, tris, hanoi.
   Aperto: lo sfondo attuale è **1344×768 WebP**, sotto la specifica della sez. 10
   (1920×1080 JPG) — da rigenerare o aggiornare la specifica.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Giochi:** de-brand **fatto** su talpe, palloncini, frutta, memory, stelle,
-  sequenza, labirinto, forme, tris, hanoi
-  (grafica dall'icona, numeri in `CONFIG` in cima a ogni gioco, sprite da
-  `tools/build_<gioco>_sprites.py`). **Resta:** puzzle (usano ancora le mascotte vecchie).
+- **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
+  immagini da ricomporre le scene della famiglia di animali.
+- **Aperto:** eliminare `games/assets/mascotte/` (orfana); unire la catena dei
+  branch in `main`; sfondo menu sotto specifica (vedi sopra).
 - **Branch:** catena talpe → palloncini → frutta → memory → cleanup-brand →
-  stelle → sequenza → labirinto → forme → tris → `feature/hanoi-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
+  stelle → sequenza → labirinto → forme → tris → hanoi → `feature/puzzle-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
