@@ -118,9 +118,9 @@ button{ font-family:inherit; color:inherit; border:none; background:none; cursor
   line-height:1;
   white-space:nowrap;
   text-shadow:
-    -2px -2px 0 #522C09, 0 -2px 0 #522C09, 2px -2px 0 #522C09,
-    -2px 0 0 #522C09, 2px 0 0 #522C09,
-    -2px 2px 0 #522C09, 0 2px 0 #522C09, 2px 2px 0 #522C09;
+    -1px -1px 0 #522C09, 0 -1px 0 #522C09, 1px -1px 0 #522C09,
+    -1px 0 0 #522C09, 1px 0 0 #522C09,
+    -1px 1px 0 #522C09, 0 1px 0 #522C09, 1px 1px 0 #522C09;
   box-shadow:
     inset 0 .35vmin 0 rgba(255,255,255,.45),
     0 .6vmin 0 #593312,
@@ -153,9 +153,9 @@ button{ font-family:inherit; color:inherit; border:none; background:none; cursor
   line-height:1.1;
   color:var(--bb-title-color, var(--bb-burgundy));
   text-shadow:
-    -2px -2px 0 #2E1A0A, 0 -2px 0 #2E1A0A, 2px -2px 0 #2E1A0A,
-    -2px 0 0 #2E1A0A, 2px 0 0 #2E1A0A,
-    -2px 2px 0 #2E1A0A, 0 2px 0 #2E1A0A, 2px 2px 0 #2E1A0A,
+    -1px -1px 0 #2E1A0A, 0 -1px 0 #2E1A0A, 1px -1px 0 #2E1A0A,
+    -1px 0 0 #2E1A0A, 1px 0 0 #2E1A0A,
+    -1px 1px 0 #2E1A0A, 0 1px 0 #2E1A0A, 1px 1px 0 #2E1A0A,
     0 3px 4px rgba(0,0,0,.45);
   /* Il titolo non ruba spazio ai pulsanti */
   min-width:0;
