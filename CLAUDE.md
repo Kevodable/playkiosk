@@ -126,10 +126,12 @@ Due cartelle:
 Giochi: memory, talpe, palloncini, frutta, stelle, sequenza, lavagna, labirinto,
 forme, puzzle, tris, hanoi.
 
-- **De-brandizzazione: FATTA su tutti e 12** (2026-09-24). Ogni gioco ha la
+- **De-brandizzazione: FATTA su tutti e 12** (2026-09-24): nessun gioco usa piu'
+  le mascotte Fun Planet. **Re-skin grafico fatto su 11**: ogni gioco ha la
   grafica del suo animale (i personaggi base del prodotto), numeri in `CONFIG`
-  in cima al file, sprite da `tools/build_<gioco>_sprites.py`. Nessun gioco usa
-  piu' le mascotte Fun Planet; `games/assets/mascotte/` e' orfana.
+  in cima al file, sprite da `tools/build_<gioco>_sprites.py`. **Manca la
+  Lavagna** (non aveva mascotte, ma la grafica del gioco e' ancora quella vecchia:
+  va rifatta col gattino). `games/assets/mascotte/` e' orfana.
 - **Metodo (obbligatorio):** UN gioco alla volta, mai tutti insieme, mai auto
   mode. Per ciascuno: inventario → arte in Scenario coerente → verifica asset →
   il CLI monta senza rompere il gameplay → test → commit.
@@ -204,7 +206,7 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Rompicapo rifatto: tartaruga dell'icona, vassoio di legno;
   immagini = le scene della **famiglia di animali** (una a caso per partita),
   tessere che **scorrono**, pulsante **Sbircia**, numeri solo nel facile.
-  Re-skin dei 12 giochi completato.
+  Re-skin fatto su 11 giochi; resta la Lavagna.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo menta,
@@ -212,7 +214,8 @@ forme, puzzle, tris, hanoi.
   Aperto: lo sfondo attuale è **1344×768 WebP**, sotto la specifica della sez. 10
   (1920×1080 JPG) — da rigenerare o aggiornare la specifica.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
+- **Giochi:** re-skin fatto su 11; **manca la Lavagna** (gioco ancora con la
+  grafica vecchia, l'icona invece e' gia' nuova). Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.
 - **Aperto:** eliminare `games/assets/mascotte/` (orfana); unire la catena dei
   branch in `main`; sfondo menu sotto specifica (vedi sopra).
