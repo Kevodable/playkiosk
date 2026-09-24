@@ -215,6 +215,7 @@ forme, puzzle, tris, hanoi.
   completato.
 - 2026-09-24 — Nuovo sfondo menu da Scenario, a norma sez. 10 (1920×1080 JPG
   sRGB, 132 KB); sostituisce `background-soft.webp` (1344×768 WebP).
+- 2026-09-24 — Catena dei branch unita in `main` (fast-forward, nessun conflitto).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
@@ -222,6 +223,5 @@ forme, puzzle, tris, hanoi.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.
-- **Aperto:** unire la catena dei branch in `main`.
-- **Branch:** catena talpe → palloncini → frutta → memory → cleanup-brand →
-  stelle → sequenza → labirinto → forme → tris → hanoi → puzzle → `feature/lavagna-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
+- **Branch:** tutto unito in `main` (fast-forward, 2026-09-24). I branch
+  `feature/<gioco>-reskin` restano come storia; il lavoro nuovo parte da `main`.
