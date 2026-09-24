@@ -16,7 +16,7 @@
     "overlay": "rgba(255,255,255,0.12)"
   },
   "window": {
-    "image": "assets/window-v2.webp?v=4",
+    "image": "assets/window-v2.webp?v=5",
     "_optional": "Cornice-finestra sopra il menu (i giochi scorrono dietro il telaio). Per tornare al vetro senza finestra: \"image\": null.",
     "contentBox": { "top": 6.7, "bottom": 14.4, "left": 4.1, "right": 4.1 },
     "zoom": 1,

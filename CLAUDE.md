@@ -240,12 +240,12 @@ forme, puzzle, tris, hanoi.
   architrave menta, davanzale coi vasi (`window-v2.webp`, da
   `tools/build_finestra_v2.py`: scontorno magenta, banda centrale allargata,
   taglio 16:9 con persiane/davanzale che escono dallo schermo). Apertura
-  1763x853 px (persiane e cerniere tolte: cornice = architrave, stipiti,
-  davanzale coi vasi). La v1 resta come asset (`window.webp`, valori in `_previous`).
+  1763x853 px (persiane, cerniere e vasi tolti: cornice = architrave, stipiti,
+  davanzale). La v1 resta come asset (`window.webp`, valori in `_previous`).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
-  cornice a finestra v2 (persiane) su default, icone in rilievo, font + colori titoli. Pulsante legno = token opzionale.
+  cornice a finestra v2 (architrave, stipiti, davanzale) su default, icone in rilievo, font + colori titoli. Pulsante legno = token opzionale.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.

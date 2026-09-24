@@ -1,4 +1,5 @@
-"""Cornice-finestra del menu, v2 (persiane di legno aperte, davanzale coi vasi):
+"""Cornice-finestra del menu, v2 (dall'arte con persiane aperte e vasi, che
+qui vengono tolti: resta architrave, stipiti, davanzale):
 tools/art/finestra_menu_v2.png (Scenario, 1672x941 RGB, apertura magenta
 piena) -> kiosk/tenants/default/assets/window-v2.webp (1920x1080).
 
@@ -7,8 +8,9 @@ piena) -> kiosk/tenants/default/assets/window-v2.webp (1920x1080).
 3. la banda centrale del telaio (solo assi lisce: architrave e davanzale,
    lontano dai vasi) viene allargata quanto serve perche' il bordo schermo
    cada a SIDE_L/SIDE_R, subito dentro le persiane (fuori del tutto);
-4. ritaglio 16:9 da CROP_TOP a CROP_BOTTOM: cornice = architrave, stipiti,
-   davanzale coi vasi.
+4. via i vasi coi fiori (zona ricostruita da stipite e fasce orizzontali);
+5. ritaglio 16:9 da CROP_TOP a CROP_BOTTOM: cornice = architrave, stipiti,
+   davanzale.
 Stampa l'apertura misurata (contentBox in %) da mettere nel config.
 """
 from PIL import Image, ImageFilter
@@ -49,6 +51,30 @@ for x0, x1, y0, y1, ypot in HINGES:
     iron = (np.array(hm) > 0) & ~green
     repl = (ys < ypot) | iron
     blk[repl] = jamb[repl]
+# via i vasi coi fiori: la zona si ricostruisce con cio' che c'e' dietro.
+# Stipite (e suo profilo teal) = riga JAMB_Y della stessa colonna; apertura,
+# profilo inferiore, battuta e davanzale = stessa riga, 150 px verso il
+# centro (sono fasce orizzontali uniformi). Misure sull'originale.
+POT_Y0, RAIL_Y, SILL_Y, POT_Y1 = 640, 764, 785, 812
+def fill_jamb(xa, xb, ya, yb):
+    rgb[ya:yb, xa:xb] = rgb[JAMB_Y, xa:xb]
+    alpha[ya:yb, xa:xb] = alpha[JAMB_Y, xa:xb]
+def fill_shift(xa, xb, ya, yb, dx):
+    rgb[ya:yb, xa:xb] = rgb[ya:yb, xa + dx:xb + dx]
+    alpha[ya:yb, xa:xb] = alpha[ya:yb, xa + dx:xb + dx]
+# sinistra: stipite 309-358, profilo 358-367, apertura da 367
+fill_jamb(309, 358, POT_Y0, SILL_Y)
+fill_jamb(358, 367, POT_Y0, RAIL_Y)
+fill_shift(358, 367, RAIL_Y, SILL_Y, 150)
+fill_shift(367, 440, POT_Y0, POT_Y1, 150)
+fill_shift(309, 367, SILL_Y, POT_Y1, 150)
+# destra: apertura fino a 1302, profilo 1303-1312, stipite 1312-1363
+fill_jamb(1312, 1363, POT_Y0, SILL_Y)
+fill_jamb(1303, 1312, POT_Y0, RAIL_Y)
+fill_shift(1303, 1312, RAIL_Y, SILL_Y, -150)
+fill_shift(1232, 1303, POT_Y0, POT_Y1, -150)
+fill_shift(1303, 1363, SILL_Y, POT_Y1, -150)
+
 img = Image.fromarray(np.dstack([rgb, alpha * 255]).astype("uint8"))
 
 sw, sh = img.size
