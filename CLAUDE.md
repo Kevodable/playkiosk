@@ -119,8 +119,10 @@ Due cartelle:
   colline, nuvole e arcobaleno ai bordi, centro calmo per non distrarre dalle
   icone; fisso dietro la griglia, con velo `overlay` dal config. Sorgente
   Scenario in `tools/art/sfondo_menu.png`.
-- **Cornice 3D del menu:** bordo menta rialzato intorno allo schermo, sopra la
-  griglia (le tile scorrono "sotto", come dietro una finestra).
+- **Vetro del menu:** niente cornice. Il menu e' una **finestra**: le icone sono
+  "disegnate sul vetro" in **rilievo** (bordo chiaro sopra, spessore scuro sotto,
+  ombra portata) e attraverso il vetro si vede lo sfondo (nitido, velo leggero e
+  riflessi diagonali, livello `.menu__glass`).
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL
   dell'iframe (`?v=`); le icone hanno `?v=` nel path. Alzarli a ogni modifica.
 
@@ -218,10 +220,12 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Catena dei branch unita in `main` (fast-forward, nessun conflitto).
 - 2026-09-24 — Eliminati i branch `feature/*` (gia' tutti in `main`); sez. 7
   aggiornata: si lavora da `main` con branch `feature/<nome>` temporanei.
+- 2026-09-24 — Menu: **tolta la cornice 3D**; al suo posto effetto **vetro di
+  finestra** (icone in rilievo sul vetro, sfondo visto attraverso).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
-  cornice 3D, font + colori titoli. Pulsante legno = token opzionale.
+  effetto vetro (icone in rilievo), font + colori titoli. Pulsante legno = token opzionale.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.
