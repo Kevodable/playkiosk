@@ -218,6 +218,8 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Catena dei branch unita in `main` (fast-forward, nessun conflitto).
 - 2026-09-24 — Eliminati i branch `feature/*` (gia' tutti in `main`); sez. 7
   aggiornata: si lavora da `main` con branch `feature/<nome>` temporanei.
+- 2026-09-24 — Fix idle: i tocchi dentro l'iframe del gioco ora azzerano il
+  timer (prima si tornava all'attract dopo 75 s anche giocando).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,

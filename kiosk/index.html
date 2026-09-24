@@ -453,6 +453,7 @@ var state = {
   currentGame: null,
   gameOpenedAt: 0,
   idleTimer: null,
+  idleReset: null,
   audioUnlocked: false,
   audioCtx: null,
   attractIndex: 0,
@@ -567,10 +568,30 @@ function startIdleWatcher(ms, onFire) {
     document.addEventListener(ev, reset, { passive: true });
   });
   reset();
+  state.idleReset = reset;
   return function cancel() {
     if (timer) clearTimeout(timer);
+    if (state.idleReset === reset) state.idleReset = null;
     events.forEach(function (ev) { document.removeEventListener(ev, reset); });
   };
+}
+
+/* Touches inside the game iframe never reach the shell's document, so the
+   idle watcher above would fire mid-game. The iframe is same-origin: on
+   every load, forward its touches to the current watcher (capture phase,
+   so games that stop propagation still count as activity). */
+function watchGameFrameActivity() {
+  var frame = document.getElementById("game-frame");
+  frame.addEventListener("load", function () {
+    var doc;
+    try { doc = frame.contentDocument; } catch (e) { doc = null; }
+    if (!doc) return;
+    ["pointerdown", "touchstart", "click", "keydown"].forEach(function (ev) {
+      doc.addEventListener(ev, function () {
+        if (state.idleReset) state.idleReset();
+      }, { passive: true, capture: true });
+    });
+  });
 }
 function stopIdleWatcher() {
   if (state.idleTimer) { state.idleTimer(); state.idleTimer = null; }
@@ -1044,6 +1065,7 @@ document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
    ------------------------------------------------------------------------- */
 document.getElementById("screen-attract").addEventListener("click", onAttractTap);
 document.getElementById("home-button").addEventListener("click", onHomeButtonTap);
+watchGameFrameActivity();
 
 boot();
 </script>
