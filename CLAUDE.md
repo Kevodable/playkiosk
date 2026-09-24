@@ -232,10 +232,13 @@ forme, puzzle, tris, hanoi.
   finestra** (icone in rilievo sul vetro, sfondo visto attraverso).
 - 2026-09-24 — **Cornice a finestra** (Scenario) come token opzionale
   `window.image`, attiva su `default`; reversibile mettendo `null`.
+- 2026-09-24 — Finestra messa **in standby** (`window.image: null` su default,
+  asset e misure restano). Fix idle: i tocchi dentro l'iframe del gioco ora
+  azzerano il timer (prima si tornava all'attract dopo 75 s anche giocando).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
-  cornice a finestra (`window.image`, su default) o vetro, icone in rilievo, font + colori titoli. Pulsante legno = token opzionale.
+  vetro con icone in rilievo (cornice a finestra pronta ma in standby), font + colori titoli. Pulsante legno = token opzionale.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.

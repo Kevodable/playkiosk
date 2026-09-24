@@ -16,7 +16,8 @@
     "overlay": "rgba(255,255,255,0.12)"
   },
   "window": {
-    "image": "assets/window.webp?v=1",
+    "image": null,
+    "_standby": "Finestra in standby: per riattivarla \"image\": \"assets/window.webp?v=1\".",
     "_optional": "Cornice-finestra sopra il menu (i giochi scorrono dietro il telaio). Per tornare al vetro senza finestra: \"image\": null.",
     "contentBox": { "top": 11.5, "bottom": 17.1, "left": 16.7, "right": 17.2 },
     "zoom": 1.2,
