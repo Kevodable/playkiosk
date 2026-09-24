@@ -19,7 +19,7 @@ W, H = 1920, 1080
 KEY = np.array([231, 79, 251])     # magenta campionato nell'apertura
 D0, D1 = 40, 90                    # distanza: <D0 trasparente, >D1 pieno
 BAND = (440, 1230)                 # banda allargabile (x sorgente)
-STRETCH = 1.135
+STRETCH = 1.31
 CROP_TOP, CROP_BOTTOM = 100, 875   # y sorgente visibili
 
 src = Image.open(SRC).convert("RGB")

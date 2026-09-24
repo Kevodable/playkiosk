@@ -16,9 +16,9 @@
     "overlay": "rgba(255,255,255,0.12)"
   },
   "window": {
-    "image": "assets/window-v2.webp?v=1",
+    "image": "assets/window-v2.webp?v=2",
     "_optional": "Cornice-finestra sopra il menu (i giochi scorrono dietro il telaio). Per tornare al vetro senza finestra: \"image\": null.",
-    "contentBox": { "top": 6.7, "bottom": 14.4, "left": 12.1, "right": 12.2 },
+    "contentBox": { "top": 6.7, "bottom": 14.4, "left": 7.1, "right": 7.2 },
     "zoom": 1,
     "originY": 50,
     "_zoom": "Ingrandisce la finestra oltre i bordi dello schermo (1 = come l'immagine). originY = punto verticale (in %) attorno a cui ingrandisce. L'apertura sullo schermo e' ricalcolata dalla shell: contentBox resta la misura sull'immagine.",
