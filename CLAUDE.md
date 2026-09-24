@@ -228,13 +228,14 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Catena dei branch unita in `main` (fast-forward, nessun conflitto).
 - 2026-09-24 — Eliminati i branch `feature/*` (gia' tutti in `main`); sez. 7
   aggiornata: si lavora da `main` con branch `feature/<nome>` temporanei.
+- 2026-09-24 — Fix idle: i tocchi dentro l'iframe del gioco ora azzerano il
+  timer (prima si tornava all'attract dopo 75 s anche giocando).
 - 2026-09-24 — Menu: **tolta la cornice 3D**; al suo posto effetto **vetro di
   finestra** (icone in rilievo sul vetro, sfondo visto attraverso).
 - 2026-09-24 — **Cornice a finestra** (Scenario) come token opzionale
   `window.image`, attiva su `default`; reversibile mettendo `null`.
 - 2026-09-24 — Finestra messa **in standby** (`window.image: null` su default,
-  asset e misure restano). Fix idle: i tocchi dentro l'iframe del gioco ora
-  azzerano il timer (prima si tornava all'attract dopo 75 s anche giocando).
+  asset e misure restano).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
