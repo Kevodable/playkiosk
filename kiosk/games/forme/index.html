@@ -8,33 +8,52 @@
   <title>Abbina le forme</title>
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
+    /* Cameretta calda, coerente con il coniglio e la tavola di legno dell'icona */
+    .bb-screen{
+      background:
+        radial-gradient(circle at 20% 25%, rgba(255,255,255,.55) 0 4px, transparent 5px) 0 0 / 80px 80px,
+        linear-gradient(to bottom, #FFF3E2 0%, #FCE6D0 60%, #F4D6BA 100%);
+    }
+    .bb-header{ background:rgba(255,255,255,.55); }
     .bb-stage{ padding:8px 14px 16px; }
-    .gioco{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; flex-direction:column;
-      justify-content:space-between; gap:12px; touch-action:none; }
-    .fila{ display:flex; flex-wrap:wrap; gap:2.5vmin; gap:clamp(10px,2.5vmin,22px);
-      justify-content:center; align-items:center; }
-    .targets{ flex:1 1 auto; align-content:center; }
-    .pool{ flex:0 0 auto; }
+    .gioco{ position:absolute; top:0; right:0; bottom:0; left:0; touch-action:none;
+      display:flex; align-items:center; justify-content:center; gap:3vmin; }
+    .coniglio{ height:48vmin; height:min(48vmin,480px); width:auto; align-self:flex-end; margin-bottom:2vmin;
+      transform-origin:50% 100%; pointer-events:none; }
+    .colonna{ display:flex; flex-direction:column; align-items:center; gap:4vmin; }
 
-    :root{ --sz:15vmin; --sz:clamp(66px,15vmin,120px); }
-    .slot, .shape{ width:var(--sz); height:var(--sz); }
-    .slot{ position:relative; border-radius:14px; }
-    .slot.pop{ animation:bb-pop .4s var(--bb-ease-elastic); }
-    .shape{ cursor:grab; will-change:transform; }
-    .shape.dragging{ cursor:grabbing; filter:drop-shadow(0 8px 10px rgba(0,0,0,.28)); }
+    :root{ --sz:15vmin; --sz:clamp(70px,15vmin,150px); }
+    /* Tavola di legno con i buchi */
+    .tavola{
+      display:flex; flex-wrap:wrap; justify-content:center; gap:2.4vmin;
+      padding:3vmin 3.4vmin; border-radius:3vmin;
+      background:
+        repeating-linear-gradient(8deg, rgba(120,70,30,.08) 0 3px, transparent 3px 18px),
+        linear-gradient(to bottom, #E2A866, #C9864A);
+      border:.7vmin solid #8A5328;
+      box-shadow:inset 0 .6vmin 0 rgba(255,235,200,.55), inset 0 -.9vmin 0 rgba(110,60,20,.35), 0 12px 22px rgba(90,50,20,.3);
+      max-width:78vw;
+    }
+    .pool{ display:flex; flex-wrap:wrap; justify-content:center; gap:2.4vmin; min-height:var(--sz); max-width:78vw; }
+    .slot, .shape{ width:var(--sz); height:var(--sz); position:relative; }
+    .shape{ cursor:grab; will-change:transform; touch-action:none; }
+    .shape.dragging{ cursor:grabbing; filter:drop-shadow(0 10px 10px rgba(60,30,10,.35)); z-index:100; }
     .shape.locked{ pointer-events:none; }
-    .slot svg, .shape svg{ width:100%; height:100%; display:block; }
-    /* Forma piena (trascinabile): colore proprio */
-    .shape svg > *{ fill:var(--c); stroke:rgba(0,0,0,.12); stroke-width:2; }
-    /* Sagoma bersaglio: vuota, tratteggiata */
-    .slot svg > *{ fill:#eef0f6; stroke:#9aa3bd; stroke-width:4; stroke-dasharray:7 7; }
+    .slot svg, .shape svg{ width:100%; height:100%; display:block; overflow:visible; }
+    /* Blocco: colore proprio, contorno scuro e riflesso come nell'icona */
+    .shape .corpo{ fill:var(--c); stroke:#3A2A20; stroke-width:5; stroke-linejoin:round; }
+    .shape .luce{ fill:#fff; opacity:.35; }
+    /* Buco: incavo scuro nel legno */
+    .slot .buco{ fill:#5E3527; stroke:#3D2016; stroke-width:5; stroke-linejoin:round; }
+    .slot .fondo{ fill:#3D2016; opacity:.55; }
+    .slot.aiuto{ border-radius:18%; }
 
     .start{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:20px;
-      background:rgba(255,247,251,.95); text-align:center; padding:18px; }
-    .start__img{ width:24vmin; width:clamp(110px,24vmin,180px); height:auto;
+      background:rgba(255,244,230,.94); text-align:center; padding:18px; }
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:4.4vmin; font-size:clamp(18px,4.4vmin,30px); font-weight:900; color:var(--bb-burgundy); line-height:1.3; }
+    .start__txt{ font-size:4.4vmin; font-size:clamp(18px,4.4vmin,30px); font-weight:900; color:#8A5328; line-height:1.3; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
   </style>
 </head>
@@ -42,12 +61,15 @@
   <div class="bb-screen">
     <div class="bb-stage">
       <div class="gioco" id="gioco">
-        <div class="fila targets" id="targets"></div>
-        <div class="fila pool" id="pool"></div>
+        <img class="coniglio" id="coniglio" src="img/coniglio.webp" alt="">
+        <div class="colonna">
+          <div class="tavola" id="targets"></div>
+          <div class="pool" id="pool"></div>
+        </div>
 
         <div class="start" id="start">
-          <img class="start__img" src="../assets/mascotte/bobo.png" alt="">
-          <div class="start__txt">Trascina ogni forma<br>nella sua sagoma!<br>Scegli la difficoltà:</div>
+          <img class="start__img" src="../assets/icons/forme.svg" alt="">
+          <div class="start__txt">Trascina ogni forma<br>nel suo buco!<br>Scegli la difficoltà:</div>
           <div class="liv-row">
             <button class="bb-btn liv-btn" data-liv="facile">😊 Facile</button>
             <button class="bb-btn liv-btn" data-liv="medio">😎 Medio</button>
@@ -60,35 +82,79 @@
 
   <script src="../assets/shared.js"></script>
   <script>
-    BB.lockScroll();
-    var info = BB.header("🔷 Abbina le forme");
-    BB.idle(90000, BB.home);
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      FORME: { facile: 3, medio: 5, difficile: 7 },   // quante forme per difficolta'
+      CALAMITA: 1.6,             // basta lasciare la forma entro tante "larghezze" dal suo buco
+      ERRORI_PER_AIUTO: 2,       // dopo tanti errori sulla stessa forma, il buco giusto lampeggia
+      INATTIVITA_MS: 90000       // senza tocchi: torna al menu giochi
+    };
 
-    var gioco=document.getElementById("gioco");
+    BB.lockScroll();
+    var info = BB.header("Abbina le forme");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
+
     var targetsBox=document.getElementById("targets");
     var poolBox=document.getElementById("pool");
     var startScreen=document.getElementById("start");
+    var coniglio=document.getElementById("coniglio");
 
-    // Geometria delle forme (viewBox 0..100) — fill/stroke gestiti dal CSS
+    // Geometria delle forme (viewBox 0..100); fill/stroke dal CSS
     var SHAPES={
       cerchio:'<circle cx="50" cy="50" r="42"/>',
-      quadrato:'<rect x="10" y="10" width="80" height="80" rx="10"/>',
-      triangolo:'<polygon points="50,10 90,88 10,88"/>',
-      rombo:'<polygon points="50,8 92,50 50,92 8,50"/>',
+      quadrato:'<rect x="10" y="10" width="80" height="80" rx="12"/>',
+      triangolo:'<polygon points="50,10 91,86 9,86"/>',
+      rombo:'<polygon points="50,7 93,50 50,93 7,50"/>',
       stella:'<polygon points="50,6 61,38 95,38 67,58 78,91 50,70 22,91 33,58 5,38 39,38"/>',
       cuore:'<path d="M50 88 C12 60 14 22 38 22 C48 22 50 32 50 34 C50 32 52 22 62 22 C86 22 88 60 50 88 Z"/>',
       esagono:'<polygon points="50,8 88,29 88,71 50,92 12,71 12,29"/>'
     };
-    var COLORI={ cerchio:"#FF5A5F", quadrato:"#4D8DFF", triangolo:"#3DDC84",
-      rombo:"#9B5DE5", stella:"#FFC93C", cuore:"#E8488B", esagono:"#FF9F1C" };
+    var COLORI={ cerchio:"#FF5A5F", quadrato:"#4D8DFF", triangolo:"#FFC93C",
+      rombo:"#9B5DE5", stella:"#FFB020", cuore:"#E8488B", esagono:"#3DDC84" };
     var ORDINE=["cerchio","quadrato","triangolo","stella","cuore","rombo","esagono"];
 
-    var TAB={ facile:3, medio:5, difficile:7 };
-    var total=0, placed=0, tStart=0, inCorso=false;
+    var total=0, placed=0, tStart=0, inCorso=false, errori={};
 
-    function svg(id){ return '<svg viewBox="0 0 100 100">'+SHAPES[id]+'</svg>'; }
+    // Blocco: forma + riflesso (la stessa forma rimpicciolita verso l'alto a sinistra)
+    function blocco(id){
+      return '<svg viewBox="0 0 100 100"><g class="corpo">'+SHAPES[id]+'</g>'+
+        '<g class="luce" transform="translate(22 16) scale(.42)">'+SHAPES[id]+'</g></svg>';
+    }
+    // Buco: la forma scura + un fondo piu' scuro spostato in basso (profondita')
+    function buco(id){
+      return '<svg viewBox="0 0 100 100"><g class="buco">'+SHAPES[id]+'</g>'+
+        '<g class="fondo" transform="translate(10 14) scale(.8)">'+SHAPES[id]+'</g></svg>';
+    }
 
     function aggiornaInfo(){ info.innerHTML = "✔ " + placed + " / " + total; }
+
+    // ---- Coniglio che reagisce ----
+    var animConiglio=null;
+    function coniglioAnima(frames, ms){
+      if (animConiglio) animConiglio.cancel();
+      animConiglio = coniglio.animate(frames, { duration: ms, easing: "ease-out" });
+    }
+    function salta(){ coniglioAnima([{ transform:"none" }, { transform:"translateY(-8%) scale(.97,1.04)", offset:.35 },
+      { transform:"scale(1.04,.95)", offset:.7 }, { transform:"none" }], 460); }
+    function perplesso(){ coniglioAnima([{ transform:"none" }, { transform:"rotate(-6deg)", offset:.25 },
+      { transform:"rotate(5deg)", offset:.6 }, { transform:"none" }], 650); }
+    function festa(){ coniglioAnima([{ transform:"none" }, { transform:"translateY(-12%) rotate(-5deg)", offset:.2 },
+      { transform:"none", offset:.4 }, { transform:"translateY(-12%) rotate(5deg)", offset:.6 },
+      { transform:"none", offset:.8 }, { transform:"translateY(-6%)", offset:.9 }, { transform:"none" }], 1200); }
+
+    // Aiutino: il buco giusto brilla (finche' la forma non entra) e il coniglio saltella
+    function aiuta(id){
+      var sl = targetsBox.querySelector('.slot[data-shape="'+id+'"]');
+      if (!sl || sl.aiutoAnim) return;
+      sl.classList.add("aiuto");
+      sl.aiutoAnim = sl.animate([{ boxShadow:"0 0 0 0 rgba(255,225,80,0)", transform:"scale(1)" },
+        { boxShadow:"0 0 0 1.2vmin rgba(255,225,80,.9)", transform:"scale(1.08)" }],
+        { duration:520, direction:"alternate", iterations:Infinity, easing:"ease-in-out" });
+      coniglioAnima([{ transform:"none" }, { transform:"translateY(-6%) rotate(4deg)", offset:.25 }, { transform:"none", offset:.5 },
+        { transform:"translateY(-6%) rotate(4deg)", offset:.75 }, { transform:"none" }], 900);
+    }
 
     // ---- drag ----
     var dragging=null, startX=0, startY=0;
@@ -98,7 +164,7 @@
     function onDown(e, sh){
       if(!inCorso || sh.classList.contains("locked")) return;
       e.preventDefault();
-      dragging=sh; sh.classList.add("dragging"); sh.style.zIndex="100";
+      dragging=sh; sh.classList.add("dragging");
       var p=pt(e); startX=p.x; startY=p.y;
     }
     function onMove(e){
@@ -109,25 +175,47 @@
     function onUp(){
       if(!dragging) return;
       var sh=dragging; dragging=null; sh.classList.remove("dragging");
-      var sc=center(sh), best=null, bestD=1e9;
-      var slots=targetsBox.querySelectorAll(".slot");
-      Array.prototype.forEach.call(slots, function(sl){
-        if(sl.dataset.filled) return;
+      var id=sh.dataset.shape, sc=center(sh), w=sh.offsetWidth;
+      var giusto=targetsBox.querySelector('.slot[data-shape="'+id+'"]:not([data-filled])');
+      var dGiusto = giusto ? Math.hypot(center(giusto).x-sc.x, center(giusto).y-sc.y) : 1e9;
+      // il buco piu' vicino in assoluto (per capire se ha "provato" un buco sbagliato)
+      var vicino=null, dVicino=1e9;
+      Array.prototype.forEach.call(targetsBox.querySelectorAll(".slot:not([data-filled])"), function(sl){
         var c=center(sl), d=Math.hypot(c.x-sc.x, c.y-sc.y);
-        if(d<bestD){ bestD=d; best=sl; }
+        if(d<dVicino){ dVicino=d; vicino=sl; }
       });
-      var tol=sh.offsetWidth*0.75;
-      if(best && bestD<tol && best.dataset.shape===sh.dataset.shape){
-        best.dataset.filled="1"; sh.classList.add("locked"); sh.style.zIndex="";
-        best.innerHTML=""; best.appendChild(sh); sh.style.transform="";
-        best.classList.add("pop");
-        BB.sound("match"); placed++; aggiornaInfo();
-        if(placed===total) fine();
+      if (giusto && (vicino===giusto || dVicino > w*.6) && dGiusto < w*CONFIG.CALAMITA){
+        entra(sh, giusto, sc);
       } else {
-        BB.sound("error");
-        sh.style.transition="transform .25s var(--bb-ease-elastic)"; sh.style.transform="";
-        setTimeout(function(){ sh.style.transition=""; sh.style.zIndex=""; }, 260);
+        // provato su un buco sbagliato, o lasciato lontano: torna al suo posto
+        if (vicino && dVicino < w*.75){
+          BB.sound("error"); perplesso();
+          errori[id]=(errori[id]||0)+1;
+          if (errori[id] >= CONFIG.ERRORI_PER_AIUTO) aiuta(id);
+        }
+        sh.animate([{ transform: sh.style.transform || "none" }, { transform: "none" }],
+                   { duration: 260, easing: "cubic-bezier(.34,1.56,.64,1)" });
+        sh.style.transform="";
       }
+    }
+    // Calamita: la forma vola al centro del suo buco e ci cade dentro
+    function entra(sh, sl, sc){
+      var c=center(sl), dx=c.x-sc.x, dy=c.y-sc.y;
+      var da = sh.style.transform || "none";
+      var m = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(da), tx = m ? +m[1] : 0, ty = m ? +m[2] : 0;
+      // stato subito (non dipende dalla fine dell'animazione)
+      sh.classList.add("locked");
+      sl.dataset.filled="1";
+      if (sl.aiutoAnim){ sl.aiutoAnim.cancel(); sl.aiutoAnim=null; sl.classList.remove("aiuto"); }
+      sh.animate([{ transform: da }, { transform: "translate("+(tx+dx)+"px,"+(ty+dy)+"px) scale(1.1)", offset:.6 },
+                  { transform: "translate("+(tx+dx)+"px,"+(ty+dy)+"px) scale(.94)" }], { duration: 240, easing:"ease-out" });
+      sh.style.transform = "translate("+(tx+dx)+"px,"+(ty+dy)+"px) scale(.94)";
+      setTimeout(function(){          // poi la forma "entra" nel buco
+        sl.innerHTML=""; sl.appendChild(sh); sh.style.transform="scale(.94)";
+        sl.animate([{ transform:"scale(1)" }, { transform:"scale(1.1)", offset:.4 }, { transform:"scale(1)" }], { duration: 320 });
+      }, 250);
+      BB.sound("match"); placed++; aggiornaInfo();
+      if (placed===total){ inCorso=false; festa(); setTimeout(fine, 1200); } else salta();
     }
     document.addEventListener("pointermove", onMove, {passive:false});
     document.addEventListener("pointerup", onUp);
@@ -136,19 +224,19 @@
     function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
 
     function avvia(liv){
-      total=TAB[liv]||3; placed=0; inCorso=true;
+      total=CONFIG.FORME[liv]||3; placed=0; inCorso=true; errori={};
       startScreen.classList.add("bb-hidden");
       var scelte=BB.shuffle(ORDINE.slice()).slice(0,total);
-      // bersagli (sagome) in un ordine, forme in un altro
+      // buchi in un ordine, forme in un altro
       var ordT=BB.shuffle(scelte.slice()), ordP=BB.shuffle(scelte.slice());
       targetsBox.innerHTML=""; poolBox.innerHTML="";
       ordT.forEach(function(id){
         var s=document.createElement("div"); s.className="slot"; s.dataset.shape=id;
-        s.innerHTML=svg(id); targetsBox.appendChild(s);
+        s.innerHTML=buco(id); targetsBox.appendChild(s);
       });
       ordP.forEach(function(id){
         var sh=document.createElement("div"); sh.className="shape"; sh.dataset.shape=id;
-        sh.style.setProperty("--c", COLORI[id]); sh.innerHTML=svg(id);
+        sh.style.setProperty("--c", COLORI[id]); sh.innerHTML=blocco(id);
         sh.addEventListener("pointerdown", function(e){ onDown(e, sh); });
         poolBox.appendChild(sh);
       });
@@ -164,12 +252,11 @@
     }
 
     function fine(){
-      inCorso=false;
       var t=Math.round((performance.now()-tStart)/100)/10;
       var prima=bestTime(), record=bestTime(t);
       var nuovo=(prima===0 || t<=prima);
       BB.win({
-        mascotte: nuovo ? null : "../assets/mascotte/bobo.png",
+        mascotte: nuovo ? null : "../assets/icons/forme.svg",
         emoji: nuovo ? "🏆" : null,
         titolo: nuovo ? "Nuovo record!" : "Tutte abbinate!",
         punteggio: "Tempo: " + t + "s",

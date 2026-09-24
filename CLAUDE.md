@@ -127,7 +127,7 @@ Giochi: memory, talpe, palloncini, frutta, stelle, sequenza, lavagna, labirinto,
 forme, puzzle, tris, hanoi.
 
 - **De-brandizzazione (in corso):** fatta su talpe, palloncini, frutta, memory,
-  stelle, sequenza, labirinto; gli altri 4 contengono ancora le vecchie mascotte Fun Planet
+  stelle, sequenza, labirinto, forme; gli altri 3 contengono ancora le vecchie mascotte Fun Planet
   (kip/stella/bolt/bobo). Vanno **rifatti** con grafica
   coerente all'icona-animale di ogni gioco (i personaggi base del prodotto):
   questo toglie il brand vecchio E alza la qualità al livello dell'icona.
@@ -193,6 +193,9 @@ forme, puzzle, tris, hanoi.
 - 2026-09-23 — Labirinto rifatto: topo e formaggio dell'icona, muri turchesi e
   corridoi crema; il topo si **trascina** e i muri lo **fermano** (niente
   cancellazione); **3 labirinti in fila** di dimensione crescente.
+- 2026-09-24 — Abbina le forme rifatto: coniglio dell'icona, tavola di legno e
+  7 blocchi disegnati in vettoriale; **calamita** (basta lasciare la forma vicino
+  al suo buco) e **aiutino** (dopo 2 errori il buco giusto lampeggia).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo menta,
@@ -201,8 +204,8 @@ forme, puzzle, tris, hanoi.
   (1920×1080 JPG) — da rigenerare o aggiornare la specifica.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** de-brand **fatto** su talpe, palloncini, frutta, memory, stelle,
-  sequenza, labirinto
+  sequenza, labirinto, forme
   (grafica dall'icona, numeri in `CONFIG` in cima a ogni gioco, sprite da
-  `tools/build_<gioco>_sprites.py`). **Restano:** forme, puzzle, tris, hanoi (usano ancora le mascotte vecchie).
+  `tools/build_<gioco>_sprites.py`). **Restano:** puzzle, tris, hanoi (usano ancora le mascotte vecchie).
 - **Branch:** catena talpe → palloncini → frutta → memory → cleanup-brand →
-  stelle → sequenza → `feature/labirinto-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
+  stelle → sequenza → labirinto → `feature/forme-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.

@@ -124,6 +124,7 @@
     {
       "id": "forme",
       "folder": "forme",
+      "version": "2",
       "category": "Giochi web",
       "order": 18,
       "tier": "base",
