@@ -77,6 +77,17 @@
   /* --------------------------------------------------------------------------
      L'oggetto pubblico BB
      ------------------------------------------------------------------------ */
+  /* Casetta del pulsante "Torna ai giochi", disegnata nello stile del menu
+     (contorno marrone scuro come il davanzale) al posto dell'emoji. */
+  var HOME_ICON =
+    '<svg class="bb-back__icon" viewBox="0 0 48 48" aria-hidden="true">' +
+    '<path d="M24 5 L44 22 L38 22 L38 42 L10 42 L10 22 L4 22 Z" fill="#FFF7E6" ' +
+    'stroke="#522C09" stroke-width="3.5" stroke-linejoin="round"/>' +
+    '<path d="M6 22 L24 7 L42 22" fill="none" stroke="#E0503A" stroke-width="5" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<rect x="20" y="28" width="9" height="14" rx="2" fill="#BA7831" stroke="#522C09" stroke-width="3"/>' +
+    '</svg>';
+
   var BB = {
 
     /* Ritorno al launcher: usa il bridge Android se presente, altrimenti
@@ -216,7 +227,7 @@
       var h = document.createElement("header");
       h.className = "bb-header";
       h.innerHTML =
-        '<button type="button" class="bb-back" id="bb-back">🏠 Torna ai giochi</button>' +
+        '<button type="button" class="bb-back" id="bb-back">' + HOME_ICON + 'Torna ai giochi</button>' +
         '<h1 class="bb-header__title">' + (titolo || "") + "</h1>" +
         '<div class="bb-header__info" id="bb-info"></div>';
       screenEl.insertBefore(h, screenEl.firstChild);

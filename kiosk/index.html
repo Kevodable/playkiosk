@@ -401,22 +401,6 @@
     border:0;
     background:#fff;
   }
-  #home-button{
-    position:absolute;
-    top:max(16px, env(safe-area-inset-top, 0px) + 12px);
-    right:max(16px, env(safe-area-inset-right, 0px) + 12px);
-    z-index:10;
-    min-width:64px; min-height:64px;
-    padding:0 3vmin;
-    border:none; border-radius:999px;
-    background:var(--primary);
-    color:#fff;
-    font-size:2.6vmin; font-weight:800;
-    box-shadow:var(--shadow);
-    display:flex; align-items:center; justify-content:center;
-    font-family:inherit;
-  }
-  #home-button:active{ transform:scale(.94); }
 
   [hidden]{ display:none !important; }
 </style>
@@ -451,7 +435,6 @@
 
   <div class="screen" id="screen-game">
     <iframe id="game-frame" title="game"></iframe>
-    <button type="button" id="home-button"></button>
   </div>
 
 <script>
@@ -467,7 +450,6 @@ var FALLBACK_STRINGS = {
   loading: "Loading...",
   attractTap: "Tap to start",
   menuSubtitle: "Choose a game",
-  homeButton: "Menu",
   noGames: "No games available"
 };
 
@@ -618,7 +600,35 @@ function watchGameFrameActivity() {
         if (state.idleReset) state.idleReset();
       }, { passive: true, capture: true });
     });
+    styleGameFrame(doc);
   });
+}
+
+/* The games' header (games/assets/shared.css) takes its title font and
+   color from --bb-title-font / --bb-title-color: pass them in from the
+   tenant (same @font-face as the menu titles, with absolute URLs since
+   the game lives in another folder) and from the game's titleColor in the
+   manifest. Missing either -> the header's own fallbacks. */
+function styleGameFrame(doc) {
+  if (!doc.head || !state.currentGame) return;
+  var css = "";
+  var fontEl = document.getElementById("tenant-font-face");
+  if (fontEl) {
+    css += fontEl.textContent.replace(/url\('([^']+)'\)/g, function (m, u) {
+      return "url('" + new URL(u, document.baseURI).href + "')";
+    });
+  }
+  var vars = "";
+  var family = getComputedStyle(document.documentElement)
+    .getPropertyValue("--tile-name-font-family").trim();
+  if (fontEl && family) vars += "--bb-title-font:" + family + ";";
+  if (state.currentGame.titleColor) vars += "--bb-title-color:" + state.currentGame.titleColor + ";";
+  if (vars) css += ":root{" + vars + "}";
+  if (!css) return;
+  var st = doc.createElement("style");
+  st.id = "kiosk-shell-style";
+  st.textContent = css;
+  doc.head.appendChild(st);
 }
 function stopIdleWatcher() {
   if (state.idleTimer) { state.idleTimer(); state.idleTimer = null; }
@@ -1060,8 +1070,6 @@ function openGame(g) {
   state.gameOpenedAt = Date.now();
 
   var frame = document.getElementById("game-frame");
-  var homeBtn = document.getElementById("home-button");
-  homeBtn.textContent = str("homeButton");
   /* "version" (manifest) busts the browser cache when a game is updated:
      bump it whenever a game's files change. */
   frame.src = "games/" + encodeURIComponent(g.folder) + "/index.html" +
@@ -1093,7 +1101,7 @@ function closeGame() {
   stopIdleWatcher();
 }
 
-function onHomeButtonTap() {
+function onGameHome() {
   closeGame();
   goMenu();
 }
@@ -1108,7 +1116,7 @@ window.addEventListener("message", function (event) {
   if (event.origin !== window.location.origin && event.origin !== "null") return;
   if (!event.data || event.data.source !== "bb-game-home-relay") return;
   if (state.currentScreen !== "game") return;
-  onHomeButtonTap();
+  onGameHome();
 });
 
 /* ---------------------------------------------------------------------------
@@ -1129,7 +1137,6 @@ document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
    Wire-up
    ------------------------------------------------------------------------- */
 document.getElementById("screen-attract").addEventListener("click", onAttractTap);
-document.getElementById("home-button").addEventListener("click", onHomeButtonTap);
 watchGameFrameActivity();
 
 boot();

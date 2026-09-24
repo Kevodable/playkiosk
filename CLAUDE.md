@@ -95,7 +95,8 @@ Due cartelle:
 
 ## 8. Shell / menu — design attuale
 - Flusso: **attract loop** (tap sblocca audio → menu) → **menu** (griglia) →
-  **gioco** in **iframe** fullscreen stessa origine con overlay HOME della shell →
+  **gioco** in **iframe** fullscreen stessa origine (si torna al menu SOLO col
+  pulsante "Torna ai giochi" nell'header del gioco, niente overlay della shell) →
   **idle return** dopo `idleTimeoutSec` → torna all'attract.
 - Griglia **scrollabile** in verticale (il catalogo crescerà oltre i 12), sfondo
   **fisso** dietro, ultima fila "peek" per invitare a scrollare. Colonne/gap come
@@ -131,8 +132,15 @@ Due cartelle:
   schermo per un'apertura piu' grande (su default 1.2). `null` →
   torna il vetro. Asset `window.webp` da `tools/build_finestra.py` (sorgente
   Scenario `tools/art/finestra_menu.png`).
+- **Header dei giochi** (`games/assets/shared.css`, uguale per tutti e 12):
+  fascia menta con profilo teal (come l'architrave della finestra), pulsante
+  "Torna ai giochi" di legno (come il davanzale) con casetta disegnata, a
+  sinistra; titolo al centro col font del tenant e il `titleColor` del gioco,
+  passati dalla shell all'iframe (`--bb-title-font`, `--bb-title-color`);
+  punteggio a destra.
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL
-  dell'iframe (`?v=`); le icone hanno `?v=` nel path. Alzarli a ogni modifica.
+  dell'iframe (`?v=`); le icone hanno `?v=` nel path; `shared.css`/`shared.js`
+  hanno `?v=` nel link di ogni gioco. Alzarli a ogni modifica.
 
 ## 9. I 12 giochi + re-skin
 Giochi: memory, talpe, palloncini, frutta, stelle, sequenza, lavagna, labirinto,
@@ -236,6 +244,9 @@ forme, puzzle, tris, hanoi.
   `window.image`, attiva su `default`; reversibile mettendo `null`.
 - 2026-09-24 — Finestra messa **in standby** (`window.image: null` su default,
   asset e misure restano).
+- 2026-09-24 — **Header dei giochi** nello stile della finestra (fascia menta,
+  pulsante di legno, titolo Bold Doodle col colore del gioco); tolto il
+  pulsante "Menu" della shell: resta solo "Torna ai giochi" a sinistra.
 - 2026-09-24 — Finestra **v2** riattivata su default: persiane di legno aperte,
   architrave menta, davanzale coi vasi (`window-v2.webp`, da
   `tools/build_finestra_v2.py`: scontorno magenta, banda centrale allargata,

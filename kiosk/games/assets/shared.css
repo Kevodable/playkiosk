@@ -74,54 +74,106 @@ button{ font-family:inherit; color:inherit; border:none; background:none; cursor
           env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* ---------- Header con pulsante Esci + titolo ---------- */
+/* ---------- Header con pulsante Esci + titolo ----------
+   Stile del menu (finestra): fascia menta come l'architrave con profilo
+   teal, pulsante di legno come il davanzale, titolo col font e il colore
+   del gioco come nel menu. Font e colore arrivano dalla shell (tenant +
+   manifest) via --bb-title-font / --bb-title-color; senza shell (gioco
+   aperto da solo) restano i fallback qui sotto. */
 .bb-header{
+  position:relative;
+  z-index:5;
   flex:0 0 auto;
-  display:flex;
+  /* 3 colonne: pulsante | titolo al centro dello schermo | info */
+  display:grid;
+  grid-template-columns:1fr minmax(0,auto) 1fr;
   align-items:center;
-  gap:16px;
-  padding:14px 18px;
+  gap:2vmin;
+  padding:1.2vmin 2.2vmin 1.4vmin;
+  background:linear-gradient(to bottom, #EAFCDF 0%, #D6F4D2 55%, #B9E2C3 100%);
+  border-bottom:.45vmin solid #5B8C83;
+  box-shadow:
+    inset 0 .35vmin 0 rgba(255,255,255,.7),
+    0 .6vmin 1.4vmin rgba(40,90,80,.28);
 }
-/* Pulsante "Torna ai giochi": sempre visibile nell'header di ogni gioco. */
+/* Pulsante "Torna ai giochi": sempre visibile nell'header di ogni gioco.
+   Asse di legno del davanzale: faccia chiara sopra, spigolo scuro sotto
+   (si abbassa quando lo premi). */
 .bb-back{
-  flex:0 0 auto;
-  background:var(--bb-burgundy, #7A1F3D);
+  justify-self:start;
+  display:inline-flex;
+  align-items:center;
+  gap:1.2vmin;
+  min-height:64px;
+  padding:0 2.6vmin 0 2vmin;
+  background:linear-gradient(to bottom, #F7C46A 0%, #F0AF48 45%, #BA7831 100%);
   color:#fff;
-  border:0;
-  border-radius:24px;
-  padding:10px 16px;
-  font-family:inherit;
+  border:.35vmin solid #522C09;
+  border-radius:2.2vmin;
+  font-family:var(--bb-title-font, var(--bb-font));
   font-weight:800;
-  font-size:2.4vmin; font-size:clamp(13px,2.4vmin,18px);
+  font-size:clamp(18px,3vmin,30px);
+  letter-spacing:.5px;
+  text-transform:uppercase;
   line-height:1;
   white-space:nowrap;
+  text-shadow:
+    -2px -2px 0 #522C09, 0 -2px 0 #522C09, 2px -2px 0 #522C09,
+    -2px 0 0 #522C09, 2px 0 0 #522C09,
+    -2px 2px 0 #522C09, 0 2px 0 #522C09, 2px 2px 0 #522C09;
+  box-shadow:
+    inset 0 .35vmin 0 rgba(255,255,255,.45),
+    0 .6vmin 0 #593312,
+    0 1vmin 1.2vmin rgba(0,0,0,.25);
   cursor:pointer;
-  box-shadow:var(--bb-shadow);
   touch-action:manipulation;
+  transition:transform .08s ease-out, box-shadow .08s ease-out;
 }
-.bb-back:active{ transform:scale(.95); }
+.bb-back:active{
+  transform:translateY(.45vmin);
+  box-shadow:
+    inset 0 .35vmin 0 rgba(255,255,255,.45),
+    0 .15vmin 0 #593312,
+    0 .4vmin .6vmin rgba(0,0,0,.25);
+}
+.bb-back__icon{
+  width:clamp(28px,4.6vmin,46px);
+  height:clamp(28px,4.6vmin,46px);
+  flex:0 0 auto;
+  filter:drop-shadow(0 2px 0 rgba(82,44,9,.5));
+}
 
 .bb-header__title{
-  font-size:4.5vmin; font-size:clamp(20px,4.5vmin,34px);
+  font-family:var(--bb-title-font, var(--bb-font));
+  font-size:clamp(26px,5.4vmin,54px);
   font-weight:800;
-  letter-spacing:.5px;
-  color:var(--bb-burgundy);
+  letter-spacing:1px;
+  text-transform:uppercase;
+  text-align:center;
+  line-height:1.1;
+  color:var(--bb-title-color, var(--bb-burgundy));
+  text-shadow:
+    -2px -2px 0 #2E1A0A, 0 -2px 0 #2E1A0A, 2px -2px 0 #2E1A0A,
+    -2px 0 0 #2E1A0A, 2px 0 0 #2E1A0A,
+    -2px 2px 0 #2E1A0A, 0 2px 0 #2E1A0A, 2px 2px 0 #2E1A0A,
+    0 3px 4px rgba(0,0,0,.45);
   /* Il titolo non ruba spazio ai pulsanti */
-  flex:1 1 auto;
   min-width:0;
+  padding:0 4px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 /* Zona punteggio/info a destra dell'header */
 .bb-header__info{
-  flex:0 0 auto;
+  justify-self:end;
   display:flex;
   align-items:center;
   gap:14px;
-  font-size:3vmin; font-size:clamp(16px,3vmin,24px);
+  font-size:clamp(20px,3.8vmin,36px);
   font-weight:800;
-  color:var(--bb-blue);
+  color:#2F5F57;
+  text-shadow:0 2px 0 rgba(255,255,255,.7);
 }
 
 /* ---------- Pulsanti (target tap >= 64px) ---------- */
