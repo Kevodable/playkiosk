@@ -136,7 +136,8 @@ Due cartelle:
   fascia menta con profilo teal (come l'architrave della finestra), pulsante
   "Torna ai giochi" di legno (come il davanzale) con casetta disegnata, a
   sinistra; titolo al centro col font del tenant e il `titleColor` del gioco,
-  passati dalla shell all'iframe (`--bb-title-font`, `--bb-title-color`);
+  passati dalla shell all'iframe (`--bb-title-font`, `--bb-title-color`;
+  il font vale per tutte le scritte del gioco);
   punteggio a destra.
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL
   dell'iframe (`?v=`); le icone hanno `?v=` nel path; `shared.css`/`shared.js`
@@ -247,6 +248,9 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — **Header dei giochi** nello stile della finestra (fascia menta,
   pulsante di legno, titolo Bold Doodle col colore del gioco); tolto il
   pulsante "Menu" della shell: resta solo "Torna ai giochi" a sinistra.
+- 2026-09-24 — Font del tenant (Bold Doodle) su **tutte le scritte**, shell e
+  giochi (non piu' solo i titoli); contorno scritte ridotto a 1px. Le lettere
+  accentate (es. "difficolta'") escono col font di sistema: Bold Doodle non le ha.
 - 2026-09-24 — Finestra **v2** riattivata su default: persiane di legno aperte,
   architrave menta, davanzale coi vasi (`window-v2.webp`, da
   `tools/build_finestra_v2.py`: scontorno magenta, banda centrale allargata,

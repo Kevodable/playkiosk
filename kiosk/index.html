@@ -84,7 +84,9 @@
     overflow:hidden;
     background:var(--background);
     color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    /* Tenant font everywhere (see applyTenantTitleFont); system stack as
+       fallback while it loads or if the tenant has none. */
+    font-family:var(--tile-name-font-family),-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-user-select:none; user-select:none;
     -webkit-touch-callout:none;
     -webkit-tap-highlight-color:transparent;
@@ -656,9 +658,9 @@ function unlockAudio() {
    ------------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------------
    Tenant title font: registers a real @font-face (local files only, never a
-   CDN) and points --tile-name-font-family at it. Scoped to game titles only
-   (.tile__name uses this var; nothing else does) - never touches the rest
-   of the UI. File convention: config.font "Bold Doodle" maps to
+   CDN) and points --tile-name-font-family at it. Used by every text in the
+   shell (body) and passed on to the games (--bb-title-font, see
+   styleGameFrame()). File convention: config.font "Bold Doodle" maps to
    assets/fonts/BoldDoodle.woff2 / .woff (spaces stripped) in the tenant's
    own folder, resolved through tenantAsset() like every other tenant asset,
    so this works for any tenant without hardcoding a path here. A missing

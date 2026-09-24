@@ -44,7 +44,9 @@ html,body{
   overscroll-behavior:none;
   background:var(--bb-paper);
   color:var(--bb-ink);
-  font-family:var(--bb-font);
+  /* Font del tenant su tutte le scritte (lo passa la shell); di sistema se
+     manca o mentre carica */
+  font-family:var(--bb-title-font, var(--bb-font));
   /* Touch only: disattiva selezione, callout e highlight su tap */
   -webkit-user-select:none;
   user-select:none;

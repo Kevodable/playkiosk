@@ -5,7 +5,7 @@
     {
       "id": "memory",
       "folder": "memory",
-      "version": "6",
+      "version": "7",
       "category": "Giochi web",
       "order": 10,
       "tier": "base",
@@ -20,7 +20,7 @@
     {
       "id": "talpe",
       "folder": "talpe",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 11,
       "tier": "base",
@@ -35,7 +35,7 @@
     {
       "id": "palloncini",
       "folder": "palloncini",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 12,
       "tier": "base",
@@ -50,7 +50,7 @@
     {
       "id": "frutta",
       "folder": "frutta",
-      "version": "5",
+      "version": "6",
       "category": "Giochi web",
       "order": 13,
       "tier": "base",
@@ -65,7 +65,7 @@
     {
       "id": "stelle",
       "folder": "stelle",
-      "version": "5",
+      "version": "6",
       "category": "Giochi web",
       "order": 14,
       "tier": "base",
@@ -80,7 +80,7 @@
     {
       "id": "sequenza",
       "folder": "sequenza",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 15,
       "tier": "base",
@@ -95,7 +95,7 @@
     {
       "id": "lavagna",
       "folder": "lavagna",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 16,
       "tier": "base",
@@ -110,7 +110,7 @@
     {
       "id": "labirinto",
       "folder": "labirinto",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 17,
       "tier": "base",
@@ -125,7 +125,7 @@
     {
       "id": "forme",
       "folder": "forme",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 18,
       "tier": "base",
@@ -140,7 +140,7 @@
     {
       "id": "puzzle",
       "folder": "puzzle",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 19,
       "tier": "base",
@@ -155,7 +155,7 @@
     {
       "id": "tris",
       "folder": "tris",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 20,
       "tier": "base",
@@ -170,7 +170,7 @@
     {
       "id": "hanoi",
       "folder": "hanoi",
-      "version": "4",
+      "version": "5",
       "category": "Giochi web",
       "order": 21,
       "tier": "base",
