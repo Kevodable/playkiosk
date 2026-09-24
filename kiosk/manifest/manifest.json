@@ -95,6 +95,7 @@
     {
       "id": "lavagna",
       "folder": "lavagna",
+      "version": "2",
       "category": "Giochi web",
       "order": 16,
       "tier": "base",

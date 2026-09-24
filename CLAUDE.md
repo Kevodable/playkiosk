@@ -127,11 +127,10 @@ Giochi: memory, talpe, palloncini, frutta, stelle, sequenza, lavagna, labirinto,
 forme, puzzle, tris, hanoi.
 
 - **De-brandizzazione: FATTA su tutti e 12** (2026-09-24): nessun gioco usa piu'
-  le mascotte Fun Planet. **Re-skin grafico fatto su 11**: ogni gioco ha la
+  le mascotte Fun Planet. **Re-skin grafico fatto su tutti e 12**: ogni gioco ha la
   grafica del suo animale (i personaggi base del prodotto), numeri in `CONFIG`
-  in cima al file, sprite da `tools/build_<gioco>_sprites.py`. **Manca la
-  Lavagna** (non aveva mascotte, ma la grafica del gioco e' ancora quella vecchia:
-  va rifatta col gattino). `games/assets/mascotte/` e' orfana.
+  in cima al file, sprite da `tools/build_<gioco>_sprites.py`. La cartella delle
+  vecchie mascotte (`games/assets/mascotte/`) e' stata eliminata.
 - **Metodo (obbligatorio):** UN gioco alla volta, mai tutti insieme, mai auto
   mode. Per ciascuno: inventario → arte in Scenario coerente → verifica asset →
   il CLI monta senza rompere il gameplay → test → commit.
@@ -207,6 +206,11 @@ forme, puzzle, tris, hanoi.
   immagini = le scene della **famiglia di animali** (una a caso per partita),
   tessere che **scorrono**, pulsante **Sbircia**, numeri solo nel facile.
   Re-skin fatto su 11 giochi; resta la Lavagna.
+- 2026-09-24 — Eliminata `games/assets/mascotte/` (non piu' usata).
+- 2026-09-24 — Lavagna rifatta: gattino dell'icona, lavagna verde con cornice e
+  mensola di legno coi gessetti; **sagome da ricalcare** (sole, cuore, stella,
+  casa, pesce, fiore) e **timbri** (stella, cuore, fiore). Re-skin dei 12 giochi
+  completato.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo menta,
@@ -214,10 +218,9 @@ forme, puzzle, tris, hanoi.
   Aperto: lo sfondo attuale è **1344×768 WebP**, sotto la specifica della sez. 10
   (1920×1080 JPG) — da rigenerare o aggiornare la specifica.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Giochi:** re-skin fatto su 11; **manca la Lavagna** (gioco ancora con la
-  grafica vecchia, l'icona invece e' gia' nuova). Il Rompicapo usa come
+- **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.
-- **Aperto:** eliminare `games/assets/mascotte/` (orfana); unire la catena dei
-  branch in `main`; sfondo menu sotto specifica (vedi sopra).
+- **Aperto:** unire la catena dei branch in `main`; sfondo menu sotto specifica
+  (vedi sopra).
 - **Branch:** catena talpe → palloncini → frutta → memory → cleanup-brand →
-  stelle → sequenza → labirinto → forme → tris → hanoi → `feature/puzzle-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
+  stelle → sequenza → labirinto → forme → tris → hanoi → puzzle → `feature/lavagna-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.

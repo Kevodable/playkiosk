@@ -8,146 +8,193 @@
   <title>Lavagna</title>
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
-    .bb-stage{ padding:8px 14px 14px; flex-direction:column; gap:10px; }
+    /* Aula colorata, coerente con il gattino e la lavagna dell'icona */
+    .bb-screen{
+      background:
+        radial-gradient(circle at 16% 20%, rgba(255,255,255,.5) 0 4px, transparent 5px) 0 0 / 80px 80px,
+        linear-gradient(to bottom, #FFF1DE 0%, #FCE3C6 60%, #F5D2AC 100%);
+    }
+    .bb-header{ background:rgba(255,255,255,.55); }
+    .bb-stage{ padding:8px 14px 12px; }
+    .scena{ position:absolute; top:0; right:0; bottom:0; left:0; display:flex; align-items:flex-end; gap:1.5vmin; padding:0 1.5vmin 1.5vmin; }
+    .gattino{ height:40vmin; height:min(40vmin,400px); width:auto; flex:0 0 auto; transform-origin:50% 100%; pointer-events:none; }
+    .colonna{ flex:1 1 auto; height:100%; min-width:0; display:flex; flex-direction:column; gap:0; }
 
-    /* La lavagna vera e propria, con cornice in legno */
+    /* Lavagna: pannello verde, cornice di legno chiaro come l'icona */
     .board{
-      position:relative; flex:1 1 auto; width:100%; min-height:0;
-      border-radius:22px;
-      background:#2F5D50;            /* verde lavagna */
-      border:12px solid #B5793A;     /* cornice legno */
-      box-shadow:var(--bb-shadow-strong), inset 0 0 60px rgba(0,0,0,.25);
+      position:relative; flex:1 1 auto; min-height:0;
+      border-radius:2.4vmin;
+      background:#2F6B55;
+      border:1.8vmin solid #E2AE72;
+      box-shadow:inset 0 0 0 .5vmin #B97A3E, inset 0 0 60px rgba(0,0,0,.28), 0 10px 22px rgba(90,50,20,.3);
       overflow:hidden; touch-action:none;
     }
-    .board canvas{ display:block; width:100%; height:100%; }
-    /* Velo di "polvere di gesso" sugli angoli, solo estetico */
-    .board::after{ content:""; position:absolute; top:0; right:0; bottom:0; left:0; inset:0; pointer-events:none;
-      background:radial-gradient(circle at 50% 120%, rgba(255,255,255,.06), transparent 60%); }
-
-    /* Barra strumenti */
-    .tools{
-      flex:0 0 auto; display:flex; align-items:center; justify-content:center;
-      gap:1.8vmin; gap:clamp(8px,1.8vmin,16px); flex-wrap:wrap;
+    .board canvas{ position:absolute; inset:0; display:block; width:100%; height:100%; }
+    #traccia{ pointer-events:none; }
+    /* Mensola di legno con i gessetti */
+    .mensola{
+      flex:0 0 auto; display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
+      gap:1vmin; padding:1.2vmin 1.6vmin; margin:0 2vmin; flex-wrap:nowrap;
+      background:linear-gradient(to bottom, #E2AE72, #C98A4E); border:.5vmin solid #8A5328; border-top:0;
+      border-radius:0 0 2vmin 2vmin; box-shadow:0 8px 14px rgba(90,50,20,.25);
     }
-    .chalk{
-      width:8vmin; width:clamp(46px,8vmin,60px); height:8vmin; height:clamp(46px,8vmin,60px);
-      border-radius:50%; box-shadow:var(--bb-shadow);
-      border:5px solid #fff; transition:transform .12s var(--bb-ease-elastic);
-    }
-    .chalk:active{ transform:scale(.9); }
-    .chalk.sel{ transform:scale(1.12); border-color:var(--bb-burgundy); }
-
-    /* Pulsanti tondi per dimensione/gomma/pulisci */
+    /* Gessetto: un bastoncino colorato adagiato sulla mensola */
+    .gesso{ width:7vmin; width:clamp(46px,7vmin,76px); height:3.4vmin; height:clamp(22px,3.4vmin,34px);
+      border-radius:1vmin; border:.35vmin solid rgba(60,30,10,.55);
+      background:linear-gradient(to bottom, rgba(255,255,255,.55) 0 22%, transparent 23%), var(--c);
+      box-shadow:0 .4vmin 0 rgba(60,30,10,.35); transition:transform .12s var(--bb-ease-elastic); }
+    .gesso.sel{ transform:translateY(-1.2vmin) rotate(-8deg) scale(1.08); box-shadow:0 1vmin 1.4vmin rgba(60,30,10,.4); }
     .tool{
-      min-width:9vmin; min-width:clamp(48px,9vmin,62px); height:9vmin; height:clamp(48px,9vmin,62px);
-      border-radius:999px; background:#fff; box-shadow:var(--bb-shadow);
-      display:inline-flex; align-items:center; justify-content:center;
-      font-size:4.4vmin; font-size:clamp(20px,4.4vmin,28px); color:var(--bb-burgundy); font-weight:900;
-      padding:0 clamp(10px,2vmin,18px); transition:transform .12s var(--bb-ease-elastic);
+      min-width:6.4vmin; min-width:clamp(44px,6.4vmin,62px); height:6.4vmin; height:clamp(44px,6.4vmin,62px);
+      border-radius:999px; background:#FFF7EA; box-shadow:0 .4vmin 0 rgba(60,30,10,.3);
+      display:inline-flex; align-items:center; justify-content:center; gap:.6vmin;
+      font-size:3.6vmin; font-size:clamp(20px,3.6vmin,30px); color:#6E4020; font-weight:900;
+      padding:0 clamp(10px,1.6vmin,16px); transition:transform .12s var(--bb-ease-elastic);
     }
     .tool:active{ transform:scale(.92); }
-    .tool.sel{ background:var(--bb-blue-soft); outline:4px solid var(--bb-blue); }
-
-    /* I tre "pallini" di dimensione tratto */
-    .dot{ background:var(--bb-burgundy); border-radius:50%; }
-    .dot--s{ width:10px; height:10px; }
-    .dot--m{ width:18px; height:18px; }
-    .dot--l{ width:26px; height:26px; }
-
-    .sep{ width:2px; height:36px; background:rgba(122,31,61,.25); border-radius:2px; }
+    .tool.sel{ background:#FFE9A8; outline:.5vmin solid #E09A2E; }
+    .dot{ background:#6E4020; border-radius:50%; }
+    .dot--s{ width:10px; height:10px; } .dot--m{ width:18px; height:18px; } .dot--l{ width:26px; height:26px; }
+    .sep{ width:.4vmin; height:5vmin; background:rgba(110,64,32,.35); border-radius:2px; }
   </style>
 </head>
 <body>
   <div class="bb-screen">
     <div class="bb-stage">
-      <div class="board" id="board">
-        <canvas id="canvas"></canvas>
-      </div>
-
-      <div class="tools" id="tools">
-        <!-- gessetti colorati -->
-        <button class="chalk sel" data-color="#FFFFFF" style="background:#FFFFFF"></button>
-        <button class="chalk" data-color="#FFE34D" style="background:#FFE34D"></button>
-        <button class="chalk" data-color="#FF8FC8" style="background:#FF8FC8"></button>
-        <button class="chalk" data-color="#7CC4FF" style="background:#7CC4FF"></button>
-        <button class="chalk" data-color="#9CE89C" style="background:#9CE89C"></button>
-        <button class="chalk" data-color="#FFB870" style="background:#FFB870"></button>
-
-        <span class="sep"></span>
-
-        <!-- dimensione tratto -->
-        <button class="tool" data-size="8"  aria-label="sottile"><span class="dot dot--s"></span></button>
-        <button class="tool sel" data-size="16" aria-label="medio"><span class="dot dot--m"></span></button>
-        <button class="tool" data-size="28" aria-label="grosso"><span class="dot dot--l"></span></button>
-
-        <span class="sep"></span>
-
-        <!-- gomma e pulisci -->
-        <button class="tool" id="gomma" aria-label="gomma">🧽</button>
-        <button class="tool" id="pulisci" aria-label="pulisci tutto">🗑️</button>
+      <div class="scena">
+        <img class="gattino" id="gattino" src="img/gattino.webp" alt="">
+        <div class="colonna">
+          <div class="board" id="board">
+            <canvas id="traccia"></canvas>
+            <canvas id="canvas"></canvas>
+          </div>
+          <div class="mensola" id="tools">
+            <!-- gessetti colorati -->
+            <button class="gesso sel" data-color="#FFFFFF" style="--c:#FFFFFF" aria-label="bianco"></button>
+            <button class="gesso" data-color="#FFE34D" style="--c:#FFE34D" aria-label="giallo"></button>
+            <button class="gesso" data-color="#FF8FC8" style="--c:#FF8FC8" aria-label="rosa"></button>
+            <button class="gesso" data-color="#7CC4FF" style="--c:#7CC4FF" aria-label="azzurro"></button>
+            <button class="gesso" data-color="#9CE89C" style="--c:#9CE89C" aria-label="verde"></button>
+            <button class="gesso" data-color="#FFB870" style="--c:#FFB870" aria-label="arancio"></button>
+            <span class="sep"></span>
+            <!-- dimensione tratto -->
+            <button class="tool" data-size="8"  aria-label="sottile"><span class="dot dot--s"></span></button>
+            <button class="tool sel" data-size="16" aria-label="medio"><span class="dot dot--m"></span></button>
+            <button class="tool" data-size="28" aria-label="grosso"><span class="dot dot--l"></span></button>
+            <span class="sep"></span>
+            <!-- timbri -->
+            <button class="tool" data-timbro="stella" aria-label="timbro stella">⭐</button>
+            <button class="tool" data-timbro="cuore" aria-label="timbro cuore">❤️</button>
+            <button class="tool" data-timbro="fiore" aria-label="timbro fiore">🌸</button>
+            <span class="sep"></span>
+            <button class="tool" id="ricalca" aria-label="disegno da ricalcare">✏️ Ricalca</button>
+            <button class="tool" id="gomma" aria-label="gomma">🧽</button>
+            <button class="tool" id="pulisci" aria-label="pulisci tutto">🗑️</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="../assets/shared.js"></script>
   <script>
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      TIMBRO_GRANDEZZA: 3.2,       // un timbro e' tante volte lo spessore scelto
+      TRACCIA_OPACITA: 0.38,       // quanto si vede la sagoma da ricalcare
+      GOMMA_FATTORE: 1.6,          // la gomma e' piu' larga del gesso
+      INATTIVITA_MS: 120000        // disegno libero: torna al menu dopo 2 minuti senza tocchi
+    };
+    // Sagome da ricalcare (spazio 0..100), una dopo l'altra, poi di nuovo nessuna
+    var SAGOME = [
+      { nome: "sole",   d: "M50 32 A18 18 0 1 1 49.9 32 Z M50 8 V20 M50 80 V92 M8 50 H20 M80 50 H92 M20 20 L28 28 M72 72 L80 80 M80 20 L72 28 M28 72 L20 80" },
+      { nome: "cuore",  d: "M50 86 C14 60 12 26 34 20 C44 17 50 26 50 32 C50 26 56 17 66 20 C88 26 86 60 50 86 Z" },
+      { nome: "stella", d: "M50 8 L61 38 L94 38 L67 57 L78 90 L50 70 L22 90 L33 57 L6 38 L39 38 Z" },
+      { nome: "casa",   d: "M18 48 L50 18 L82 48 M26 42 V86 H74 V42 M44 86 V62 H56 V86 M60 26 V14 H70 V35" },
+      { nome: "pesce",  d: "M14 50 C28 26 62 26 76 50 C62 74 28 74 14 50 Z M76 50 L92 34 V66 Z M30 46 A3 3 0 1 1 30.1 46" },
+      { nome: "fiore",  d: "M50 42 A8 8 0 1 1 49.9 42 Z M50 34 C40 14 60 14 50 34 M58 50 C78 40 78 60 58 50 M50 58 C60 78 40 78 50 58 M42 50 C22 60 22 40 42 50 M50 66 V94 M50 82 C60 72 68 76 70 80" }
+    ];
+
     BB.lockScroll();
-    BB.header("✏️ Lavagna");
-    BB.idle(120000, BB.home);   // ritorno dopo 2 min di inattività (disegno libero)
+    BB.header("Lavagna");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
     var board = document.getElementById("board");
     var canvas = document.getElementById("canvas");
     var ctx = canvas.getContext("2d");
+    var traccia = document.getElementById("traccia");
+    var tctx = traccia.getContext("2d");
+    var gattino = document.getElementById("gattino");
 
-    var COLORE = "#FFFFFF";
-    var SPESSORE = 16;
-    var gomma = false;
-    var BOARD_BG = "#2F5D50";
+    var COLORE = "#FFFFFF", SPESSORE = 16, gomma = false, timbro = null, sagoma = -1;
 
-    // Adatta il canvas alla dimensione reale (con devicePixelRatio), preservando il disegno
+    // Adatta i canvas alla dimensione reale (con devicePixelRatio), preservando il disegno
     function fitCanvas(){
       var dpr = window.devicePixelRatio || 1;
       var w = board.clientWidth, h = board.clientHeight;
       if (w === 0 || h === 0) return;
-      // salva il disegno corrente
       var prev = null;
       if (canvas.width > 0 && canvas.height > 0){
         prev = document.createElement("canvas");
         prev.width = canvas.width; prev.height = canvas.height;
         prev.getContext("2d").drawImage(canvas, 0, 0);
       }
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      [canvas, traccia].forEach(function (c) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); });
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.lineCap = "round"; ctx.lineJoin = "round";
       if (prev) ctx.drawImage(prev, 0, 0, w, h);
+      disegnaSagoma();
     }
 
-    // Coordinate in pixel CSS relative al board
-    function pos(e){
-      var r = canvas.getBoundingClientRect();
-      return { x: e.clientX - r.left, y: e.clientY - r.top };
-    }
+    function pos(e){ var r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
 
-    // Più dita contemporaneamente: ogni pointerId ha la sua ultima posizione
+    // ---- Gesso e gomma (piu' dita insieme: ogni pointerId ha la sua ultima posizione) ----
     var attivi = {};
-
     function disegnaPunto(p){
-      ctx.beginPath();
-      ctx.fillStyle = gomma ? BOARD_BG : COLORE;
-      ctx.arc(p.x, p.y, (gomma ? SPESSORE*1.6 : SPESSORE)/2, 0, Math.PI*2);
+      ctx.globalCompositeOperation = gomma ? "destination-out" : "source-over";
+      ctx.beginPath(); ctx.fillStyle = COLORE;
+      ctx.arc(p.x, p.y, (gomma ? SPESSORE * CONFIG.GOMMA_FATTORE : SPESSORE) / 2, 0, Math.PI * 2);
       ctx.fill();
     }
     function disegnaLinea(a, b){
-      ctx.beginPath();
-      ctx.strokeStyle = gomma ? BOARD_BG : COLORE;
-      ctx.lineWidth = gomma ? SPESSORE*1.6 : SPESSORE;
+      ctx.globalCompositeOperation = gomma ? "destination-out" : "source-over";
+      ctx.beginPath(); ctx.strokeStyle = COLORE;
+      ctx.lineWidth = gomma ? SPESSORE * CONFIG.GOMMA_FATTORE : SPESSORE;
       ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    // ---- Timbri: stella, cuore, fiore nel colore del gesso ----
+    function stampa(p){
+      var R = SPESSORE * CONFIG.TIMBRO_GRANDEZZA, i, a;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = COLORE; ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (timbro === "stella"){
+        for (i = 0; i < 10; i++){ var rr = i % 2 ? R * .45 : R; a = (-90 + i * 36) * Math.PI / 180;
+          ctx[i ? "lineTo" : "moveTo"](p.x + Math.cos(a) * rr, p.y + Math.sin(a) * rr); }
+        ctx.closePath();
+      } else if (timbro === "cuore"){
+        var s = R / 40;
+        ctx.moveTo(p.x, p.y + 34 * s);
+        ctx.bezierCurveTo(p.x - 44 * s, p.y + 4 * s, p.x - 30 * s, p.y - 34 * s, p.x, p.y - 16 * s);
+        ctx.bezierCurveTo(p.x + 30 * s, p.y - 34 * s, p.x + 44 * s, p.y + 4 * s, p.x, p.y + 34 * s);
+      } else {                                  // fiore: 5 petali + centro giallo
+        for (i = 0; i < 5; i++){ a = (-90 + i * 72) * Math.PI / 180;
+          ctx.moveTo(p.x + Math.cos(a) * R * .55 + R * .42, p.y + Math.sin(a) * R * .55);
+          ctx.arc(p.x + Math.cos(a) * R * .55, p.y + Math.sin(a) * R * .55, R * .42, 0, Math.PI * 2); }
+      }
+      if (timbro === "fiore"){ ctx.lineWidth = 5; ctx.stroke(); ctx.fill(); } else { ctx.fill(); ctx.stroke(); }
+      if (timbro === "fiore"){ ctx.beginPath(); ctx.fillStyle = "#FFD23F"; ctx.arc(p.x, p.y, R * .3, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+      BB.sound("pop");
     }
 
     canvas.addEventListener("pointerdown", function(e){
       e.preventDefault();
-      var p = pos(e); attivi[e.pointerId] = p;
+      var p = pos(e);
+      if (timbro){ stampa(p); return; }
+      attivi[e.pointerId] = p;
       disegnaPunto(p);
       if (canvas.setPointerCapture) { try { canvas.setPointerCapture(e.pointerId); } catch(_){} }
     });
@@ -161,37 +208,66 @@
     canvas.addEventListener("pointercancel", finePuntatore);
     canvas.addEventListener("pointerleave", finePuntatore);
 
-    // --- Strumenti ---
-    function selColore(btn){
-      Array.prototype.forEach.call(document.querySelectorAll(".chalk"), function(c){ c.classList.remove("sel"); });
-      btn.classList.add("sel");
-      COLORE = btn.dataset.color; gomma = false;
-      document.getElementById("gomma").classList.remove("sel");
+    // ---- Sagoma da ricalcare: tratteggio leggero sotto il disegno ----
+    function disegnaSagoma(){
+      var w = board.clientWidth, h = board.clientHeight;
+      tctx.clearRect(0, 0, w, h);
+      if (sagoma < 0) return;
+      var lato = Math.min(w, h) * .8, s = lato / 100;
+      tctx.save();
+      tctx.translate((w - lato) / 2, (h - lato) / 2); tctx.scale(s, s);
+      tctx.strokeStyle = "rgba(255,255,255," + CONFIG.TRACCIA_OPACITA + ")";
+      tctx.lineWidth = 3.2; tctx.lineCap = "round"; tctx.lineJoin = "round"; tctx.setLineDash([4, 5]);
+      tctx.stroke(new Path2D(SAGOME[sagoma].d));
+      tctx.restore();
     }
-    Array.prototype.forEach.call(document.querySelectorAll(".chalk"), function(c){
-      c.addEventListener("click", function(){ selColore(c); BB.sound("pop"); });
-    });
 
-    function selSize(btn){
-      Array.prototype.forEach.call(document.querySelectorAll(".tool[data-size]"), function(t){ t.classList.remove("sel"); });
-      btn.classList.add("sel"); SPESSORE = parseInt(btn.dataset.size, 10);
+    // ---- Gattino ----
+    var animG = null;
+    function gattinoFesta(){
+      if (animG) animG.cancel();
+      animG = gattino.animate([{ transform:"none" }, { transform:"translateY(-9%) rotate(-5deg)", offset:.3 }, { transform:"none", offset:.55 },
+        { transform:"translateY(-6%) rotate(4deg)", offset:.8 }, { transform:"none" }], { duration: 700, easing: "ease-out" });
     }
+
+    // ---- Strumenti ----
+    function deseleziona(sel){ Array.prototype.forEach.call(document.querySelectorAll(sel), function(t){ t.classList.remove("sel"); }); }
+    Array.prototype.forEach.call(document.querySelectorAll(".gesso"), function(c){
+      c.addEventListener("click", function(){
+        deseleziona(".gesso"); c.classList.add("sel");
+        COLORE = c.dataset.color; gomma = false; document.getElementById("gomma").classList.remove("sel");
+        BB.sound("pop");
+      });
+    });
     Array.prototype.forEach.call(document.querySelectorAll(".tool[data-size]"), function(t){
-      t.addEventListener("click", function(){ selSize(t); });
+      t.addEventListener("click", function(){ deseleziona(".tool[data-size]"); t.classList.add("sel"); SPESSORE = parseInt(t.dataset.size, 10); });
     });
-
+    Array.prototype.forEach.call(document.querySelectorAll(".tool[data-timbro]"), function(t){
+      t.addEventListener("click", function(){
+        var era = timbro === t.dataset.timbro;
+        deseleziona(".tool[data-timbro]");
+        timbro = era ? null : t.dataset.timbro;          // ritocco = torna al gesso
+        if (timbro){ t.classList.add("sel"); gomma = false; document.getElementById("gomma").classList.remove("sel"); }
+        BB.sound("pop");
+      });
+    });
     document.getElementById("gomma").addEventListener("click", function(){
-      gomma = !gomma;
-      this.classList.toggle("sel", gomma);
+      gomma = !gomma; this.classList.toggle("sel", gomma);
+      if (gomma){ timbro = null; deseleziona(".tool[data-timbro]"); }
       BB.sound("pop");
     });
-
+    document.getElementById("ricalca").addEventListener("click", function(){
+      sagoma = sagoma + 1 >= SAGOME.length ? -1 : sagoma + 1;   // dopo l'ultima: nessuna
+      this.classList.toggle("sel", sagoma >= 0);
+      disegnaSagoma();
+      if (sagoma >= 0){ gattinoFesta(); BB.sound("match"); } else BB.sound("pop");
+    });
     document.getElementById("pulisci").addEventListener("click", function(){
+      ctx.globalCompositeOperation = "source-over";
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      BB.sound("match");
+      gattinoFesta(); BB.sound("match");
     });
 
-    // Adatta al primo avvio e ai cambi di orientamento/resize
     window.addEventListener("resize", fitCanvas);
     window.addEventListener("orientationchange", function(){ setTimeout(fitCanvas, 200); });
     fitCanvas();
