@@ -90,8 +90,8 @@ Due cartelle:
     tier, active, icona locale, titolo i18n, titleColor, ...)
   - `tenants/default/` e `tenants/funplanet/` — `config.json` + `assets/`
   - `.nojekyll`, `README.md`
-- Branch: `feature/shell` (shell), `feature/<gioco>-reskin` (re-skin per gioco).
-  Committare i punti buoni.
+- Branch: `main` e' la base; per un lavoro nuovo si apre un `feature/<nome>` da
+  `main` e lo si riunisce a fine lavoro. Committare i punti buoni.
 
 ## 8. Shell / menu — design attuale
 - Flusso: **attract loop** (tap sblocca audio → menu) → **menu** (griglia) →
@@ -216,6 +216,8 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Nuovo sfondo menu da Scenario, a norma sez. 10 (1920×1080 JPG
   sRGB, 132 KB); sostituisce `background-soft.webp` (1344×768 WebP).
 - 2026-09-24 — Catena dei branch unita in `main` (fast-forward, nessun conflitto).
+- 2026-09-24 — Eliminati i branch `feature/*` (gia' tutti in `main`); sez. 7
+  aggiornata: si lavora da `main` con branch `feature/<nome>` temporanei.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
@@ -223,5 +225,4 @@ forme, puzzle, tris, hanoi.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.
-- **Branch:** tutto unito in `main` (fast-forward, 2026-09-24). I branch
-  `feature/<gioco>-reskin` restano come storia; il lavoro nuovo parte da `main`.
+- **Branch:** solo `main` (tutto unito il 2026-09-24, i vecchi branch eliminati).
