@@ -153,6 +153,7 @@
     {
       "id": "tris",
       "folder": "tris",
+      "version": "2",
       "category": "Giochi web",
       "order": 20,
       "tier": "base",

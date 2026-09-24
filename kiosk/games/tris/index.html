@@ -8,46 +8,55 @@
   <title>Tris</title>
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
+    /* Stagno: coerente con la rana dell'icona */
+    .bb-screen{
+      background:
+        radial-gradient(ellipse at 12% 104%, #7CCB6A 0 20%, transparent 21%),
+        radial-gradient(ellipse at 92% 106%, #8BD479 0 18%, transparent 19%),
+        linear-gradient(to bottom, #DDF3FF 0%, #CDEBFA 55%, #BFE3F2 100%);
+    }
+    .bb-header{ background:rgba(255,255,255,.55); }
+    .scena{ position:relative; width:100%; height:100%;
+      display:flex; align-items:center; justify-content:center; gap:4vmin; }
+    .rana{ height:44vmin; height:min(44vmin,440px); width:auto; align-self:flex-end; margin-bottom:3vmin;
+      transform-origin:50% 100%; pointer-events:none; }
+    /* Nuvoletta dei pensieri della rana */
+    .pensa{ position:absolute; font-size:6vmin; font-weight:900; color:#6A7A8C; opacity:0; pointer-events:none;
+      background:#fff; border-radius:999px; padding:.4vmin 2.4vmin 1.4vmin; box-shadow:0 6px 14px rgba(0,0,0,.15); }
+
+    /* Griglia: 4 barre viola arrotondate come l'icona */
     .board{
       position:relative;
-      width:72vmin; width:min(72vmin, 480px);
-      height:72vmin; height:min(72vmin, 480px);
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      grid-template-rows:repeat(3,1fr);
-      gap:1.6vmin;
-      padding:1.6vmin;
-      background:#fff;
-      border-radius:24px;
-      box-shadow:var(--bb-shadow);
+      width:72vmin; width:min(72vmin, 700px);
+      aspect-ratio:1/1;
+      display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
     }
-    .cella{
-      display:flex; align-items:center; justify-content:center;
-      border:0; border-radius:16px;
-      background:var(--bb-blue-soft);
-      font-weight:900; line-height:1;
-      font-size:18vmin; font-size:min(18vmin, 120px);
-      cursor:pointer;
-      transition:transform .1s var(--bb-ease-elastic);
-    }
-    .cella:active{ transform:scale(.95); }
-    .cella.x{ color:var(--bb-pink); }
-    .cella.o{ color:var(--bb-blue); }
-    .cella.vinta{ background:#FFE9A8; }
-    .turno{ font-size:5vmin; font-size:min(5vmin,30px); font-weight:900; }
-    .turno .x{ color:var(--bb-pink); } .turno .o{ color:var(--bb-blue); }
+    .barra{ position:absolute; background:linear-gradient(135deg,#B58CF0,#8A5CD8); border-radius:999px;
+      box-shadow:inset 0 .5vmin 0 rgba(255,255,255,.4), inset 0 -.6vmin 0 rgba(60,20,120,.3), 0 6px 12px rgba(80,40,140,.25); }
+    .barra.v{ top:0; bottom:0; width:4.2%; transform:translateX(-50%); }
+    .barra.h{ left:0; right:0; height:4.2%; transform:translateY(-50%); }
+    .cella{ position:relative; border:0; background:none; padding:9%; cursor:pointer; touch-action:manipulation; }
+    .cella img{ width:100%; height:100%; display:block; pointer-events:none;
+      filter:drop-shadow(0 6px 6px rgba(0,0,0,.2)); }
+    .linea{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+
+    /* Punteggio tra una partita e l'altra */
+    .annuncio{ position:absolute; left:22%; top:20%; z-index:5; pointer-events:none; white-space:nowrap;
+      font-size:6.5vmin; font-size:clamp(30px,6.5vmin,66px); font-weight:900; color:#fff;
+      text-shadow:0 3px 0 #5E3AA8, 0 0 16px rgba(140,90,220,.8); opacity:0; }
+    .punti b{ color:#E8424F; } .punti i{ color:#3FA7E8; font-style:normal; font-weight:900; }
 
     /* Schermata di start */
     .start{
       position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
       display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:20px;
-      background:rgba(255,247,251,.94);
+      background:rgba(232,246,255,.94);
       text-align:center;
     }
-    .start__img{ width:26vmin; width:clamp(120px,26vmin,190px); height:auto;
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px); font-weight:900; color:var(--bb-burgundy); }
+    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px); font-weight:900; color:#5E3AA8; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
   </style>
 </head>
@@ -55,10 +64,15 @@
   <div class="bb-screen">
     <!-- header iniettato da JS -->
     <div class="bb-stage">
-      <div class="board" id="board"></div>
+      <div class="scena" id="scena">
+        <img class="rana" id="rana" src="img/rana.webp" alt="">
+        <div class="board" id="board"></div>
+        <div class="pensa" id="pensa">…</div>
+        <div class="annuncio" id="annuncio"></div>
+      </div>
       <div class="start" id="start">
-        <img class="start__img" src="../assets/mascotte/kip.png" alt="">
-        <div class="start__txt">Tris! Fai tre in fila.<br>Come vuoi giocare?</div>
+        <img class="start__img" src="../assets/icons/tris.svg" alt="">
+        <div class="start__txt">Sfida la rana a Tris!<br>Vince chi arriva prima a 2 partite.</div>
         <div class="liv-row">
           <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="facile">😊 Facile</button>
           <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="difficile">🔥 Difficile</button>
@@ -70,12 +84,28 @@
 
   <script src="../assets/shared.js"></script>
   <script>
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      VITTORIE_PER_SFIDA: 2,       // la sfida finisce quando uno arriva a tante vittorie
+      PARTITE_MAX: 5,              // tetto di partite (con tanti pareggi)
+      RANA_PENSA_MS: 800,          // quanto "pensa" la rana prima di muovere
+      PAUSA_PARTITA_MS: 1800,      // punteggio tra una partita e l'altra
+      INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
+    };
+
     BB.lockScroll();
-    var info = BB.header("⭕ Tris");
-    BB.idle(60000, BB.home);
+    var info = BB.header("Tris");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
     var board = document.getElementById("board");
+    var scena = document.getElementById("scena");
+    var rana = document.getElementById("rana");
+    var pensa = document.getElementById("pensa");
+    var annuncio = document.getElementById("annuncio");
     var startScreen = document.getElementById("start");
+    var IMG = { x: "img/gettone_x.webp", o: "img/gettone_o.webp" };
 
     var LINEE = [
       [0,1,2],[3,4,5],[6,7,8],   // righe
@@ -84,67 +114,95 @@
     ];
 
     var celle = [];        // "", "x", "o"
-    var turno = "x";       // il bambino è sempre "x" e inizia
+    var turno = "x";       // il bambino e' sempre "x" e inizia
     var modo = "facile";   // facile | difficile | due
     var inCorso = false;
+    var vinte = { x: 0, o: 0 }, partite = 0;
 
+    // Griglia: celle + 4 barre + strato per la linea magica
+    var celleEl = [];
+    for (var i = 0; i < 9; i++){
+      var c = document.createElement("button");
+      c.className = "cella";
+      (function(idx){ c.addEventListener("pointerdown", function(e){ e.preventDefault(); gioca(idx); }); })(i);
+      board.appendChild(c); celleEl.push(c);
+    }
+    [["v", "left", "33.33%"], ["v", "left", "66.67%"], ["h", "top", "33.33%"], ["h", "top", "66.67%"]].forEach(function (b) {
+      var d = document.createElement("div"); d.className = "barra " + b[0]; d.style[b[1]] = b[2]; board.appendChild(d);
+    });
+    var lineaSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    lineaSvg.setAttribute("class", "linea"); lineaSvg.setAttribute("viewBox", "0 0 300 300");
+    board.appendChild(lineaSvg);
+
+    function nomi(){ return modo === "due" ? { x: "✕", o: "◯" } : { x: "Tu", o: "Rana" }; }
     function mostraTurno(){
-      if (modo === "due"){
-        info.innerHTML = 'Tocca a: <span class="turno"><span class="' + turno + '">' +
-          (turno === "x" ? "✕" : "◯") + "</span></span>";
-      } else {
-        info.innerHTML = turno === "x"
-          ? '<span class="turno"><span class="x">✕</span></span> tocca a te'
-          : "🤖 penso…";
-      }
+      var n = nomi(), chi;
+      if (modo === "due") chi = "Tocca a: " + (turno === "x" ? '<b>✕</b>' : '<i>◯</i>');
+      else chi = turno === "x" ? "Tocca a te" : "La rana pensa…";
+      info.innerHTML = '<span class="punti">' + chi + ' &nbsp; <b>' + n.x + " " + vinte.x + "</b> - <i>" + vinte.o + " " + n.o + "</i></span>";
     }
 
-    function nuova(liv){
-      modo = liv;
+    // ---- Rana ----
+    var animRana = null;
+    function ranaAnima(frames, ms){
+      if (animRana) animRana.cancel();
+      animRana = rana.animate(frames, { duration: ms, easing: "ease-out" });
+    }
+    function ranaSalta(h){ ranaAnima([{ transform:"none" }, { transform:"translateY(-" + (h||8) + "%) scale(.97,1.04)", offset:.35 },
+      { transform:"scale(1.04,.95)", offset:.7 }, { transform:"none" }], 460); }
+    function ranaTriste(){ ranaAnima([{ transform:"none" }, { transform:"rotate(-5deg) scale(1,.96)", offset:.3 },
+      { transform:"rotate(4deg) scale(1,.96)", offset:.65 }, { transform:"none" }], 800); }
+    function ranaPensa(ms){
+      var s = scena.getBoundingClientRect(), r = rana.getBoundingClientRect();
+      pensa.style.left = (r.right - s.left - r.width * .15) + "px";
+      pensa.style.top = (r.top - s.top - r.height * .05) + "px";
+      pensa.animate([{ opacity:0, transform:"scale(.5)" }, { opacity:1, transform:"scale(1)", offset:.2 },
+        { opacity:1, transform:"scale(1)", offset:.85 }, { opacity:0, transform:"scale(.9)" }], { duration: ms, fill:"forwards" });
+    }
+
+    // ---- Partita ----
+    function nuovaPartita(){
       celle = ["","","","","","","","",""];
-      turno = "x";
-      inCorso = true;
-      render();
+      celleEl.forEach(function (c) { c.innerHTML = ""; });
+      lineaSvg.innerHTML = "";
+      turno = "x"; inCorso = true;
       mostraTurno();
-      startScreen.classList.add("bb-hidden");
     }
 
-    function render(){
-      board.innerHTML = "";
-      for (var i = 0; i < 9; i++){
-        var c = document.createElement("button");
-        c.className = "cella" + (celle[i] ? " " + celle[i] : "");
-        c.textContent = celle[i] === "x" ? "✕" : (celle[i] === "o" ? "◯" : "");
-        (function(idx){ c.addEventListener("click", function(){ gioca(idx); }); })(i);
-        board.appendChild(c);
-      }
+    function sfida(liv){
+      modo = liv; vinte = { x: 0, o: 0 }; partite = 0;
+      startScreen.classList.add("bb-hidden");
+      nuovaPartita();
     }
 
     function gioca(i){
       if (!inCorso || celle[i]) return;
-      if (modo !== "due" && turno !== "x") return;   // vs computer: solo il turno del bambino
+      if (modo !== "due" && turno !== "x") return;   // vs rana: solo il turno del bambino
       piazza(i, turno);
     }
 
     function piazza(i, chi){
       celle[i] = chi;
       BB.sound("pop");
-      render();
+      var img = document.createElement("img"); img.src = IMG[chi]; img.alt = "";
+      celleEl[i].appendChild(img);
+      img.animate([{ transform:"scale(.2) rotate(-30deg)", opacity:0 }, { transform:"scale(1.15) rotate(6deg)", opacity:1, offset:.6 },
+                   { transform:"scale(1)" }], { duration: 320, easing:"ease-out" });
       var vinc = vincitore();
-      if (vinc){ return fine(vinc); }
-      if (pieno()){ return fine(null); }        // pareggio
+      if (vinc){ return finePartita(vinc); }
+      if (pieno()){ return finePartita(null); }       // pareggio
       turno = (chi === "x") ? "o" : "x";
       mostraTurno();
       if (modo !== "due" && turno === "o"){
-        inCorso = true;
-        setTimeout(mossaComputer, 450);
+        ranaPensa(CONFIG.RANA_PENSA_MS);
+        setTimeout(mossaRana, CONFIG.RANA_PENSA_MS);
       }
     }
 
-    function mossaComputer(){
+    function mossaRana(){
       if (!inCorso) return;
-      var mossa = (modo === "difficile") ? sceltaSmart("o") : sceltaCasuale();
-      if (mossa != null) piazza(mossa, "o");
+      var mossa = (modo === "difficile") ? sceltaSmart("o") : sceltaFacile();
+      if (mossa != null){ ranaSalta(6); piazza(mossa, "o"); }
     }
 
     function libere(){
@@ -153,19 +211,25 @@
     function sceltaCasuale(){
       var l = libere(); return l.length ? l[BB.rand(0, l.length-1)] : null;
     }
-    // AI robusta: vinci se puoi, blocca se devi, poi centro/angoli/lati
+    // Facile: vince se puo', a volte blocca, altrimenti a caso
+    function sceltaFacile(){
+      var m = trovaLinea("o"); if (m != null) return m;
+      if (Math.random() < .4){ m = trovaLinea("x"); if (m != null) return m; }
+      return sceltaCasuale();
+    }
+    // Difficile: vinci se puoi, blocca se devi, poi centro/angoli/lati
     function sceltaSmart(me){
       var avv = me === "o" ? "x" : "o";
-      var m = trovaLinea(me); if (m != null) return m;   // vinci
-      m = trovaLinea(avv); if (m != null) return m;       // blocca
-      if (!celle[4]) return 4;                            // centro
+      var m = trovaLinea(me); if (m != null) return m;
+      m = trovaLinea(avv); if (m != null) return m;
+      if (!celle[4]) return 4;
       var angoli = [0,2,6,8].filter(function(i){ return !celle[i]; });
       if (angoli.length) return angoli[BB.rand(0, angoli.length-1)];
       var lati = [1,3,5,7].filter(function(i){ return !celle[i]; });
       if (lati.length) return lati[BB.rand(0, lati.length-1)];
       return sceltaCasuale();
     }
-    // Se `chi` ha due su una linea e la terza è libera, ritorna quella casella
+    // Se `chi` ha due su una linea e la terza e' libera, ritorna quella casella
     function trovaLinea(chi){
       for (var k=0;k<LINEE.length;k++){
         var a=LINEE[k][0], b=LINEE[k][1], c=LINEE[k][2];
@@ -178,36 +242,68 @@
       }
       return null;
     }
-
     function vincitore(){
       for (var k=0;k<LINEE.length;k++){
         var a=LINEE[k][0], b=LINEE[k][1], c=LINEE[k][2];
-        if (celle[a] && celle[a]===celle[b] && celle[b]===celle[c]){
-          return { chi:celle[a], linea:LINEE[k] };
-        }
+        if (celle[a] && celle[a]===celle[b] && celle[b]===celle[c]) return { chi:celle[a], linea:LINEE[k] };
       }
       return null;
     }
     function pieno(){ return libere().length === 0; }
 
-    function fine(vinc){
-      inCorso = false;
+    // Linea magica sulle tre caselle vincenti, i gettoni saltano
+    function lineaMagica(linea){
+      function centro(i){ return [(i % 3) * 100 + 50, Math.floor(i / 3) * 100 + 50]; }
+      var a = centro(linea[0]), b = centro(linea[2]);
+      var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), ex = dx / L * 38, ey = dy / L * 38;
+      var d = "M" + (a[0] - ex) + " " + (a[1] - ey) + " L" + (b[0] + ex) + " " + (b[1] + ey);
+      lineaSvg.innerHTML =
+        '<path d="' + d + '" stroke="#FFE14D" stroke-width="26" stroke-linecap="round" opacity=".55" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>' +
+        '<path d="' + d + '" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>';
+      Array.prototype.forEach.call(lineaSvg.querySelectorAll("path"), function (p) {
+        p.animate([{ strokeDashoffset: 100 }, { strokeDashoffset: 0 }], { duration: 450, easing: "ease-out", fill: "forwards" });
+        p.style.strokeDashoffset = 0;
+      });
+      linea.forEach(function (i, k) {
+        var img = celleEl[i].querySelector("img");
+        if (img) img.animate([{ transform:"none" }, { transform:"translateY(-14%) scale(1.1)", offset:.4 }, { transform:"none" }],
+                             { duration: 420, delay: 300 + k * 120, easing: "ease-out" });
+      });
+    }
+
+    function finePartita(vinc){
+      inCorso = false; partite++;
       if (vinc){
-        vinc.linea.forEach(function(i){ board.children[i].classList.add("vinta"); });
+        vinte[vinc.chi]++;
+        lineaMagica(vinc.linea);
+        BB.sound("match");
+        // la rana esulta se vince lei (o per chiunque, a 2 giocatori); e' triste se la batti
+        if (modo !== "due" && vinc.chi === "x") setTimeout(ranaTriste, 300); else ranaSalta(10);
       }
-      var titolo, emoji;
-      if (!vinc){ titolo = "Pareggio!"; emoji = "🤝"; }
-      else if (modo === "due"){ titolo = (vinc.chi==="x"?"✕":"◯") + " ha vinto!"; emoji = "🏆"; }
-      else if (vinc.chi === "x"){ titolo = "Hai vinto!"; emoji = "🏆"; }
-      else { titolo = "Ha vinto il computer"; emoji = "🤖"; }
-      setTimeout(function(){
-        BB.win({ emoji: emoji, titolo: titolo,
-          rigioca: function(){ startScreen.classList.remove("bb-hidden"); } });
-      }, 650);
+      mostraTurno();
+      var n = nomi();
+      var finita = vinte.x >= CONFIG.VITTORIE_PER_SFIDA || vinte.o >= CONFIG.VITTORIE_PER_SFIDA || partite >= CONFIG.PARTITE_MAX;
+      if (finita) return setTimeout(fineSfida, 1300);
+      annuncio.innerHTML = (vinc ? "" : "Pareggio! ") + n.x + " " + vinte.x + " - " + vinte.o + " " + n.o;
+      annuncio.animate([{ opacity:0, transform:"translateX(-50%) scale(.6)" }, { opacity:1, transform:"translateX(-50%) scale(1.08)", offset:.2 },
+                        { opacity:1, transform:"translateX(-50%) scale(1)", offset:.85 }, { opacity:0, transform:"translateX(-50%) scale(1)" }],
+                       { duration: CONFIG.PAUSA_PARTITA_MS, fill:"forwards" });
+      setTimeout(nuovaPartita, CONFIG.PAUSA_PARTITA_MS);
+    }
+
+    function fineSfida(){
+      var titolo, emoji = null, mascotte = null, n = nomi();
+      if (vinte.x === vinte.o){ titolo = "Pareggio!"; mascotte = "../assets/icons/tris.svg"; }
+      else if (modo === "due"){ titolo = (vinte.x > vinte.o ? "✕" : "◯") + " vince la sfida!"; emoji = "🏆"; }
+      else if (vinte.x > vinte.o){ titolo = "Hai battuto la rana!"; emoji = "🏆"; }
+      else { titolo = "Ha vinto la rana!"; mascotte = "../assets/icons/tris.svg"; }
+      BB.win({ emoji: emoji, mascotte: mascotte, titolo: titolo,
+        punteggio: n.x + " " + vinte.x + " - " + vinte.o + " " + n.o,
+        rigioca: function(){ startScreen.classList.remove("bb-hidden"); } });
     }
 
     Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
-      b.addEventListener("click", function(){ nuova(b.dataset.liv); });
+      b.addEventListener("click", function(){ sfida(b.dataset.liv); });
     });
   </script>
 </body>
