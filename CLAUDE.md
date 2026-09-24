@@ -127,7 +127,7 @@ Giochi: memory, talpe, palloncini, frutta, stelle, sequenza, lavagna, labirinto,
 forme, puzzle, tris, hanoi.
 
 - **De-brandizzazione (in corso):** fatta su talpe, palloncini, frutta, memory,
-  stelle, sequenza, labirinto, forme, tris; gli altri 2 contengono ancora le vecchie mascotte Fun Planet
+  stelle, sequenza, labirinto, forme, tris, hanoi; resta il puzzle, che contiene ancora le vecchie mascotte Fun Planet
   (kip/stella/bolt/bobo). Vanno **rifatti** con grafica
   coerente all'icona-animale di ogni gioco (i personaggi base del prodotto):
   questo toglie il brand vecchio E alza la qualità al livello dell'icona.
@@ -199,6 +199,9 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Tris rifatto: rana, gettoni X/O e griglia viola dell'icona;
   **sfida alla rana** al meglio di 3 (la rana pensa e salta) e **linea magica**
   sul tris.
+- 2026-09-24 — Torre di Hanoi rifatta: elefantino dell'icona, aste e anelli
+  vettoriali; l'anello si **solleva e vola ad arco** sull'asta scelta (mossa non
+  valida: rimbalza) e pulsante **Aiuto** che indica la prossima mossa ottimale.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo menta,
@@ -207,8 +210,8 @@ forme, puzzle, tris, hanoi.
   (1920×1080 JPG) — da rigenerare o aggiornare la specifica.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** de-brand **fatto** su talpe, palloncini, frutta, memory, stelle,
-  sequenza, labirinto, forme, tris
+  sequenza, labirinto, forme, tris, hanoi
   (grafica dall'icona, numeri in `CONFIG` in cima a ogni gioco, sprite da
-  `tools/build_<gioco>_sprites.py`). **Restano:** puzzle, hanoi (usano ancora le mascotte vecchie).
+  `tools/build_<gioco>_sprites.py`). **Resta:** puzzle (usano ancora le mascotte vecchie).
 - **Branch:** catena talpe → palloncini → frutta → memory → cleanup-brand →
-  stelle → sequenza → labirinto → forme → `feature/tris-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
+  stelle → sequenza → labirinto → forme → tris → `feature/hanoi-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.

@@ -168,6 +168,7 @@
     {
       "id": "hanoi",
       "folder": "hanoi",
+      "version": "2",
       "category": "Giochi web",
       "order": 21,
       "tier": "base",

@@ -8,65 +8,41 @@
   <title>Torre di Hanoi</title>
   <link rel="stylesheet" href="../assets/shared.css">
   <style>
-    /* Area di gioco: 3 paletti allineati in basso */
-    .gioco{
-      position:absolute; top:0; right:0; bottom:0; left:0;
-      display:flex; align-items:flex-end; justify-content:space-around;
-      padding:0 3vw 8vmin;
-      gap:2vw;
+    /* Savana chiara, coerente con l'elefantino dell'icona */
+    .bb-screen{
+      background:
+        radial-gradient(ellipse at 50% 112%, #E9D39A 0 34%, transparent 35%),
+        linear-gradient(to bottom, #FFF1D6 0%, #FDE6C2 60%, #F6D6A6 100%);
     }
-    .paletto{
-      position:relative;
-      flex:1 1 0;
-      max-width:30vw;
-      height:46vmin;
-      display:flex; flex-direction:column-reverse; align-items:center;
-      justify-content:flex-start;
-      cursor:pointer;
-    }
-    /* Asta verticale */
-    .paletto::before{
-      content:""; position:absolute; left:50%; bottom:0;
-      width:10px; height:100%;
-      margin-left:-5px;
-      background:linear-gradient(#b9754a,#8a4f2c);
-      border-radius:6px 6px 0 0; z-index:0;
-    }
-    /* Base del paletto */
-    .paletto::after{
-      content:""; position:absolute; left:2%; right:2%; bottom:-3vmin;
-      height:3vmin;
-      background:linear-gradient(#8a4f2c,#5f3418);
-      border-radius:10px; z-index:0;
-    }
-    .paletto.sel{ filter:drop-shadow(0 0 0 transparent); }
-    .paletto.sel::before{ background:linear-gradient(#3a6bff,#2148d6); }
-
-    .disco{
-      position:relative; z-index:1;
-      height:4.6vmin;
-      margin-top:1vmin;
-      border-radius:10px;
-      box-shadow:inset 0 -4px 0 rgba(0,0,0,.15), 0 3px 6px rgba(0,0,0,.2);
-      transition:transform .12s var(--bb-ease-elastic);
-    }
-    /* Disco in cima al paletto selezionato: sollevato */
-    .paletto.sel .disco:last-child{
-      transform:translateY(-1.4vmin) scale(1.03);
-      box-shadow:0 0 0 4px rgba(46,91,255,.35), 0 6px 10px rgba(0,0,0,.25);
-    }
+    .bb-header{ background:rgba(255,255,255,.55); }
+    .scena{ position:absolute; top:0; right:0; bottom:0; left:0;
+      display:flex; align-items:flex-end; justify-content:center; gap:2vmin; padding:0 2vw 3vmin; }
+    .elefante{ height:40vmin; height:min(40vmin,400px); width:auto; flex:0 0 auto; margin-bottom:1vmin;
+      transform-origin:50% 100%; pointer-events:none; }
+    .campo{ position:relative; flex:0 1 auto; width:min(118vmin, 74vw); height:78vmin; touch-action:none; }
+    .campo svg.pioli{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    .zona{ position:absolute; top:0; bottom:0; cursor:pointer; }
+    /* Anello: vettoriale, lucido, contorno scuro come nell'icona */
+    .anello{ position:absolute; left:0; top:0; border-radius:999px; pointer-events:none;
+      background:linear-gradient(to bottom, rgba(255,255,255,.55) 0 18%, transparent 19%), var(--c);
+      border:max(.45vmin,3px) solid #3A2A20;
+      box-shadow:inset 0 -.8vmin 0 rgba(0,0,0,.18), 0 4px 6px rgba(0,0,0,.18);
+      will-change:transform; }
+    .anello.su{ box-shadow:inset 0 -.8vmin 0 rgba(0,0,0,.18), 0 0 0 .8vmin rgba(255,225,80,.8), 0 10px 14px rgba(0,0,0,.25); }
+    .aiuto-btn{ position:absolute; right:0; top:1vmin; z-index:4; }
+    .scia{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:3; }
 
     /* Schermata di start */
     .start{
       position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:30;
       display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:20px;
-      background:rgba(255,247,251,.94);
+      background:rgba(255,244,226,.94);
       text-align:center;
     }
-    .start__img{ width:26vmin; width:clamp(120px,26vmin,190px); height:auto;
+    .start__img{ width:34vmin; width:clamp(150px,34vmin,260px); height:auto;
       filter:drop-shadow(0 8px 14px rgba(0,0,0,.2)); }
-    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px); font-weight:900; color:var(--bb-burgundy); }
+    .start__txt{ font-size:3.2vmin; font-size:clamp(18px,3.2vmin,30px); font-weight:900; color:#8A5328; }
     .liv-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
   </style>
 </head>
@@ -74,18 +50,21 @@
   <div class="bb-screen">
     <!-- header iniettato da JS -->
     <div class="bb-stage">
-      <div class="gioco" id="gioco">
-        <div class="paletto" data-peg="0"></div>
-        <div class="paletto" data-peg="1"></div>
-        <div class="paletto" data-peg="2"></div>
+      <div class="scena">
+        <img class="elefante" id="elefante" src="img/elefante.webp" alt="">
+        <div class="campo" id="campo">
+          <svg class="pioli" id="pioli"></svg>
+          <svg class="scia" id="scia"></svg>
+          <button class="bb-btn bb-btn--blue aiuto-btn" id="aiuto">💡 Aiuto</button>
+        </div>
       </div>
       <div class="start" id="start">
-        <img class="start__img" src="../assets/mascotte/stella.png" alt="">
-        <div class="start__txt">Sposta la torre a destra!<br>Mai un disco grande su uno piccolo.</div>
+        <img class="start__img" src="../assets/icons/hanoi.svg" alt="">
+        <div class="start__txt">Sposta la torre sull'ultima asta!<br>Mai un anello grande su uno piccolo.</div>
         <div class="liv-row">
-          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="3">😊 3 dischi</button>
-          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="4">😎 4 dischi</button>
-          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="5">🔥 5 dischi</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="3">😊 3 anelli</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="4">😎 4 anelli</button>
+          <button class="bb-btn bb-btn--burgundy liv-btn" data-liv="5">🔥 5 anelli</button>
         </div>
       </div>
     </div>
@@ -93,93 +72,200 @@
 
   <script src="../assets/shared.js"></script>
   <script>
+    /* =====================================================================
+       CONFIG: tutti i numeri del gioco, da ritoccare qui.
+       ===================================================================== */
+    var CONFIG = {
+      VOLO_MS: 520,                // durata del volo di un anello da un'asta all'altra
+      AIUTO_MS: 1600,              // quanto resta visibile il suggerimento
+      INATTIVITA_MS: 60000         // senza tocchi: torna al menu giochi
+    };
+    // colori degli anelli, dal piu' piccolo al piu' grande (come l'icona)
+    var COLORI = ["#7BD35A", "#FFD23F", "#FF9A2E", "#F0503E", "#B270E0"];
+
     BB.lockScroll();
-    var info = BB.header("🗼 Torre di Hanoi");
-    BB.idle(60000, BB.home);
+    var info = BB.header("Torre di Hanoi");
+    BB.idle(CONFIG.INATTIVITA_MS, BB.home);
 
     var startScreen = document.getElementById("start");
-    var paletti = Array.prototype.slice.call(document.querySelectorAll(".paletto"));
-    var COLORI = ["#E8488B","#2E5BFF","#FFB020","#34C759","#7A1F3D","#FF6B6B"];
+    var campo = document.getElementById("campo");
+    var pioli = document.getElementById("pioli");
+    var scia = document.getElementById("scia");
+    var elefante = document.getElementById("elefante");
+    var btnAiuto = document.getElementById("aiuto");
 
     var N = 3;
-    var torri = [[], [], []];   // ogni torre: [fondo ... cima], numeri = dimensione disco
-    var sel = -1;               // paletto selezionato (-1 = nessuno)
-    var mosse = 0;
-    var minimo = 7;
-    var inCorso = false;
+    var torri = [[], [], []];   // ogni torre: [fondo ... cima], numeri = dimensione anello
+    var anelli = {};            // dimensione -> elemento
+    var sel = -1;               // asta con l'anello sollevato (-1 = nessuna)
+    var mosse = 0, minimo = 7, inCorso = false, inVolo = false;
+    var G = {};                 // geometria (px nel campo)
 
     function aggiornaInfo(){ info.textContent = "👣 " + mosse + " (min " + minimo + ")"; }
+
+    // ---- Geometria e disegno delle aste ----
+    function geometria(){
+      var W = campo.clientWidth, H = campo.clientHeight;
+      G = { W: W, H: H, x: [W / 6, W / 2, W * 5 / 6], base: H * .9, cima: H * .22,
+            h: Math.min(H * .1, (H * .9 - H * .3) / 5.4),
+            wMin: W / 3 * .34, wMax: W / 3 * .92 };
+      G.su = G.cima - G.h * 1.5;               // altezza dell'anello sollevato
+      var palo = W * .016, s = "";
+      s += '<rect x="' + W * .02 + '" y="' + G.base + '" width="' + W * .96 + '" height="' + H * .07 + '" rx="' + H * .03 +
+           '" fill="#C98A4E" stroke="#6E4020" stroke-width="4"/>';
+      s += '<rect x="' + W * .03 + '" y="' + (G.base + H * .012) + '" width="' + W * .94 + '" height="' + H * .018 + '" rx="' + H * .01 + '" fill="#E6B07A"/>';
+      G.x.forEach(function (x) {
+        s += '<rect x="' + (x - palo / 2) + '" y="' + G.cima + '" width="' + palo + '" height="' + (G.base - G.cima + 2) +
+             '" rx="' + palo / 2 + '" fill="#B87844" stroke="#6E4020" stroke-width="3"/>';
+        s += '<circle cx="' + x + '" cy="' + G.cima + '" r="' + palo * 1.1 + '" fill="#E6A45E" stroke="#6E4020" stroke-width="3"/>';
+      });
+      pioli.setAttribute("viewBox", "0 0 " + W + " " + H);
+      pioli.innerHTML = s;
+      scia.setAttribute("viewBox", "0 0 " + W + " " + H);
+    }
+    function larghezza(s){ return G.wMin + (G.wMax - G.wMin) * (N === 1 ? 1 : (s - 1) / (N - 1)); }
+    function posizione(s, p, i){               // anello s sull'asta p, al livello i (0 = in fondo)
+      var w = larghezza(s);
+      return { x: G.x[p] - w / 2, y: G.base - (i + 1) * G.h };
+    }
+    function metti(el, x, y){ el.style.transform = "translate(" + x + "px," + y + "px)"; }
+
+    function disponi(){
+      for (var p = 0; p < 3; p++) for (var i = 0; i < torri[p].length; i++){
+        var s = torri[p][i], el = anelli[s], q = posizione(s, p, i);
+        el.style.width = larghezza(s) + "px"; el.style.height = G.h * .92 + "px";
+        if (sel === p && i === torri[p].length - 1) metti(el, q.x, G.su); else metti(el, q.x, q.y);
+      }
+    }
 
     function nuova(liv){
       N = parseInt(liv, 10) || 3;
       minimo = Math.pow(2, N) - 1;
-      torri = [[], [], []];
-      for (var s = N; s >= 1; s--) torri[0].push(s);   // disco più grande in fondo
-      sel = -1; mosse = 0; inCorso = true;
-      aggiornaInfo();
-      render();
-      startScreen.classList.add("bb-hidden");
-    }
-
-    // Larghezza del disco (in vmin) proporzionale alla dimensione
-    function larghezza(s){ return (9 + s * (19 / N)).toFixed(2) + "vmin"; }
-
-    function render(){
-      for (var p = 0; p < 3; p++){
-        var el = paletti[p];
-        el.className = "paletto" + (sel === p ? " sel" : "");
-        el.innerHTML = "";
-        for (var i = 0; i < torri[p].length; i++){
-          var s = torri[p][i];
-          var d = document.createElement("div");
-          d.className = "disco";
-          d.style.width = larghezza(s);
-          d.style.background = COLORI[(s - 1) % COLORI.length];
-          el.appendChild(d);   // column-reverse: primo figlio in basso
-        }
+      Object.keys(anelli).forEach(function (k) { anelli[k].remove(); });
+      anelli = {}; torri = [[], [], []];
+      for (var s = N; s >= 1; s--){
+        torri[0].push(s);                      // anello piu' grande in fondo
+        var el = document.createElement("div");
+        el.className = "anello"; el.style.setProperty("--c", COLORI[(s - 1) % COLORI.length]);
+        campo.appendChild(el); anelli[s] = el;
       }
+      sel = -1; mosse = 0; inCorso = true; inVolo = false;
+      startScreen.classList.add("bb-hidden");
+      geometria(); disponi(); aggiornaInfo();
     }
 
     function cima(p){ return torri[p].length ? torri[p][torri[p].length - 1] : Infinity; }
 
+    // ---- Elefante ----
+    var animEle = null;
+    function eleAnima(frames, ms){ if (animEle) animEle.cancel(); animEle = elefante.animate(frames, { duration: ms, easing: "ease-out" }); }
+    function eleNo(){ eleAnima([{ transform:"none" }, { transform:"rotate(-5deg)", offset:.2 }, { transform:"rotate(5deg)", offset:.45 },
+      { transform:"rotate(-4deg)", offset:.7 }, { transform:"none" }], 650); }
+    function eleSi(){ eleAnima([{ transform:"none" }, { transform:"translateY(-5%) scale(.98,1.03)", offset:.4 }, { transform:"none" }], 380); }
+    function eleFesta(){ eleAnima([{ transform:"none" }, { transform:"translateY(-12%) rotate(-5deg)", offset:.2 }, { transform:"none", offset:.4 },
+      { transform:"translateY(-12%) rotate(5deg)", offset:.6 }, { transform:"none", offset:.8 }, { transform:"translateY(-6%)", offset:.9 }, { transform:"none" }], 1300); }
+
+    // ---- Tocco su un'asta ----
     function tocca(p){
-      if (!inCorso) return;
+      if (!inCorso || inVolo) return;
       if (sel === -1){
-        if (torri[p].length === 0){ return; }   // niente da prendere
-        sel = p; BB.sound("pop"); render();
+        if (!torri[p].length) return;           // niente da prendere
+        sel = p; BB.sound("pop");
+        var s = cima(p), el = anelli[s], q = posizione(s, p, torri[p].length - 1);
+        el.classList.add("su");
+        el.animate([{ transform: "translate(" + q.x + "px," + q.y + "px)" }, { transform: "translate(" + q.x + "px," + G.su + "px)" }],
+                   { duration: 180, easing: "ease-out" });
+        metti(el, q.x, G.su);
         return;
       }
-      if (sel === p){ sel = -1; render(); return; }   // deseleziona
-      // prova a spostare il disco in cima da `sel` a `p`
-      var disco = torri[sel][torri[sel].length - 1];
-      if (disco < cima(p)){
-        torri[sel].pop();
-        torri[p].push(disco);
-        mosse++; sel = -1;
-        BB.sound("match");
-        aggiornaInfo();
-        render();
-        if (torri[2].length === N) vittoria();
-      } else {
-        BB.sound("error");
-        sel = -1; render();   // mossa non valida: deseleziona
+      if (sel === p){ giu(p); return; }         // rimette giu' l'anello
+      var da = sel, disco = cima(da);
+      if (disco < cima(p)) vola(da, p);
+      else {                                    // non valida: l'anello rimbalza e torna giu'
+        BB.sound("error"); eleNo();
+        var el = anelli[disco], q = posizione(disco, da, torri[da].length - 1);
+        el.animate([{ transform: "translate(" + q.x + "px," + G.su + "px)" }, { transform: "translate(" + (q.x + 12) + "px," + G.su + "px)", offset:.25 },
+                    { transform: "translate(" + (q.x - 12) + "px," + G.su + "px)", offset:.5 }, { transform: "translate(" + q.x + "px," + G.su + "px)", offset:.7 },
+                    { transform: "translate(" + q.x + "px," + q.y + "px)" }], { duration: 420, easing: "ease-out" });
+        giu(da, true);
       }
     }
+    function giu(p, senzaAnim){
+      var s = cima(p), el = anelli[s], q = posizione(s, p, torri[p].length - 1);
+      el.classList.remove("su");
+      if (!senzaAnim) el.animate([{ transform: "translate(" + q.x + "px," + G.su + "px)" }, { transform: "translate(" + q.x + "px," + q.y + "px)" }],
+                                 { duration: 180, easing: "ease-in" });
+      metti(el, q.x, q.y); sel = -1;
+    }
+    // L'anello vola ad arco dall'asta `da` all'asta `a` e ci cade sopra
+    function vola(da, a){
+      var s = cima(da), el = anelli[s];
+      var q0 = posizione(s, da, torri[da].length - 1);
+      torri[da].pop(); torri[a].push(s);
+      var q1 = posizione(s, a, torri[a].length - 1), alto = G.su - G.h * 1.2;
+      mosse++; sel = -1; inVolo = true; aggiornaInfo();
+      el.animate([{ transform: "translate(" + q0.x + "px," + G.su + "px)" },
+                  { transform: "translate(" + (q0.x + q1.x) / 2 + "px," + alto + "px)", offset: .4 },
+                  { transform: "translate(" + q1.x + "px," + G.su + "px)", offset: .7 },
+                  { transform: "translate(" + q1.x + "px," + (q1.y + 4) + "px)", offset: .92 },
+                  { transform: "translate(" + q1.x + "px," + q1.y + "px)" }], { duration: CONFIG.VOLO_MS, easing: "ease-in-out" });
+      metti(el, q1.x, q1.y); el.classList.remove("su");
+      BB.sound("match");
+      setTimeout(function () {
+        inVolo = false; eleSi();
+        if (torri[2].length === N) vittoria();
+      }, CONFIG.VOLO_MS);
+    }
+
+    // ---- Suggerimento: la prossima mossa giusta verso l'ultima asta ----
+    function dove(s){ for (var p = 0; p < 3; p++) if (torri[p].indexOf(s) >= 0) return p; }
+    function prossima(n, target){
+      if (n === 0) return null;
+      var p = dove(n);
+      if (p === target) return prossima(n - 1, target);
+      var altra = 3 - p - target;
+      for (var k = 1; k < n; k++) if (dove(k) !== altra) return prossima(n - 1, altra);
+      return [p, target];                       // i piu' piccoli sono gia' da parte: si sposta n
+    }
+    function aiuta(){
+      if (!inCorso || inVolo) return;
+      if (sel !== -1) giu(sel);
+      var m = prossima(N, 2); if (!m) return;
+      var s = cima(m[0]), q0 = posizione(s, m[0], torri[m[0]].length - 1);
+      var x0 = G.x[m[0]], y0 = q0.y, x1 = G.x[m[1]], y1 = posizione(s, m[1], torri[m[1]].length).y;
+      var d = "M" + x0 + " " + y0 + " Q" + (x0 + x1) / 2 + " " + (G.su - G.h * 2) + " " + x1 + " " + y1;
+      scia.innerHTML = '<path d="' + d + '" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 20"/>' +
+        '<circle r="14" fill="#FFE14D" stroke="#fff" stroke-width="4"><animateMotion dur="900ms" repeatCount="indefinite" path="' + d + '"/></circle>';
+      scia.animate([{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .85 }, { opacity: 0 }], { duration: CONFIG.AIUTO_MS, fill: "forwards" });
+      anelli[s].animate([{ filter: "brightness(1)" }, { filter: "brightness(1.35)" }, { filter: "brightness(1)" }], { duration: 500, iterations: 3 });
+      eleAnima([{ transform:"none" }, { transform:"rotate(4deg) translateY(-4%)", offset:.3 }, { transform:"none", offset:.6 },
+                { transform:"rotate(4deg) translateY(-4%)", offset:.8 }, { transform:"none" }], 900);
+      setTimeout(function () { scia.innerHTML = ""; }, CONFIG.AIUTO_MS);
+    }
+    btnAiuto.addEventListener("click", aiuta);
 
     function vittoria(){
       inCorso = false;
       var perfetto = mosse === minimo;
-      BB.win({
-        mascotte: "../assets/mascotte/stella.png",
-        titolo: perfetto ? "Perfetto!" : "Bravo!",
-        punteggio: mosse + " mosse" + (perfetto ? " (minimo!)" : ""),
-        rigioca: function(){ startScreen.classList.remove("bb-hidden"); }
-      });
+      eleFesta(); BB.sound("win");
+      setTimeout(function () {
+        BB.win({
+          mascotte: "../assets/icons/hanoi.svg",
+          titolo: perfetto ? "Perfetto!" : "Bravo!",
+          punteggio: mosse + " mosse" + (perfetto ? " (minimo!)" : ""),
+          rigioca: function(){ startScreen.classList.remove("bb-hidden"); }
+        });
+      }, 1300);
     }
 
-    paletti.forEach(function(el){
-      el.addEventListener("click", function(){ tocca(parseInt(el.dataset.peg, 10)); });
-    });
+    // zone toccabili: una per asta, tutta l'altezza
+    for (var z = 0; z < 3; z++){
+      var zona = document.createElement("div");
+      zona.className = "zona"; zona.style.left = (z * 100 / 3) + "%"; zona.style.width = (100 / 3) + "%";
+      (function (p) { zona.addEventListener("pointerdown", function (e) { e.preventDefault(); tocca(p); }); })(z);
+      campo.insertBefore(zona, btnAiuto);
+    }
+    window.addEventListener("resize", function () { if (inCorso) { geometria(); disponi(); } });
 
     Array.prototype.forEach.call(document.querySelectorAll(".liv-btn"), function(b){
       b.addEventListener("click", function(){ nuova(b.dataset.liv); });
