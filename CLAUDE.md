@@ -240,7 +240,7 @@ forme, puzzle, tris, hanoi.
   architrave menta, davanzale coi vasi (`window-v2.webp`, da
   `tools/build_finestra_v2.py`: scontorno magenta, banda centrale allargata,
   taglio 16:9 con persiane/davanzale che escono dallo schermo). Apertura
-  1645x853 px (persiane ridotte a una striscia sul bordo). La v1 resta come asset (`window.webp`, valori in `_previous`).
+  1711x853 px (delle persiane resta solo il bordo con le cerniere). La v1 resta come asset (`window.webp`, valori in `_previous`).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
