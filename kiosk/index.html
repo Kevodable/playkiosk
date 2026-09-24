@@ -206,21 +206,28 @@
     position:fixed; inset:0; z-index:1;
     pointer-events:none;
     background:
+      /* glare in the top-left corner */
+      radial-gradient(ellipse 38% 30% at 8% 6%, rgba(255,255,255,.55), rgba(255,255,255,0) 70%),
+      /* diagonal reflections: one wide band + a thin twin, one more on the right */
       linear-gradient(115deg,
-        rgba(255,255,255,0) 14%,
-        rgba(255,255,255,.30) 20%,
-        rgba(255,255,255,.12) 25%,
-        rgba(255,255,255,0) 29%,
-        rgba(255,255,255,0) 31%,
-        rgba(255,255,255,.22) 32.5%,
-        rgba(255,255,255,0) 34.5%,
-        rgba(255,255,255,0) 64%,
-        rgba(255,255,255,.20) 69%,
-        rgba(255,255,255,0) 75%),
-      linear-gradient(180deg, rgba(255,255,255,.10), rgba(200,235,245,.06) 50%, rgba(255,255,255,.08));
+        rgba(255,255,255,0) 12%,
+        rgba(255,255,255,.50) 17%,
+        rgba(255,255,255,.28) 23%,
+        rgba(255,255,255,0) 26%,
+        rgba(255,255,255,0) 28%,
+        rgba(255,255,255,.55) 29%,
+        rgba(255,255,255,0) 30.5%,
+        rgba(255,255,255,0) 66%,
+        rgba(255,255,255,.40) 70%,
+        rgba(255,255,255,.20) 74%,
+        rgba(255,255,255,0) 77%),
+      /* cool glass tint, slightly deeper at the bottom */
+      linear-gradient(180deg, rgba(110,165,185,.10), rgba(90,150,170,.18));
     box-shadow:
-      inset 0 0 0 .25vmin rgba(255,255,255,.45),
-      inset 0 0 3vmin rgba(255,255,255,.18);
+      /* lit rim + greenish glass thickness at the edges */
+      inset 0 0 0 .3vmin rgba(255,255,255,.75),
+      inset 0 0 0 .8vmin rgba(120,190,180,.25),
+      inset 0 0 6vmin rgba(60,120,120,.28);
   }
   /* The tile itself is now TALLER than the square button: a plain,
      fully-transparent flex column holding the square button area, then
