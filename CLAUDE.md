@@ -236,10 +236,15 @@ forme, puzzle, tris, hanoi.
   `window.image`, attiva su `default`; reversibile mettendo `null`.
 - 2026-09-24 — Finestra messa **in standby** (`window.image: null` su default,
   asset e misure restano).
+- 2026-09-24 — Finestra **v2** riattivata su default: persiane di legno aperte,
+  architrave menta, davanzale coi vasi (`window-v2.webp`, da
+  `tools/build_finestra_v2.py`: scontorno magenta, banda centrale allargata,
+  taglio 16:9 con persiane/davanzale che escono dallo schermo). Apertura
+  1453x853 px. La v1 resta come asset (`window.webp`, valori in `_previous`).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
-  vetro con icone in rilievo (cornice a finestra pronta ma in standby), font + colori titoli. Pulsante legno = token opzionale.
+  cornice a finestra v2 (persiane) su default, icone in rilievo, font + colori titoli. Pulsante legno = token opzionale.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.

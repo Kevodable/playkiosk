@@ -16,14 +16,14 @@
     "overlay": "rgba(255,255,255,0.12)"
   },
   "window": {
-    "image": null,
-    "_standby": "Finestra in standby: per riattivarla \"image\": \"assets/window.webp?v=1\".",
+    "image": "assets/window-v2.webp?v=1",
     "_optional": "Cornice-finestra sopra il menu (i giochi scorrono dietro il telaio). Per tornare al vetro senza finestra: \"image\": null.",
-    "contentBox": { "top": 11.5, "bottom": 17.1, "left": 16.7, "right": 17.2 },
-    "zoom": 1.2,
-    "originY": 53,
-    "_zoom": "Ingrandisce la finestra oltre i bordi dello schermo (1 = intera). originY = punto verticale (in %) attorno a cui ingrandisce. L'apertura sullo schermo e' ricalcolata dalla shell: contentBox resta la misura sull'immagine.",
-    "_measuredFrom": "window.webp 1920x1080 (tools/build_finestra.py), apertura interna misurata sulla riga/colonna centrale, in % dai bordi dello schermo."
+    "contentBox": { "top": 6.7, "bottom": 14.4, "left": 12.1, "right": 12.2 },
+    "zoom": 1,
+    "originY": 50,
+    "_zoom": "Ingrandisce la finestra oltre i bordi dello schermo (1 = come l'immagine). originY = punto verticale (in %) attorno a cui ingrandisce. L'apertura sullo schermo e' ricalcolata dalla shell: contentBox resta la misura sull'immagine.",
+    "_measuredFrom": "window-v2.webp 1920x1080 (tools/build_finestra_v2.py: taglio e allargamento gia' fatti nell'immagine), apertura interna misurata sulla riga/colonna centrale.",
+    "_previous": "Finestra v1: \"image\": \"assets/window.webp?v=1\", contentBox top 11.5 bottom 17.1 left 16.7 right 17.2, zoom 1.2, originY 53."
   },
   "button": {
     "image": null,
