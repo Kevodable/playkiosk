@@ -11,7 +11,7 @@
   "mascot": { "path": null },
   "font": "Bold Doodle",
   "background": {
-    "image": "assets/background-soft.webp",
+    "image": "assets/background.jpg?v=2",
     "color": "#F5F7FF",
     "overlay": "rgba(255,255,255,0.12)"
   },

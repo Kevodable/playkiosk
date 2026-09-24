@@ -115,8 +115,10 @@ Due cartelle:
   manifest restano normali). Font **Bold Doodle** (woff2/woff locali; licenza
   free anche commerciale; NON ha glifi accentati). Colore **acceso/saturo per
   gioco** (`titleColor` nel manifest) + contorno scuro + ombra morbida.
-- **Sfondo:** `background-soft.webp` (menta pastello con doodle discreti, per non
-  distrarre dalle icone), fisso dietro la griglia, con velo `overlay` dal config.
+- **Sfondo:** `background.jpg` (1920×1080 JPG sRGB, ~130 KB): cielo menta con
+  colline, nuvole e arcobaleno ai bordi, centro calmo per non distrarre dalle
+  icone; fisso dietro la griglia, con velo `overlay` dal config. Sorgente
+  Scenario in `tools/art/sfondo_menu.png`.
 - **Cornice 3D del menu:** bordo menta rialzato intorno allo schermo, sopra la
   griglia (le tile scorrono "sotto", come dietro una finestra).
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL
@@ -211,16 +213,15 @@ forme, puzzle, tris, hanoi.
   mensola di legno coi gessetti; **sagome da ricalcare** (sole, cuore, stella,
   casa, pesce, fiore) e **timbri** (stella, cuore, fiore). Re-skin dei 12 giochi
   completato.
+- 2026-09-24 — Nuovo sfondo menu da Scenario, a norma sez. 10 (1920×1080 JPG
+  sRGB, 132 KB); sostituisce `background-soft.webp` (1344×768 WebP).
 
 ## Stato attuale
-- **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo menta,
+- **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
   cornice 3D, font + colori titoli. Pulsante legno = token opzionale.
-  Aperto: lo sfondo attuale è **1344×768 WebP**, sotto la specifica della sez. 10
-  (1920×1080 JPG) — da rigenerare o aggiornare la specifica.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.
-- **Aperto:** unire la catena dei branch in `main`; sfondo menu sotto specifica
-  (vedi sopra).
+- **Aperto:** unire la catena dei branch in `main`.
 - **Branch:** catena talpe → palloncini → frutta → memory → cleanup-brand →
   stelle → sequenza → labirinto → forme → tris → hanoi → puzzle → `feature/lavagna-reskin` (punta). `feature/shell`/`main` non contengono ancora `kiosk/`: da fondere.
