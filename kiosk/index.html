@@ -229,6 +229,27 @@
       inset 0 0 0 .8vmin rgba(120,190,180,.25),
       inset 0 0 6vmin rgba(60,120,120,.28);
   }
+  /* Optional window frame (window.image in the tenant config): a full-screen
+     picture of a window (transparent opening) ABOVE the grid, so the tiles
+     scroll behind the frame. The scroll area shrinks to the opening,
+     measured on the image (window.contentBox, 4 insets in %); the image is
+     stretched to the screen so the insets stay aligned. With a window the
+     glass pane is off (the window is open). No window.image -> glass. */
+  .menu__window{
+    display:none;
+    position:fixed; inset:0; z-index:4;
+    pointer-events:none;
+    background:center/100% 100% no-repeat;
+  }
+  #screen-menu.menu--window .menu__window{ display:block; }
+  #screen-menu.menu--window .menu__glass{ display:none; }
+  #screen-menu.menu--window .menu__scroll,
+  #screen-menu.menu--window .menu__fade{
+    position:fixed;
+    top:var(--window-top); bottom:var(--window-bottom);
+    left:var(--window-left); right:var(--window-right);
+  }
+  #screen-menu.menu--window .menu__fade{ top:auto; left:0; right:0; }
   /* The tile itself is now TALLER than the square button: a plain,
      fully-transparent flex column holding the square button area, then
      the title below it. Nothing of its own to see - no background, no
@@ -421,6 +442,7 @@
       <div class="menu__grid" id="menu-grid"></div>
     </div>
     <div class="menu__fade" aria-hidden="true"></div>
+    <div class="menu__window" id="menu-window" aria-hidden="true"></div>
   </div>
 
   <div class="screen" id="screen-game">
@@ -875,6 +897,32 @@ function goMenu() {
   });
 }
 
+/* Optional window frame over the menu (see .menu__window). Switched on
+   only once the image has loaded: a missing/broken file leaves the plain
+   glass menu, never a half-framed one. */
+function applyMenuWindow() {
+  var screenEl = document.getElementById("screen-menu");
+  var winEl = document.getElementById("menu-window");
+  var win = state.config && state.config.window;
+  var winPath = tenantAsset(win && win.image);
+  screenEl.classList.remove("menu--window");
+  if (!winPath) return;
+
+  var cb = win.contentBox || {};
+  var root = document.documentElement.style;
+  root.setProperty("--window-top", (cb.top || 0) + "%");
+  root.setProperty("--window-bottom", (cb.bottom || 0) + "%");
+  root.setProperty("--window-left", (cb.left || 0) + "%");
+  root.setProperty("--window-right", (cb.right || 0) + "%");
+
+  var probe = new Image();
+  probe.onload = function () {
+    winEl.style.backgroundImage = "url('" + winPath + "')";
+    screenEl.classList.add("menu--window");
+  };
+  probe.src = winPath;
+}
+
 /* Menu backdrop: image in cover behind the grid, with a color fallback and
    a semi-transparent overlay veil. A missing/broken image never breaks the
    screen: it just falls back to the flat color. */
@@ -889,6 +937,8 @@ function applyMenuBackground() {
   bgEl.style.backgroundColor = color;
   bgEl.style.backgroundImage = "none";
   overlayEl.style.background = overlay;
+
+  applyMenuWindow();
 
   var imagePath = tenantAsset(bg && bg.image);
   if (!imagePath) return;

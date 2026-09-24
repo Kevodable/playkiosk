@@ -123,6 +123,12 @@ Due cartelle:
   "disegnate sul vetro" in **rilievo** (bordo chiaro sopra, spessore scuro sotto,
   ombra portata) e attraverso il vetro si vede lo sfondo (nitido, velo leggero e
   riflessi diagonali, livello `.menu__glass`).
+- **Finestra (token opzionale per-tenant):** `window.image` nel config = cornice
+  a finestra aperta (telaio, ante, davanzale coi vasi) SOPRA la griglia; la
+  griglia si restringe all'apertura (`window.contentBox`, 4 inset in %) e le
+  tile scorrono dietro il telaio; con la finestra il vetro e' spento. `null` →
+  torna il vetro. Asset `window.webp` da `tools/build_finestra.py` (sorgente
+  Scenario `tools/art/finestra_menu.png`).
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL
   dell'iframe (`?v=`); le icone hanno `?v=` nel path. Alzarli a ogni modifica.
 
@@ -222,10 +228,12 @@ forme, puzzle, tris, hanoi.
   aggiornata: si lavora da `main` con branch `feature/<nome>` temporanei.
 - 2026-09-24 — Menu: **tolta la cornice 3D**; al suo posto effetto **vetro di
   finestra** (icone in rilievo sul vetro, sfondo visto attraverso).
+- 2026-09-24 — **Cornice a finestra** (Scenario) come token opzionale
+  `window.image`, attiva su `default`; reversibile mettendo `null`.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
-  effetto vetro (icone in rilievo), font + colori titoli. Pulsante legno = token opzionale.
+  cornice a finestra (`window.image`, su default) o vetro, icone in rilievo, font + colori titoli. Pulsante legno = token opzionale.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.

@@ -15,6 +15,12 @@
     "color": "#F5F7FF",
     "overlay": "rgba(255,255,255,0.12)"
   },
+  "window": {
+    "image": "assets/window.webp?v=1",
+    "_optional": "Cornice-finestra sopra il menu (i giochi scorrono dietro il telaio). Per tornare al vetro senza finestra: \"image\": null.",
+    "contentBox": { "top": 11.5, "bottom": 17.1, "left": 16.7, "right": 17.2 },
+    "_measuredFrom": "window.webp 1920x1080 (tools/build_finestra.py), apertura interna misurata sulla riga/colonna centrale, in % dai bordi dello schermo."
+  },
   "button": {
     "image": null,
     "_optional": "Tile nude di default (icona + titolo). Per la cornice di legno: \"image\": \"assets/tile-button.png\" - aspectRatio e contentBox qui sotto sono gia' misurati su quel file.",
