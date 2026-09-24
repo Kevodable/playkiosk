@@ -113,33 +113,50 @@ Due cartelle:
   animazioni CSS; generate da `tools/build_<gioco>.py` a partire dall'arte
   Scenario (sorgenti in `tools/art/`).
 - **Titolo:** sotto l'icona, scritto **come nel manifest** (maiuscole e
-  minuscole: le minuscole di Bold Doodle sono piu' morbide; il maiuscolo
-  forzato e' stato tolto il 2026-09-24). Font **Bold Doodle** (woff2/woff locali; licenza
-  free anche commerciale; NON ha glifi accentati). Colore **acceso/saturo per
-  gioco** (`titleColor` nel manifest) + contorno scuro + ombra morbida.
+  minuscole: le minuscole di Bold Doodle sono piu' morbide, niente maiuscolo
+  forzato). Colore **acceso/saturo per gioco** (`titleColor` nel manifest) +
+  contorno scuro sottile (1px) + ombra morbida.
+- **Font:** quello del tenant (`font` nel config, file in
+  `tenants/<id>/assets/fonts/`) su **tutte le scritte**, shell e giochi. Su
+  default e' **Bold Doodle** (woff2/woff locali; licenza free anche
+  commerciale; **NON ha le lettere accentate**: "a'" & co. escono col font di
+  sistema).
 - **Sfondo:** `background.jpg` (1920×1080 JPG sRGB, ~130 KB): cielo menta con
   colline, nuvole e arcobaleno ai bordi, centro calmo per non distrarre dalle
   icone; fisso dietro la griglia, con velo `overlay` dal config. Sorgente
   Scenario in `tools/art/sfondo_menu.png`.
-- **Vetro del menu:** niente cornice. Il menu e' una **finestra**: le icone sono
-  "disegnate sul vetro" in **rilievo** (bordo chiaro sopra, spessore scuro sotto,
-  ombra portata) e attraverso il vetro si vede lo sfondo (nitido, velo leggero e
-  riflessi diagonali, livello `.menu__glass`).
-- **Finestra (token opzionale per-tenant):** `window.image` nel config = cornice
-  a finestra aperta (telaio, ante, davanzale coi vasi) SOPRA la griglia; la
-  griglia si restringe all'apertura (`window.contentBox`, 4 inset in %) e le
-  tile scorrono dietro il telaio; con la finestra il vetro e' spento.
-  `window.zoom` (+ `originY`) ingrandisce la finestra oltre i bordi dello
-  schermo per un'apertura piu' grande (su default 1.2). `null` →
-  torna il vetro. Asset `window.webp` da `tools/build_finestra.py` (sorgente
-  Scenario `tools/art/finestra_menu.png`).
-- **Header dei giochi** (`games/assets/shared.css`, uguale per tutti e 12):
-  fascia menta con profilo teal (come l'architrave della finestra), pulsante
-  "Torna ai giochi" di legno (come il davanzale) con casetta disegnata, a
-  sinistra; titolo al centro col font del tenant e il `titleColor` del gioco,
-  passati dalla shell all'iframe (`--bb-title-font`, `--bb-title-color`;
-  il font vale per tutte le scritte del gioco);
-  punteggio a destra.
+- **Icone in rilievo:** ogni icona e' "disegnata sul vetro", in rilievo (bordo
+  chiaro sopra, spessore scuro sotto, ombra portata). Vale sia col vetro sia
+  con la finestra.
+- **Finestra (token opzionale per-tenant, ATTIVA su default):**
+  `window.image` nel config = cornice a finestra **sopra** la griglia; la
+  griglia si restringe all'apertura (`window.contentBox`, 4 inset in % misurati
+  sull'immagine) e le tile scorrono **dietro** il telaio.
+  - Su default: `window-v2.webp` (1920x1080 WebP con alpha) = architrave menta,
+    stipiti menta, davanzale di legno; apertura **1763x853 px**. Generata da
+    `tools/build_finestra_v2.py` dall'arte Scenario
+    `tools/art/finestra_menu_v2.png` (apertura magenta piena): scontorno,
+    persiane/cerniere/vasi tolti, banda centrale allargata, taglio 16:9. Lo
+    script stampa il contentBox da copiare nel config.
+  - `window.zoom` (+ `originY`) ingrandisce la finestra oltre i bordi dello
+    schermo; su v2 e' 1 (il taglio e' gia' nell'immagine).
+  - La v1 (`window.webp`, finestra bianca con ante a vetri,
+    `tools/build_finestra.py`) resta come asset: valori in `_previous` nel
+    config.
+- **Vetro (senza finestra):** `window.image: null` → niente cornice, il menu e'
+  un **vetro** davanti allo sfondo (velo leggero, riflessi diagonali, bordo
+  luminoso: livello `.menu__glass`). Con la finestra il vetro e' spento.
+- **Header dei giochi** (`games/assets/shared.css` + `BB.header()` in
+  `shared.js`, uguale per tutti e 12): fascia menta con profilo teal (come
+  l'architrave), griglia a 3 colonne:
+  - sinistra: pulsante **"Torna ai giochi"** di legno (come il davanzale),
+    casetta disegnata in SVG, >= 64px. E' l'**unico** modo per tornare al menu
+    (il pulsante "Menu" della shell non c'e' piu');
+  - centro (dello schermo): titolo del gioco col `titleColor`;
+  - destra: punteggio/tempo in teal scuro.
+  Font e colore li passa la **shell** all'iframe al load (`styleGameFrame()`:
+  `@font-face` del tenant + `--bb-title-font`, `--bb-title-color`). Gioco
+  aperto da solo, fuori dalla shell → font di sistema e colori di fallback.
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL
   dell'iframe (`?v=`); le icone hanno `?v=` nel path; `shared.css`/`shared.js`
   hanno `?v=` nel link di ogni gioco. Alzarli a ogni modifica.
@@ -164,14 +181,17 @@ forme, puzzle, tris, hanoi.
 - **Sfondo:** 1920×1080, JPG sRGB, <400KB, centro calmo, dettaglio ai bordi (il
   `cover` taglia i bordi: niente di essenziale lì).
 - **Pulsante:** quadrato PNG, esterno trasparente, interno pieno.
+- **Finestra:** da Scenario in 16:9 con l'apertura riempita di un **colore
+  piatto** (magenta) da scontornare; mai traversine davanti ai giochi. Asset
+  finale 1920x1080 WebP con alpha, apertura trasparente.
 - **Icone/loghi gioco:** quadrato PNG trasparente, leggibili in piccolo (~200px),
   stile comune (blocco-stile fisso riusato per tutti e 12 → famiglia coerente).
 - **Font:** woff2 + woff LOCALI, licenza libera per uso commerciale (OFL o
   equivalente). MAI versioni demo "personal use only".
 - **Regola d'oro per cambiare grafica:** immagine → **sostituisci il file**
   (stesso nome, stessa cartella); testo/numero/colore → **config.json**;
-  gioco/tier/titolo → **manifest**. Il codice non si tocca. Unica eccezione:
-  cambio FORMA del pulsante → rimisurare la content-box (4 inset).
+  gioco/tier/titolo → **manifest**. Il codice non si tocca. Eccezioni: cambio
+  FORMA del pulsante o della finestra → rimisurare la content-box (4 inset).
 
 ## 11. Metodo di lavoro (divisione strumenti)
 - **Chat:** brief, decisioni, bivi strategici, misure su file
@@ -187,7 +207,8 @@ forme, puzzle, tris, hanoi.
 - Look pulsante **uniforme** (immagine unica completa), niente colore per-gioco.
 - Colore spostato dal fondo del pulsante al **titolo** (acceso/saturo per gioco).
 - **Safari abbandonato** come target: solo Chromium. Offline-first resta (N100).
-- Font titoli: **Bold Doodle** (free anche commerciale, no accenti).
+- Font: **Bold Doodle** (free anche commerciale, no accenti); dal 2026-09-24
+  su tutte le scritte, non solo sui titoli.
 - Re-skin giochi con la **famiglia di animali** (de-brandizzazione deluxe);
   pilota: Acchiappa la Talpa.
 - 2026-09-22 — Icone del menu **animate** (SVG con livelli WebP), dall'arte
@@ -244,8 +265,13 @@ forme, puzzle, tris, hanoi.
   finestra** (icone in rilievo sul vetro, sfondo visto attraverso).
 - 2026-09-24 — **Cornice a finestra** (Scenario) come token opzionale
   `window.image`, attiva su `default`; reversibile mettendo `null`.
-- 2026-09-24 — Finestra messa **in standby** (`window.image: null` su default,
-  asset e misure restano).
+- 2026-09-24 — Finestra v1 **zoomata** (`window.zoom` 1.2) perche' occupava
+  troppo schermo; poi messa **in standby** (`window.image: null`).
+- 2026-09-24 — Finestra **v2** riattivata su default (nuova arte Scenario:
+  persiane di legno aperte, architrave menta, davanzale coi vasi). Poi, su
+  richiesta, sempre meno persiana fino a toglierla del tutto, e via cerniere e
+  vasi: cornice = architrave, stipiti, davanzale; apertura 1763x853 px.
+  La v1 resta come asset (`window.webp`, valori in `_previous`).
 - 2026-09-24 — **Header dei giochi** nello stile della finestra (fascia menta,
   pulsante di legno, titolo Bold Doodle col colore del gioco); tolto il
   pulsante "Menu" della shell: resta solo "Torna ai giochi" a sinistra.
@@ -254,17 +280,24 @@ forme, puzzle, tris, hanoi.
   accentate (es. "difficolta'") escono col font di sistema: Bold Doodle non le ha.
 - 2026-09-24 — Tolto il **maiuscolo forzato** da nomi dei giochi, titolo
   dell'header e pulsante: si scrive come nel manifest (piace di piu').
-- 2026-09-24 — Finestra **v2** riattivata su default: persiane di legno aperte,
-  architrave menta, davanzale coi vasi (`window-v2.webp`, da
-  `tools/build_finestra_v2.py`: scontorno magenta, banda centrale allargata,
-  taglio 16:9 con persiane/davanzale che escono dallo schermo). Apertura
-  1763x853 px (persiane, cerniere e vasi tolti: cornice = architrave, stipiti,
-  davanzale). La v1 resta come asset (`window.webp`, valori in `_previous`).
 
 ## Stato attuale
-- **Shell/menu:** tile nude (icona animata + titolo), sfondo nuovo a norma,
-  cornice a finestra v2 (architrave, stipiti, davanzale) su default, icone in rilievo, font + colori titoli. Pulsante legno = token opzionale.
-- **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
+- **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
+  norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
+  senza finestra il menu mostra il vetro. Pulsante legno = token opzionale.
+- **Giochi:** re-skin **completo su tutti e 12**; **header nuovo** nello stile
+  della finestra, un solo pulsante per tornare ai giochi. Il Rompicapo usa come
   immagini da ricomporre le scene della famiglia di animali.
-- **Branch:** solo `main` (tutto unito il 2026-09-24, i vecchi branch eliminati).
+- **Font:** Bold Doodle su tutte le scritte, contorno 1px, niente maiuscolo
+  forzato.
+- **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
+- **Branch:**
+  - `main`: fino al fix idle (i tocchi nel gioco azzerano il timer).
+  - `feature/menu-vetro`: vetro + finestra (parte da `main`).
+  - `feature/header-giochi`: header, font, niente maiuscolo (parte da
+    `feature/menu-vetro`). **Tutto da unire in `main`**; nessun push fatto.
+- **Aperti:**
+  - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
+    riscrivere senza accento o trovare un font simile con gli accenti;
+  - maiuscole dei titoli nel manifest non uniformi ("Acchiappa la Talpa" vs
+    "Scoppia i palloncini").
