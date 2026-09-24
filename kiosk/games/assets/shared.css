@@ -116,7 +116,6 @@ button{ font-family:inherit; color:inherit; border:none; background:none; cursor
   font-weight:800;
   font-size:clamp(18px,3vmin,30px);
   letter-spacing:.5px;
-  text-transform:uppercase;
   line-height:1;
   white-space:nowrap;
   text-shadow:
@@ -150,7 +149,6 @@ button{ font-family:inherit; color:inherit; border:none; background:none; cursor
   font-size:clamp(26px,5.4vmin,54px);
   font-weight:800;
   letter-spacing:1px;
-  text-transform:uppercase;
   text-align:center;
   line-height:1.1;
   color:var(--bb-title-color, var(--bb-burgundy));

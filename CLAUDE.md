@@ -112,8 +112,9 @@ Due cartelle:
 - **Icone:** **animate**, SVG autocontenuti con i livelli WebP incorporati e
   animazioni CSS; generate da `tools/build_<gioco>.py` a partire dall'arte
   Scenario (sorgenti in `tools/art/`).
-- **Titolo:** sotto l'icona, **MAIUSCOLO** (`text-transform`, i testi nel
-  manifest restano normali). Font **Bold Doodle** (woff2/woff locali; licenza
+- **Titolo:** sotto l'icona, scritto **come nel manifest** (maiuscole e
+  minuscole: le minuscole di Bold Doodle sono piu' morbide; il maiuscolo
+  forzato e' stato tolto il 2026-09-24). Font **Bold Doodle** (woff2/woff locali; licenza
   free anche commerciale; NON ha glifi accentati). Colore **acceso/saturo per
   gioco** (`titleColor` nel manifest) + contorno scuro + ombra morbida.
 - **Sfondo:** `background.jpg` (1920×1080 JPG sRGB, ~130 KB): cielo menta con
@@ -251,6 +252,8 @@ forme, puzzle, tris, hanoi.
 - 2026-09-24 — Font del tenant (Bold Doodle) su **tutte le scritte**, shell e
   giochi (non piu' solo i titoli); contorno scritte ridotto a 1px. Le lettere
   accentate (es. "difficolta'") escono col font di sistema: Bold Doodle non le ha.
+- 2026-09-24 — Tolto il **maiuscolo forzato** da nomi dei giochi, titolo
+  dell'header e pulsante: si scrive come nel manifest (piace di piu').
 - 2026-09-24 — Finestra **v2** riattivata su default: persiane di legno aperte,
   architrave menta, davanzale coi vasi (`window-v2.webp`, da
   `tools/build_finestra_v2.py`: scontorno magenta, banda centrale allargata,
@@ -259,7 +262,7 @@ forme, puzzle, tris, hanoi.
   davanzale). La v1 resta come asset (`window.webp`, valori in `_previous`).
 
 ## Stato attuale
-- **Shell/menu:** tile nude (icona animata + titolo maiuscolo), sfondo nuovo a norma,
+- **Shell/menu:** tile nude (icona animata + titolo), sfondo nuovo a norma,
   cornice a finestra v2 (architrave, stipiti, davanzale) su default, icone in rilievo, font + colori titoli. Pulsante legno = token opzionale.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Giochi:** re-skin **completo su tutti e 12**. Il Rompicapo usa come
