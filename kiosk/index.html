@@ -240,6 +240,10 @@
     position:fixed; inset:0; z-index:4;
     pointer-events:none;
     background:center/100% 100% no-repeat;
+    /* window.zoom: enlarges the frame past the screen edges (outer wall,
+       part of the shutters and sill go off-screen) for a bigger opening. */
+    transform:scale(var(--window-zoom,1));
+    transform-origin:50% var(--window-origin-y,50%);
   }
   #screen-menu.menu--window .menu__window{ display:block; }
   #screen-menu.menu--window .menu__glass{ display:none; }
@@ -908,12 +912,22 @@ function applyMenuWindow() {
   screenEl.classList.remove("menu--window");
   if (!winPath) return;
 
+  /* contentBox is measured on the image itself; with zoom (scale around
+     x 50%, y originY%) the opening on screen is derived from it here. */
   var cb = win.contentBox || {};
+  var z = win.zoom || 1;
+  var oy = typeof win.originY === "number" ? win.originY : 50;
+  var top = oy - (oy - (cb.top || 0)) * z;
+  var bottom = 100 - (oy + (100 - (cb.bottom || 0) - oy) * z);
+  var left = 50 - (50 - (cb.left || 0)) * z;
+  var right = 50 - (50 - (cb.right || 0)) * z;
   var root = document.documentElement.style;
-  root.setProperty("--window-top", (cb.top || 0) + "%");
-  root.setProperty("--window-bottom", (cb.bottom || 0) + "%");
-  root.setProperty("--window-left", (cb.left || 0) + "%");
-  root.setProperty("--window-right", (cb.right || 0) + "%");
+  root.setProperty("--window-zoom", z);
+  root.setProperty("--window-origin-y", oy + "%");
+  root.setProperty("--window-top", Math.max(0, top) + "%");
+  root.setProperty("--window-bottom", Math.max(0, bottom) + "%");
+  root.setProperty("--window-left", Math.max(0, left) + "%");
+  root.setProperty("--window-right", Math.max(0, right) + "%");
 
   var probe = new Image();
   probe.onload = function () {

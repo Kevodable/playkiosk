@@ -126,7 +126,9 @@ Due cartelle:
 - **Finestra (token opzionale per-tenant):** `window.image` nel config = cornice
   a finestra aperta (telaio, ante, davanzale coi vasi) SOPRA la griglia; la
   griglia si restringe all'apertura (`window.contentBox`, 4 inset in %) e le
-  tile scorrono dietro il telaio; con la finestra il vetro e' spento. `null` →
+  tile scorrono dietro il telaio; con la finestra il vetro e' spento.
+  `window.zoom` (+ `originY`) ingrandisce la finestra oltre i bordi dello
+  schermo per un'apertura piu' grande (su default 1.2). `null` →
   torna il vetro. Asset `window.webp` da `tools/build_finestra.py` (sorgente
   Scenario `tools/art/finestra_menu.png`).
 - **Cache:** ogni gioco ha un `version` nel manifest, aggiunto all'URL

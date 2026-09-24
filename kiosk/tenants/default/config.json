@@ -19,6 +19,9 @@
     "image": "assets/window.webp?v=1",
     "_optional": "Cornice-finestra sopra il menu (i giochi scorrono dietro il telaio). Per tornare al vetro senza finestra: \"image\": null.",
     "contentBox": { "top": 11.5, "bottom": 17.1, "left": 16.7, "right": 17.2 },
+    "zoom": 1.2,
+    "originY": 53,
+    "_zoom": "Ingrandisce la finestra oltre i bordi dello schermo (1 = intera). originY = punto verticale (in %) attorno a cui ingrandisce. L'apertura sullo schermo e' ricalcolata dalla shell: contentBox resta la misura sull'immagine.",
     "_measuredFrom": "window.webp 1920x1080 (tools/build_finestra.py), apertura interna misurata sulla riga/colonna centrale, in % dai bordi dello schermo."
   },
   "button": {
