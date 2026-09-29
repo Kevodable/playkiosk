@@ -139,6 +139,7 @@ sudo systemctl enable --now kiosk.service
 | Avvio automatico al boot                   | ✅ ok           |
 | Rilancio automatico dopo crash di Chromium | ✅ ok           |
 | I giochi si aprono                         | ✅ ok           |
+| Font emoji e DejaVu installati             | ✅ ok (resa di emoji e accenti a schermo da verificare) |
 | Ripartenza dopo stacco di corrente         | ⏳ da verificare |
 | Precisione touch (`pointerType` touch vs mouse) | ⏳ da verificare |
 | Audio                                      | ⏳ da verificare |
