@@ -141,7 +141,7 @@ sudo systemctl enable --now kiosk.service
 | I giochi si aprono                         | ✅ ok           |
 | Emoji e lettere accentate a schermo        | ✅ ok           |
 | Ripartenza dopo stacco di corrente         | ✅ ok           |
-| Precisione touch (`pointerType` touch vs mouse) | ⏳ da verificare |
+| Precisione touch (`pointerType` touch vs mouse) | ✅ ok, arriva come `touch` |
 | Audio                                      | ✅ ok           |
 | Orientamento monitor (verticale/orizzontale) | ⏳ non deciso  |
 
