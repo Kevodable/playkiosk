@@ -91,8 +91,10 @@ EOF
 }
 
 restart() {
-	# -t: se sudo chiede la password, la si digita qui
-	ssh -t "$HOST" sudo systemctl restart kiosk.service
+	# -t (solo da terminale): se sudo chiede la password, la si digita qui
+	local tty=""
+	[ -t 0 ] && tty="-t"
+	ssh $tty "$HOST" sudo systemctl restart kiosk.service
 	remote health
 }
 

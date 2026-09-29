@@ -44,7 +44,7 @@ usa `localStorage`; con `file://` Chromium blocca o isola tutte e tre le cose.
 |---------------------------------------|-------------------------------------------------------------|
 | `/srv/kiosk/releases/v0/`             | pagina di test touch                                        |
 | `/srv/kiosk/releases/v1/`             | contenuto di `kiosk/` di questa repo                        |
-| `/srv/kiosk/releases/vN/`             | release successive (una cartella per versione)              |
+| `/srv/kiosk/releases/r-AAAAMMGG-HHMMSS-<commit>/` | release create da `deploy.sh` (ne tiene 5)   |
 | `/srv/kiosk/current`                  | **symlink** alla release attiva (Caddy serve questo)        |
 | `/etc/caddy/Caddyfile`                | ← `device/pi/Caddyfile`                                     |
 | `/etc/systemd/system/kiosk.service`   | ← `device/pi/kiosk.service`                                 |
@@ -182,8 +182,14 @@ Cosa fa il deploy:
 Il rollback senza nome va alla release dello script precedente a quella
 attiva; se l'attiva è una release a mano (es. `v1`) bisogna dare il nome.
 
-Prerequisiti sul Pi: `/srv/kiosk` di proprietà dell'admin (§2.5), `curl`
-installato (c'è già su Lite), sudo per l'admin.
+Prerequisiti sul Pi: `/srv/kiosk` e `/srv/kiosk/releases` di proprietà
+dell'admin (§2.5; sul prototipo erano di root: `sudo chown <admin>:<admin>
+/srv/kiosk /srv/kiosk/releases`), `curl` installato (c'è già su Lite), sudo
+per l'admin.
+
+Provato sul prototipo il 2026-09-30: deploy (file identici a `kiosk/`, niente
+`.DS_Store`, kiosk riavviato), rollback per nome e senza nome, errore corretto
+quando non c'è una release precedente.
 
 ### 3.2 Deploy manuale (come fatto sul prototipo prima dello script)
 
@@ -264,8 +270,8 @@ si interviene via SSH/Tailscale.
    Attenzione: anche il **profilo Chromium** (`/home/kiosk/.config/chromium`)
    deve stare sulla partizione dati, altrimenti a ogni riavvio si perdono
    `localStorage` → **nuovo `deviceUuid`** e record dei giochi azzerati.
-4. **Script di deploy:** ✅ scritto (`device/pi/deploy.sh`, vedi §3.1);
-   da provare sul prototipo.
+4. **Script di deploy:** ✅ fatto e provato sul prototipo
+   (`device/pi/deploy.sh`, vedi §3.1).
 5. **Immagine master "sigillata"** con script di primo avvio: hostname e UUID
    dal **numero di serie** del Pi, rigenerazione chiavi SSH host e
    `machine-id`, join Tailscale con **pre-auth key** (fornita al momento, mai

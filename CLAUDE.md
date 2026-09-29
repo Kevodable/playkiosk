@@ -299,6 +299,9 @@ forme, puzzle, tris, hanoi.
   `feature/header-giochi` e `docs/raspberry-pi-setup`.
 - 2026-09-30 — Verifiche sul prototipo Pi tutte ok (boot, crash, stacco di
   corrente, touch come `touch`, audio, emoji e accenti). Monitor **orizzontale**.
+- 2026-09-30 — **Script di deploy** `device/pi/deploy.sh` (dal Mac): release
+  `r-<data>-<commit>`, switch atomico di `current`, restart, rollback, tiene 5
+  release. Provato sul prototipo.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
@@ -314,8 +317,9 @@ forme, puzzle, tris, hanoi.
   del Pi); branch `feature/*` e `docs/*` eliminati. **Nessun remote GitHub
   collegato**: da aggiungere, poi primo push (attiva l'auto-deploy su Pages).
 - **Dispositivo:** prototipo Raspberry Pi 5 `kiosk-dev-01` funzionante, tutte le
-  verifiche ok (vedi `docs/raspberry-pi-setup.md`); roadmap di sez. 5 del doc da
-  fare.
+  verifiche ok (vedi `docs/raspberry-pi-setup.md`). Deploy con
+  `device/pi/deploy.sh` (dal Mac: release versionate, rollback); roadmap di
+  sez. 5 del doc: fatto il punto 4 (script di deploy), il resto da fare.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
