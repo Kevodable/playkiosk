@@ -310,8 +310,9 @@ forme, puzzle, tris, hanoi.
 - **Font:** Bold Doodle su tutte le scritte, contorno 1px, niente maiuscolo
   forzato.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Branch:** tutto unito in `main` (vetro + finestra, header, font, docs del
-  Pi); push su GitHub **non ancora fatto**.
+- **Branch:** solo `main`, tutto unito (vetro + finestra, header, font, docs
+  del Pi); branch `feature/*` e `docs/*` eliminati. **Nessun remote GitHub
+  collegato**: da aggiungere, poi primo push (attiva l'auto-deploy su Pages).
 - **Dispositivo:** prototipo Raspberry Pi 5 `kiosk-dev-01` funzionante, tutte le
   verifiche ok (vedi `docs/raspberry-pi-setup.md`); roadmap di sez. 5 del doc da
   fare.
