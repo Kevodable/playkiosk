@@ -73,10 +73,13 @@ hostname dell'unità.
 
 ```sh
 sudo apt update && sudo apt full-upgrade -y
-sudo apt install -y cage chromium caddy
-# Consigliato (vedi §6): emoji a colori e font di ripiego per gli accenti
-sudo apt install -y fonts-noto-color-emoji fonts-dejavu-core
+sudo apt install -y cage chromium caddy fonts-noto-color-emoji fonts-dejavu-core
 ```
+
+I due pacchetti di font sono **obbligatori** (vedi §6): Raspberry Pi OS Lite non
+ha font emoji (i giochi usano emoji nel testo visibile) e Bold Doodle non ha le
+lettere accentate, che escono col font di sistema. Dopo l'installazione:
+`sudo systemctl restart kiosk.service`.
 
 ### 2.3 Tailscale
 
@@ -250,10 +253,11 @@ Verifica statica del 2026-09-30 sul contenuto di `kiosk/`:
   `config.json` (con fallback se mancano). La telemetria oggi è solo
   `console.log`; nessuna chiamata Apps Script. `localStorage` e `AudioContext`
   sono protetti da `try/catch`.
-- ⚠️ **Emoji nel testo visibile** (pulsanti livello, contatori, 🏆, carte del
-  Memory ecc.): Raspberry Pi OS **Lite** non ha un font emoji → quadratini.
-  Installare `fonts-noto-color-emoji`.
-- ⚠️ **Lettere accentate**: Bold Doodle non le ha, escono col font di sistema;
-  su Lite serve almeno un font sans (`fonts-dejavu-core`).
+- ✅ **Emoji nel testo visibile** (pulsanti livello, contatori, 🏆, carte del
+  Memory ecc.): Raspberry Pi OS **Lite** non ha un font emoji → senza
+  `fonts-noto-color-emoji` escono quadratini. Installato nella procedura (§2.2).
+- ✅ **Lettere accentate**: Bold Doodle non le ha, escono col font di sistema;
+  `fonts-dejavu-core` installato nella procedura (§2.2).
+  Controllo sul Pi: `fc-list | grep -iE 'emoji|dejavu'`.
 - ℹ️ Audio: si sblocca col primo tocco sull'attract (policy autoplay di
   Chromium) — da verificare sul Pi con l'uscita audio reale.
