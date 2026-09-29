@@ -140,7 +140,7 @@ sudo systemctl enable --now kiosk.service
 | Rilancio automatico dopo crash di Chromium | ✅ ok           |
 | I giochi si aprono                         | ✅ ok           |
 | Emoji e lettere accentate a schermo        | ✅ ok           |
-| Ripartenza dopo stacco di corrente         | ⏳ da verificare |
+| Ripartenza dopo stacco di corrente         | ✅ ok           |
 | Precisione touch (`pointerType` touch vs mouse) | ⏳ da verificare |
 | Audio                                      | ✅ ok           |
 | Orientamento monitor (verticale/orizzontale) | ⏳ non deciso  |
