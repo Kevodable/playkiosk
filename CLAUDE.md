@@ -295,6 +295,8 @@ forme, puzzle, tris, hanoi.
 - 2026-09-30 — Primo kiosk **prototipo su Raspberry Pi 5** (cage + Chromium +
   Caddy locale): documentato in `docs/raspberry-pi-setup.md`, config in
   `device/pi/` (branch `docs/raspberry-pi-setup`).
+- 2026-09-30 — Uniti in `main` (fast-forward) `feature/menu-vetro`,
+  `feature/header-giochi` e `docs/raspberry-pi-setup`.
 - 2026-09-30 — Verifiche sul prototipo Pi tutte ok (boot, crash, stacco di
   corrente, touch come `touch`, audio, emoji e accenti). Monitor **orizzontale**.
 
@@ -308,11 +310,11 @@ forme, puzzle, tris, hanoi.
 - **Font:** Bold Doodle su tutte le scritte, contorno 1px, niente maiuscolo
   forzato.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Branch:**
-  - `main`: fino al fix idle (i tocchi nel gioco azzerano il timer).
-  - `feature/menu-vetro`: vetro + finestra (parte da `main`).
-  - `feature/header-giochi`: header, font, niente maiuscolo (parte da
-    `feature/menu-vetro`). **Tutto da unire in `main`**; nessun push fatto.
+- **Branch:** tutto unito in `main` (vetro + finestra, header, font, docs del
+  Pi); push su GitHub **non ancora fatto**.
+- **Dispositivo:** prototipo Raspberry Pi 5 `kiosk-dev-01` funzionante, tutte le
+  verifiche ok (vedi `docs/raspberry-pi-setup.md`); roadmap di sez. 5 del doc da
+  fare.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
