@@ -10,6 +10,7 @@ deploy, rollback, diagnostica): [`docs/raspberry-pi-setup.md`](../../docs/raspbe
 | `kiosk.service`     | `/etc/systemd/system/kiosk.service`  | root:root 644           | `sudo systemctl daemon-reload && sudo systemctl restart kiosk.service` |
 | `pam-cage`          | `/etc/pam.d/cage`                    | root:root 644           | effetto al prossimo avvio di `kiosk.service`          |
 | `kiosk-browser.sh`  | `/usr/local/bin/kiosk-browser.sh`    | root:root 755           | `sudo systemctl restart kiosk.service`                |
+| `deploy.sh`         | **non va sul Pi**: si lancia dal Mac | —                       | `device/pi/deploy.sh [deploy\|list\|rollback [nome]]` |
 
 Installazione di tutti i file (dal Pi, con la cartella `device/pi/` copiata in `~/pi`):
 

@@ -152,7 +152,42 @@ sudo systemctl enable --now kiosk.service
 **Regola:** sul dispositivo va **solo** il contenuto di `kiosk/`, mai la repo
 (niente `.git`, `CLAUDE.md`, `.claude`, `tools`, `_legacy`, `docs`, `device`).
 
-### 3.1 Deploy attuale (manuale, dal Mac)
+### 3.1 Deploy con lo script (consigliato)
+
+`device/pi/deploy.sh` si lancia **dal Mac** (non va copiato sul Pi):
+
+```sh
+device/pi/deploy.sh                 # deploy: nuova release + switch + restart
+device/pi/deploy.sh list            # release sul Pi, * = attiva
+device/pi/deploy.sh rollback        # torna alla release precedente
+device/pi/deploy.sh rollback v1     # ... o a una release per nome
+KIOSK_HOST=<admin>@<host>.local device/pi/deploy.sh   # altro kiosk
+```
+
+Cosa fa il deploy:
+
+1. controlla in locale `kiosk/index.html`, `manifest.json` e i `config.json`
+   dei tenant (JSON valido); avvisa se `kiosk/` ha modifiche non committate
+   (la release prende il suffisso `-dirty`);
+2. sul Pi verifica che `/srv/kiosk` e `releases/` siano scrivibili dall'admin;
+3. rsync **solo** di `kiosk/` (con `--delete`, senza `.DS_Store`) in una
+   cartella nuova `releases/r-AAAAMMGG-HHMMSS-<commit>`;
+4. permessi di lettura per tutti, switch **atomico** del symlink `current`
+   (`ln -sfn … current.new` + `mv -T`);
+5. `sudo systemctl restart kiosk.service` (`ssh -t`: se sudo chiede la
+   password la si digita), poi controlla che Caddy serva `/` e il manifest;
+6. tiene le ultime `KIOSK_KEEP` release dello script (default 5), mai quella
+   attiva; le release fatte a mano (`v0`, `v1`, …) non vengono mai toccate.
+
+Il rollback senza nome va alla release dello script precedente a quella
+attiva; se l'attiva è una release a mano (es. `v1`) bisogna dare il nome.
+
+Prerequisiti sul Pi: `/srv/kiosk` di proprietà dell'admin (§2.5), `curl`
+installato (c'è già su Lite), sudo per l'admin.
+
+### 3.2 Deploy manuale (come fatto sul prototipo prima dello script)
+
+Dalla cartella `kiosk/`:
 
 Dalla cartella `kiosk/`:
 
@@ -170,7 +205,7 @@ Nota: così si **sovrascrive la release attiva** (v1): durante la copia la shell
 può vedere file misti, e non resta una versione precedente per il rollback.
 Inoltre senza `--delete` i file tolti dalla repo restano sul Pi.
 
-### 3.2 Deploy con release versionata (procedura consigliata, manuale)
+### 3.3 Deploy manuale con release versionata
 
 ```sh
 # dal Mac, cartella kiosk/: nuova cartella vN
@@ -180,7 +215,7 @@ sudo ln -sfn /srv/kiosk/releases/v2 /srv/kiosk/current
 sudo pkill chromium
 ```
 
-### 3.3 Rollback
+### 3.4 Rollback manuale
 
 ```sh
 ls /srv/kiosk/releases/                              # release disponibili
@@ -229,10 +264,8 @@ si interviene via SSH/Tailscale.
    Attenzione: anche il **profilo Chromium** (`/home/kiosk/.config/chromium`)
    deve stare sulla partizione dati, altrimenti a ogni riavvio si perdono
    `localStorage` → **nuovo `deviceUuid`** e record dei giochi azzerati.
-4. **Script di deploy:** nuova release versionata, rsync solo di `kiosk/`
-   (con `--delete`, senza `.DS_Store`), switch del symlink **atomico**
-   (`ln -s … current.new && mv -T current.new current`), restart di Chromium,
-   comando di rollback, pulizia delle release vecchie.
+4. **Script di deploy:** ✅ scritto (`device/pi/deploy.sh`, vedi §3.1);
+   da provare sul prototipo.
 5. **Immagine master "sigillata"** con script di primo avvio: hostname e UUID
    dal **numero di serie** del Pi, rigenerazione chiavi SSH host e
    `machine-id`, join Tailscale con **pre-auth key** (fornita al momento, mai
