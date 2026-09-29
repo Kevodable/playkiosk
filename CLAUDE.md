@@ -56,7 +56,7 @@ compito del **backend**, non della shell. La shell mostra SOLO i giochi in
 
 ## 5. Target hardware e runtime
 - Produzione: **Raspberry Pi 5** (ARM64, Raspberry Pi OS Lite, SSD NVMe) +
-  monitor touch ~22" (1920×1080; orientamento da decidere), **solo Chromium**
+  monitor touch ~22" (1920×1080, **orizzontale**), **solo Chromium**
   (cage, kiosk). Vedi sez. 5b.
 - Android NON è più target di produzione. **Safari NON è più un target**: niente
   più verifiche di compatibilità Safari.
@@ -295,6 +295,8 @@ forme, puzzle, tris, hanoi.
 - 2026-09-30 — Primo kiosk **prototipo su Raspberry Pi 5** (cage + Chromium +
   Caddy locale): documentato in `docs/raspberry-pi-setup.md`, config in
   `device/pi/` (branch `docs/raspberry-pi-setup`).
+- 2026-09-30 — Verifiche sul prototipo Pi tutte ok (boot, crash, stacco di
+  corrente, touch come `touch`, audio, emoji e accenti). Monitor **orizzontale**.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a

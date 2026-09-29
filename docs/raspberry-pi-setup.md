@@ -143,7 +143,7 @@ sudo systemctl enable --now kiosk.service
 | Ripartenza dopo stacco di corrente         | ✅ ok           |
 | Precisione touch (`pointerType` touch vs mouse) | ✅ ok, arriva come `touch` |
 | Audio                                      | ✅ ok           |
-| Orientamento monitor (verticale/orizzontale) | ⏳ non deciso  |
+| Orientamento monitor                       | ✅ orizzontale (landscape) |
 
 ---
 
