@@ -1,0 +1,7 @@
+# Sessione PAM per cage -> sul Pi: /etc/pam.d/cage
+# pam_systemd registra la sessione in logind (accesso a display/input,
+# XDG_RUNTIME_DIR) per l'utente "kiosk", che non ha password.
+auth           required        pam_unix.so nullok
+account        required        pam_unix.so
+session        required        pam_unix.so
+session        required        pam_systemd.so
