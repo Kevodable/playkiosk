@@ -142,7 +142,7 @@ sudo systemctl enable --now kiosk.service
 | Emoji e lettere accentate a schermo        | ✅ ok           |
 | Ripartenza dopo stacco di corrente         | ⏳ da verificare |
 | Precisione touch (`pointerType` touch vs mouse) | ⏳ da verificare |
-| Audio                                      | ⏳ da verificare |
+| Audio                                      | ✅ ok           |
 | Orientamento monitor (verticale/orizzontale) | ⏳ non deciso  |
 
 ---
@@ -260,5 +260,5 @@ Verifica statica del 2026-09-30 sul contenuto di `kiosk/`:
 - ✅ **Lettere accentate**: Bold Doodle non le ha, escono col font di sistema;
   `fonts-dejavu-core` installato nella procedura (§2.2).
   Controllo sul Pi: `fc-list | grep -iE 'emoji|dejavu'`.
-- ℹ️ Audio: si sblocca col primo tocco sull'attract (policy autoplay di
-  Chromium) — da verificare sul Pi con l'uscita audio reale.
+- ✅ Audio: si sblocca col primo tocco sull'attract (policy autoplay di
+  Chromium); verificato sul Pi.
