@@ -218,7 +218,7 @@ forme, puzzle, tris, hanoi.
 ## Log decisioni
 - Look pulsante **uniforme** (immagine unica completa), niente colore per-gioco.
 - Colore spostato dal fondo del pulsante al **titolo** (acceso/saturo per gioco).
-- **Safari abbandonato** come target: solo Chromium. Offline-first resta (N100).
+- **Safari abbandonato** come target: solo Chromium. Offline-first resta (Raspberry Pi 5).
 - Font: **Bold Doodle** (free anche commerciale, no accenti); dal 2026-09-24
   su tutte le scritte, non solo sui titoli.
 - Re-skin giochi con la **famiglia di animali** (de-brandizzazione deluxe);
@@ -302,6 +302,11 @@ forme, puzzle, tris, hanoi.
 - 2026-09-30 — **Script di deploy** `device/pi/deploy.sh` (dal Mac): release
   `r-<data>-<commit>`, switch atomico di `current`, restart, rollback, tiene 5
   release. Provato sul prototipo.
+- 2026-09-30 — Revisione doc del Pi: `rsync` tra i pacchetti, chiave SSH
+  generata prima dell'Imager, procedura di **recupero accesso SSH**. File di
+  `device/pi/` **allineati al prototipo** (collaudato); restano 2 migliorie da
+  applicare sul Pi: `bind 127.0.0.1` nel Caddyfile (oggi Caddy ascolta su
+  `*:8080`, porta aperta alla LAN) ed errore chiaro se manca Chromium.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
@@ -320,6 +325,8 @@ forme, puzzle, tris, hanoi.
   verifiche ok (vedi `docs/raspberry-pi-setup.md`). Deploy con
   `device/pi/deploy.sh` (dal Mac: release versionate, rollback); roadmap di
   sez. 5 del doc: fatto il punto 4 (script di deploy), il resto da fare.
+  **Da applicare sul Pi** (dopo ok): Caddyfile con `bind 127.0.0.1` e
+  `kiosk-browser.sh` nuovo (vedi `device/pi/README.md`).
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;

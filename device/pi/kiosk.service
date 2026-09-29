@@ -2,29 +2,28 @@
 # Avvia cage (compositor Wayland a singola app) su tty1 come utente "kiosk";
 # cage esegue kiosk-browser.sh (Chromium in kiosk). Se Chromium o cage
 # terminano, systemd li rilancia dopo 3 s.
-
+# PAMName=cage (/etc/pam.d/cage): logind crea la sessione e XDG_RUNTIME_DIR.
+# Conflicts/After getty@tty1: tty1 e' del kiosk, niente login testuale.
 [Unit]
 Description=Kiosk (cage + Chromium)
-After=systemd-user-sessions.service plymouth-quit-wait.service caddy.service
-Wants=caddy.service
-# tty1 e' del kiosk: niente login testuale su quel terminale
+After=systemd-user-sessions.service dbus.socket systemd-logind.service caddy.service
+Wants=dbus.socket systemd-logind.service caddy.service
 Conflicts=getty@tty1.service
 After=getty@tty1.service
 
 [Service]
 Type=simple
 User=kiosk
-# Sessione PAM (/etc/pam.d/cage): logind crea la sessione e XDG_RUNTIME_DIR
 PAMName=cage
 TTYPath=/dev/tty1
 TTYReset=yes
 TTYVHangup=yes
 TTYVTDisallocate=yes
+UtmpIdentifier=tty1
+UtmpMode=user
 StandardInput=tty-fail
 StandardOutput=journal
 StandardError=journal
-UtmpIdentifier=tty1
-UtmpMode=user
 ExecStart=/usr/bin/cage -- /usr/local/bin/kiosk-browser.sh
 Restart=always
 RestartSec=3

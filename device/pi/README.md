@@ -26,11 +26,12 @@ sudo systemctl restart kiosk.service
 
 ## Note
 
-- Questi file sono stati **ricostruiti dalla descrizione** del prototipo
-  `kiosk-dev-01`, non copiati dal dispositivo. Prima di sovrascrivere, fare un
-  confronto con quelli sul Pi, per esempio
-  `ssh <admin>@<host> cat /etc/systemd/system/kiosk.service | diff - device/pi/kiosk.service`,
-  e riportare qui le differenze buone.
+- **Allineati al prototipo** `kiosk-dev-01` il 2026-09-30 (la versione del Pi
+  è quella collaudata). A parte i commenti, differiscono dal Pi solo due
+  migliorie, **da applicare sul prototipo**:
+  - `Caddyfile`: `bind 127.0.0.1` (sul Pi Caddy ascolta su `*:8080`);
+  - `kiosk-browser.sh`: errore chiaro nel journal se manca Chromium.
+  Confronto: `ssh <admin>@<host> cat /etc/caddy/Caddyfile | diff -I '^ *#' - device/pi/Caddyfile`.
 - **Niente segreti** in questa cartella: niente password, chiavi, auth key
   Tailscale, IP. L'accesso SSH (solo chiave) lo imposta cloud-init
   (`/etc/ssh/sshd_config.d/50-cloud-init.conf`), fuori dalla repo.

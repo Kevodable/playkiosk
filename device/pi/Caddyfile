@@ -1,12 +1,13 @@
 # Caddyfile del kiosk -> sul Pi: /etc/caddy/Caddyfile
-# Server HTTP locale: ascolta SOLO su 127.0.0.1:8080 (niente accesso dalla rete),
-# serve la release attiva (/srv/kiosk/current e' un symlink a releases/vN).
-
+# Server HTTP locale su 127.0.0.1:8080, serve la release attiva
+# (/srv/kiosk/current e' un symlink a releases/<release>).
+# no-cache = il browser puo' tenere i file ma li rivalida a ogni richiesta:
+# dopo un deploy/rollback si vedono subito i file nuovi.
 http://127.0.0.1:8080 {
-	bind 127.0.0.1
-	root * /srv/kiosk/current
-	# no-cache = il browser puo' tenere i file ma li rivalida a ogni richiesta:
-	# dopo un deploy/rollback si vedono subito i file nuovi.
-	header Cache-Control "no-cache"
-	file_server
+    # L'indirizzo del sito filtra solo l'host: senza "bind" Caddy ascolta su
+    # TUTTE le interfacce (*:8080). Con "bind" la porta non e' aperta alla rete.
+    bind 127.0.0.1
+    root * /srv/kiosk/current
+    file_server
+    header Cache-Control "no-cache"
 }

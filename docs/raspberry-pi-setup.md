@@ -28,7 +28,7 @@ la fonte di verità, sul Pi si copiano da lì.
 | OS                 | Raspberry Pi OS **Lite 64-bit** (Debian **Trixie**), niente desktop     |
 | Compositor         | **cage**: una sola app a schermo intero, niente desktop né barre       |
 | Browser            | **Chromium** in modalità kiosk, backend Wayland (ozone)                |
-| Server locale      | **Caddy** su `127.0.0.1:8080` (non raggiungibile dalla rete)           |
+| Server locale      | **Caddy** su `127.0.0.1:8080`, `bind 127.0.0.1` (non raggiungibile dalla rete; vedi nota in §2.6) |
 | Utente di runtime  | `kiosk`: gruppi `video render input audio`, **senza password né sudo** |
 | Utente admin       | prototipo: `kiosk-dev-01` (temporaneo). Produzione: utente admin fisso uguale su tutti i kiosk |
 | Hostname           | prototipo: `kiosk-dev-01`. Produzione: hostname unico per unità         |
@@ -62,19 +62,32 @@ hostname dell'unità.
 
 ### 2.1 Scheda SD / disco
 
-1. **Raspberry Pi Imager** → *Raspberry Pi OS Lite (64-bit)* (Trixie).
-2. Impostazioni personalizzate: hostname `<host>`, utente `<admin>` con
-   password, **SSH con sola chiave pubblica** (incolla la tua chiave), locale
+1. **Prima dell'Imager, sul Mac:** se non hai già una chiave, generala.
+
+   ```sh
+   ssh-keygen -t ed25519                         # -> ~/.ssh/id_ed25519(.pub)
+   ssh-add --apple-use-keychain ~/.ssh/id_ed25519  # solo se ha una passphrase
+   cat ~/.ssh/id_ed25519.pub                     # da incollare nell'Imager
+   ```
+
+2. **Raspberry Pi Imager** → *Raspberry Pi OS Lite (64-bit)* (Trixie).
+3. Impostazioni personalizzate: hostname `<host>`, utente `<admin>` con
+   password, **SSH con sola chiave pubblica**: incolla il **contenuto** di
+   `~/.ssh/id_ed25519.pub` (la chiave pubblica, mai quella privata), locale
    e fuso orario. Imager scrive tutto via cloud-init, compreso
    `50-cloud-init.conf` con `PasswordAuthentication no`.
-3. Primo avvio, poi dal Mac: `ssh <admin>@<host>.local`.
+4. Primo avvio, poi dal Mac: `ssh <admin>@<host>.local`. Se la chiave non
+   viene accettata: §2.8.
 
 ### 2.2 Sistema e pacchetti
 
 ```sh
 sudo apt update && sudo apt full-upgrade -y
-sudo apt install -y cage chromium caddy fonts-noto-color-emoji fonts-dejavu-core
+sudo apt install -y cage chromium caddy rsync fonts-noto-color-emoji fonts-dejavu-core
 ```
+
+`rsync` serve sul Pi per `deploy.sh` (§3.1): su Lite non c'è (sul prototipo
+era stato installato a mano).
 
 I due pacchetti di font sono **obbligatori** (vedi §6): Raspberry Pi OS Lite non
 ha font emoji (i giochi usano emoji nel testo visibile) e Bold Doodle non ha le
@@ -132,6 +145,12 @@ sudo systemctl set-default graphical.target
 sudo systemctl enable --now kiosk.service
 ```
 
+Nota: il Caddyfile ha `bind 127.0.0.1`. L'indirizzo del sito
+(`http://127.0.0.1:8080`) filtra solo l'host delle richieste: senza `bind`
+Caddy ascolta su tutte le interfacce e la porta 8080 risponde dalla rete (con
+una pagina vuota). Controllo sul Pi: `ss -ltn | grep 8080` deve mostrare
+`127.0.0.1:8080`, non `*:8080`.
+
 ### 2.7 Verifiche
 
 | Verifica                                   | Esito prototipo |
@@ -144,6 +163,41 @@ sudo systemctl enable --now kiosk.service
 | Precisione touch (`pointerType` touch vs mouse) | ✅ ok, arriva come `touch` |
 | Audio                                      | ✅ ok           |
 | Orientamento monitor                       | ✅ orizzontale (landscape) |
+
+### 2.8 Recupero accesso SSH
+
+Se la chiave non è entrata (chiave sbagliata o incollata male nell'Imager),
+SSH rifiuta tutto perché `50-cloud-init.conf` ha `PasswordAuthentication no`.
+Procedura usata sul prototipo, con **tastiera e monitor sul Pi** (login su
+tty come `<admin>`):
+
+```sh
+# sul Pi: riabilita la password SOLO temporaneamente
+echo 'PasswordAuthentication yes' | sudo tee /etc/ssh/sshd_config.d/00-temp.conf
+sudo systemctl restart ssh
+sudo sshd -T | grep -i passwordauthentication   # deve dire "yes"
+```
+
+Il nome **deve finire in `.conf`** (altrimenti sshd lo ignora) e deve venire
+**prima** di `50-cloud-init.conf` in ordine alfabetico: sshd tiene il primo
+valore che trova, quindi `00-` vince su `50-`.
+
+```sh
+# dal Mac: copia la chiave (chiede la password dell'admin)
+ssh-copy-id -i ~/.ssh/id_ed25519.pub <admin>@<host>.local
+ssh <admin>@<host>.local                          # deve entrare senza password
+```
+
+```sh
+# sul Pi: torna a solo chiave
+sudo rm /etc/ssh/sshd_config.d/00-temp.conf
+sudo systemctl restart ssh
+sudo sshd -T | grep -i passwordauthentication   # deve dire "no"
+```
+
+Nota: la tastiera sul Pi serve **prima** di installare il kiosk (§2.6): con
+`kiosk.service` attivo tty1 è di cage e il cambio di terminale è disattivato
+(§4), quindi non c'è un login locale.
 
 ---
 
@@ -192,8 +246,6 @@ Provato sul prototipo il 2026-09-30: deploy (file identici a `kiosk/`, niente
 quando non c'è una release precedente.
 
 ### 3.2 Deploy manuale (come fatto sul prototipo prima dello script)
-
-Dalla cartella `kiosk/`:
 
 Dalla cartella `kiosk/`:
 
