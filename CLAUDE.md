@@ -55,13 +55,22 @@ compito del **backend**, non della shell. La shell mostra SOLO i giochi in
   icone), tenant-agnostico.
 
 ## 5. Target hardware e runtime
-- Produzione: **mini PC Linux (x86 N100) + monitor touch ~22" (1920×1080,
-  landscape)**, **solo Chromium**.
-- Sviluppo/test su Mac con **Chromium**.
+- Produzione: **Raspberry Pi 5** (ARM64, Raspberry Pi OS Lite, SSD NVMe) +
+  monitor touch ~22" (1920×1080; orientamento da decidere), **solo Chromium**
+  (cage, kiosk). Vedi sez. 5b.
 - Android NON è più target di produzione. **Safari NON è più un target**: niente
   più verifiche di compatibilità Safari.
-- **Offline-first RESTA** (legato all'N100, non a Safari): niente CDN, librerie e
-  font in **locale** nel repo.
+- **Offline-first RESTA** (kiosk servito in locale da Caddy su 127.0.0.1):
+  niente CDN, librerie e font in **locale** nel repo.
+
+## 5b. Dispositivo target: Raspberry Pi 5
+Primo kiosk prototipo (`kiosk-dev-01`): Raspberry Pi 5, Raspberry Pi OS Lite
+64-bit (Trixie), **cage + Chromium kiosk** servito da **Caddy** su
+`http://127.0.0.1:8080` (release in `/srv/kiosk/releases/vN`, symlink
+`/srv/kiosk/current`). Sul Pi va **solo** il contenuto di `kiosk/`, mai la repo.
+Setup, deploy/rollback, diagnostica e roadmap: `docs/raspberry-pi-setup.md`;
+file di configurazione versionati (fonte di verita'): `device/pi/`.
+Niente segreti in repo (password, chiavi, auth key Tailscale, IP).
 
 ## 6. Vincoli tecnici
 - Shell in **HTML single-file**, niente build tool / bundler.
@@ -69,8 +78,9 @@ compito del **backend**, non della shell. La shell mostra SOLO i giochi in
   tecniche come chiavi e percorsi), come igiene contro bug da caratteri strani.
   Emoji e accenti nel **testo visibile** (punteggi, messaggi, titoli) e nei
   commenti sono ok. Non è più un vincolo di compatibilità (Safari non è target).
-- Deploy su **GitHub Pages** (account kevodable), sottocartelle separate, serve
-  `.nojekyll`.
+- Deploy di **produzione**: solo `kiosk/` sul Pi, in `/srv/kiosk/releases/vN`
+  (vedi `docs/raspberry-pi-setup.md`). **GitHub Pages** (auto-deploy da `main`,
+  account kevodable, `.nojekyll`) = anteprima.
 - **Telemetria:** una funzione `telemetry(event, payload)` → oggi `console.log`
   di `{ts, tenantId, deviceUuid, event, ...}`, con cucitura TODO per POST al
   backend futuro (PHP+MySQL su Aruba). `deviceUuid` in `localStorage`. Eventi:
@@ -78,7 +88,7 @@ compito del **backend**, non della shell. La shell mostra SOLO i giochi in
   idle_return, error.
 
 ## 7. Struttura repo
-Due cartelle:
+Cartelle:
 - `_legacy/` — vecchia repo, **SOLA LETTURA**, sorgente da cui pescare i 12
   giochi. Non va nel deploy.
 - `kiosk/` — il prodotto:
@@ -89,7 +99,9 @@ Due cartelle:
   - `manifest/manifest.json` — UNICA fonte di verità dei 12 giochi (id, cartella,
     tier, active, icona locale, titolo i18n, titleColor, ...)
   - `tenants/default/` e `tenants/funplanet/` — `config.json` + `assets/`
-  - `.nojekyll`, `README.md`
+  - `.nojekyll`
+- `docs/` — documentazione (setup del Pi); `device/pi/` — config di sistema del
+  kiosk, fonte di verità. Nessuna delle due va sul dispositivo.
 - Branch: `main` e' la base; per un lavoro nuovo si apre un `feature/<nome>` da
   `main` e lo si riunisce a fine lavoro. Committare i punti buoni.
 
@@ -280,6 +292,9 @@ forme, puzzle, tris, hanoi.
   accentate (es. "difficolta'") escono col font di sistema: Bold Doodle non le ha.
 - 2026-09-24 — Tolto il **maiuscolo forzato** da nomi dei giochi, titolo
   dell'header e pulsante: si scrive come nel manifest (piace di piu').
+- 2026-09-30 — Primo kiosk **prototipo su Raspberry Pi 5** (cage + Chromium +
+  Caddy locale): documentato in `docs/raspberry-pi-setup.md`, config in
+  `device/pi/` (branch `docs/raspberry-pi-setup`).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
