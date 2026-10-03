@@ -350,24 +350,26 @@ forme, puzzle, tris, hanoi.
 - **Font:** Bold Doodle su tutte le scritte, contorno 1px, niente maiuscolo
   forzato.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
-- **Branch:** solo `main`, tutto unito (vetro + finestra, header, font, docs
-  del Pi); branch `feature/*` e `docs/*` eliminati. **Nessun remote GitHub
+- **Branch:** solo `main`, tutto unito (fino a revisione doc del Pi,
+  `kiosk-perf`, icone a livelli GPU); branch `feature/*` e `docs/*` eliminati. **Nessun remote GitHub
   collegato**: da aggiungere, poi primo push (attiva l'auto-deploy su Pages).
 - **Dispositivo:** prototipo Raspberry Pi 5 `kiosk-dev-01` funzionante, tutte le
   verifiche ok (vedi `docs/raspberry-pi-setup.md`). Deploy con
   `device/pi/deploy.sh` (dal Mac: release versionate, rollback); roadmap di
   sez. 5 del doc: fatto il punto 4 (script di deploy), il resto da fare.
-  **Da applicare sul Pi** (dopo ok): Caddyfile con `bind 127.0.0.1` e
-  `kiosk-browser.sh` nuovo (vedi `device/pi/README.md`).
-- **Prestazioni:** `kiosk-perf` installato sul prototipo (timer di salute
-  attivo). Misure 2026-10-03 (CPU Chromium, 100% = 1 core; temp media):
-  attract 11% / 58 C; **menu 156% / 82 C** (GPU 105 + renderer 48, limite
-  termico soft); menu con icone ferme 0,3% / 56 C; menu animato senza ombre
-  100% / 74 C. Causa: le icone animate (SVG in `<img>` ridisegnati a ogni
-  frame, renderer ~47%) + le 3 `drop-shadow` (~55% di GPU). Gioco: misura da
-  rifare (scartata, i giochi escono da soli per inattivita': fix 81f7b97 da
-  pubblicare). Obiettivo: menu < 25% senza perdere le icone vive. Soluzioni
-  proposte, in attesa di ok. Modalita' test ancora ACCESA sul Pi.
+  Migliorie applicate sul Pi il 2026-10-03: Caddy solo su `127.0.0.1:8080`
+  (verificato: dal Mac la porta non risponde), `kiosk-browser.sh` nuovo,
+  `kiosk-perf` e timer di salute.
+- **Prestazioni (menu):** risolto. Icone a livelli GPU (`iconMode:
+  "layers"`, con flipbook e ombre per pezzo) + pausa dopo 10 s senza tocchi.
+  Misure sul Pi all'aria aperta (CPU Chromium, 100% = 1 core): menu animato
+  **56-58% / 60-62 C** (prima 156% / 75-84 C con throttling), menu lasciato
+  solo **0,5% / 54 C**, attract 11% / 58 C. Ritorno indietro: `iconMode:
+  "svg"` o rollback della release. `kiosk-perf` + timer `kiosk-health`
+  installati sul prototipo; modalita' test SPENTA.
+- **Da fare (prestazioni):** prova nel totem chiuso (`journalctl -t
+  kiosk-health`); i **giochi** scaldano anch'essi (Palloncini fermo 81%,
+  Memory fermo 46%): stesso metodo di misura, un gioco alla volta.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
