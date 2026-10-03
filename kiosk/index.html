@@ -1156,6 +1156,7 @@ function startPerfMode() {
     document.addEventListener(ev, countInput, true);
   });
   var frame = document.getElementById("game-frame");
+  var holdGame = false;
   frame.addEventListener("load", function () {
     var doc;
     try { doc = frame.contentDocument; } catch (e) { doc = null; }
@@ -1183,6 +1184,7 @@ function startPerfMode() {
   }
 
   function apply(mode) {
+    holdGame = false;
     if (mode === "attract") {
       closeGame();
       closeGameFrame();
@@ -1207,6 +1209,7 @@ function startPerfMode() {
       if (!g) return false;
       toMenu();
       openGame(g);
+      holdGame = true;
     } else {
       return false;
     }
@@ -1230,6 +1233,16 @@ function startPerfMode() {
       })
       .catch(function () {});
   }, 2000);
+
+  /* Every game returns home on its own after 60-120 s without touches
+     (BB.idle in games/assets/shared.js), shorter than a measurement. While a
+     game is held here, a synthetic touchstart on the game's document resets
+     that timer: no game handles touchstart on document, and it is not
+     counted as an input above. */
+  setInterval(function () {
+    if (!holdGame || state.currentScreen !== "game") return;
+    try { frame.contentDocument.dispatchEvent(new Event("touchstart")); } catch (e) {}
+  }, 20000);
 }
 
 /* ---------------------------------------------------------------------------
