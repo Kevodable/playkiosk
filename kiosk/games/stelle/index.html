@@ -27,10 +27,17 @@
       box-shadow:inset 0 10px 0 #A7E08F;
       pointer-events:none;
     }
-    /* Stella che cade (sprite dell'icona) */
-    .cosa{ position:absolute; left:0; top:0; width:var(--size,64px); height:var(--size,64px);
-      will-change:transform; user-select:none; pointer-events:none;
-      filter:drop-shadow(0 0 10px rgba(255,230,120,.7)) drop-shadow(0 4px 6px rgba(0,0,0,.15)); }
+    /* Stella che cade (sprite dell'icona). Bagliore e ombra sono disegnati
+       nello sprite (stella_N_bagliore.webp, tools/bake_filter.py con
+       drop-shadow(0 0 10px rgba(255,230,120,.7)) drop-shadow(0 4px 6px
+       rgba(0,0,0,.15)) a 70 px, margine 45% per lato): un filtro su una stella
+       che si muove si ricalcolerebbe a ogni frame. L'immagine e' piu' grande
+       della stella del margine: il riquadro della stella (--size) resta dove
+       era, centro di rotazione compreso. */
+    .cosa{ position:absolute; left:0; top:0;
+      width:calc(var(--size,64px) * 1.9); height:calc(var(--size,64px) * 1.9);
+      margin:calc(var(--size,64px) * -.45) 0 0 calc(var(--size,64px) * -.45);
+      will-change:transform; user-select:none; pointer-events:none; }
     /* La volpe col cestino segue il dito */
     .volpe{
       position:absolute; left:0; bottom:2vmin;
@@ -78,7 +85,7 @@
     </div>
   </div>
 
-  <script src="../assets/shared.js?v=3"></script>
+  <script src="../assets/shared.js?v=4"></script>
   <script>
     /* =====================================================================
        CONFIG: tutti i numeri del gioco, da ritoccare qui.
@@ -107,7 +114,8 @@
     };
     // Geometria di volpe.webp (frazioni, da tools/build_stelle_sprites.py)
     var VOLPE = { cesto: [.4744, .6582], presaX: [.2399, .7385], testa: .12 };
-    var STELLE = ["img/stella_0.webp", "img/stella_1.webp", "img/stella_2.webp", "img/stella_3.webp"];
+    var STELLE = ["img/stella_0_bagliore.webp", "img/stella_1_bagliore.webp",
+                  "img/stella_2_bagliore.webp", "img/stella_3_bagliore.webp"];
 
     BB.lockScroll();
     var info = BB.header("Acchiappa-stelle");
@@ -126,18 +134,22 @@
     var prossimaPioggia = 0, finePioggia = 0;   // in secondi di gioco trascorsi
     var luce = document.getElementById("luce"), annuncio = document.getElementById("annuncio");
 
-    // Stelline di sfondo che brillano (Web Animations: non risentono di "riduci movimento")
+    // Stelline di sfondo che brillano (Web Animations: non risentono di "riduci movimento").
+    // Sulla schermata iniziale si fermano quando nessuno tocca (BB.pausaDecorazioni).
+    var brillii = [];
     for (var n = 0; n < CONFIG.BRILLII; n++) {
       var b = document.createElement("span");
       b.className = "brillio";
       b.style.left = BB.rand(2, 98) + "%";
       b.style.top = BB.rand(3, 62) + "%";
       var sc = (BB.rand(5, 12) / 10);
-      b.animate([{ opacity: .25, transform: "scale(" + sc * .6 + ")" }, { opacity: 1, transform: "scale(" + sc + ")" }],
+      brillii.push(b.animate([{ opacity: .25, transform: "scale(" + sc * .6 + ")" }, { opacity: 1, transform: "scale(" + sc + ")" }],
                 { duration: BB.rand(900, 2200), direction: "alternate", iterations: Infinity, easing: "ease-in-out",
-                  delay: -BB.rand(0, 2000) });
+                  delay: -BB.rand(0, 2000) }));
       campo.insertBefore(b, campo.firstChild);
     }
+    var decoro = BB.pausaDecorazioni(brillii);
+    decoro.attiva();
 
     function aggiornaInfo(){ info.innerHTML = "⭐ " + punteggio + " &nbsp; ⏱ " + tempo + "s"; }
 
@@ -260,11 +272,12 @@
       rafId = requestAnimationFrame(loop);
     }
 
-    function mostraStart(){ startScreen.classList.remove("bb-hidden"); }
+    function mostraStart(){ startScreen.classList.remove("bb-hidden"); decoro.attiva(); }
 
     function avvia(liv){
       if (CONFIG.DIFFICOLTA[liv]) DIFF = CONFIG.DIFFICOLTA[liv];
       startScreen.classList.add("bb-hidden");
+      decoro.disattiva();      // a partita in corso le stelline restano vive
       cose.forEach(function(p){ if(p.el.parentNode) p.el.remove(); }); cose=[];
       punteggio=0; tempo=CONFIG.DURATA_PARTITA; inCorso=true; ultimoSpawn=9999; lastTs=0; loop._prev=0;
       trascorso = 0; finePioggia = 0; prossimaPioggia = CONFIG.PIOGGIA_PRIMA_S;

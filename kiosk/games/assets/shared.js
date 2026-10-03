@@ -10,6 +10,7 @@
      BB.win(opzioni)      → overlay di vittoria/fine partita
      BB.score(gioco)      → record salvato in localStorage namespaced
      BB.iconeLivelli()    → icone animate a livelli GPU (vedi sotto), per gioco
+     BB.pausaDecorazioni(animazioni) → decori in pausa quando nessuno tocca
    100% vanilla, nessuna dipendenza. Funziona offline.
    ========================================================================== */
 (function (window, document) {
@@ -299,6 +300,36 @@
       if (!cfg || cfg.iconMode !== "layers") return;
       livelli = { pausa: cfg.iconPauseAfterSec || 0 };
       Array.prototype.forEach.call(document.querySelectorAll("img"), iconaLivelli);
+    },
+
+    /* Animazioni di decoro (es. stelline di sfondo) in pausa dopo
+       iconPauseAfterSec della shell senza tocchi; ripartono al tocco. Finche'
+       qualcosa si muove il Raspberry ridisegna lo schermo 60 volte al secondo.
+         var decoro = BB.pausaDecorazioni(listaDiAnimation);
+         decoro.attiva();     // es. sulla schermata iniziale
+         decoro.disattiva();  // es. a partita in corso: ripartono e restano vive
+       Fuori dalla shell (o con pausa 0) non fa nulla. */
+    pausaDecorazioni: function (anims) {
+      var cfg = configShell();
+      var sec = cfg && cfg.iconPauseAfterSec;
+      var timer = null, attiva = false;
+      function riparti() { anims.forEach(function (a) { if (a.playState === "paused") a.play(); }); }
+      function ferma() { anims.forEach(function (a) { a.pause(); }); }
+      function tocco(e) {
+        if (!attiva || (e && !e.isTrusted)) return;   // solo tocchi veri
+        riparti();
+        clearTimeout(timer);
+        timer = setTimeout(ferma, sec * 1000);
+      }
+      if (sec) {
+        ["pointerdown", "touchstart", "click"].forEach(function (ev) {
+          document.addEventListener(ev, tocco, true);
+        });
+      }
+      return {
+        attiva: function () { if (sec) { attiva = true; tocco(); } },
+        disattiva: function () { attiva = false; clearTimeout(timer); riparti(); }
+      };
     },
 
     /* Nasconde l'overlay vittoria (utile se un gioco lo riusa) */
