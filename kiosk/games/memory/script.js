@@ -23,6 +23,7 @@ var FIGURE = [
 BB.lockScroll();
 var info = BB.header("Memory");
 BB.idle(CONFIG.INATTIVITA_MS, BB.home);
+BB.iconeLivelli();        // icona di start e mascotte finale a livelli GPU (Raspberry)
 
 var board = document.getElementById("board");
 var startScreen = document.getElementById("start");
