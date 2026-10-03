@@ -388,6 +388,15 @@ forme, puzzle, tris, hanoi.
 - 2026-10-03 — **Talpe**: `BB.iconeLivelli()` attivo. Schermata iniziale
   35% -> 0,4%; partita ~8% (invariata).
 
+- 2026-10-03 — `BB.iconeLivelli()` attivo su tutti gli 11 giochi con
+  l'icona animata (la Lavagna non ce l'ha). Schermate iniziali, CPU Chromium
+  SVG -> livelli: Frutta 53->0,6, Stelle 71->26, Sequenza 59->0,4,
+  Labirinto 60->0,5, Forme 49->0,4, Rompicapo 34->0,5, Tris 78->0,4,
+  Hanoi 55->0,4 (%). Partite avviate e lasciate senza tocchi: quasi tutte
+  ~0,4%, Frutta 36%, **Stelle 105% (oltre il budget)**: stelle che cadono
+  con drop-shadow sfocato (bagliore) mosse a ogni frame + 28 stelline di
+  sfondo animate con box-shadow.
+
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
   norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
@@ -416,9 +425,10 @@ forme, puzzle, tris, hanoi.
   "svg"` o rollback della release. `kiosk-perf` + timer `kiosk-health`
   installati sul prototipo; modalita' test SPENTA.
 - **Da fare (prestazioni):** prova nel totem chiuso (`journalctl -t
-  kiosk-health`, totem non ancora pronto). **Giochi:** Palloncini, Memory e
-  Talpe fatti (`BB.iconeLivelli()`); gli altri 8 con icona SVG animata su
-  schermata iniziale/finale vanno attivati e misurati uno alla volta.
+  kiosk-health`, totem non ancora pronto). **Giochi:** icone a livelli attive
+  su tutti; resta **Acchiappa-stelle** (partita 105%, schermata iniziale
+  26%): bagliore delle stelle da disegnare nello sprite invece del filtro,
+  stelline di sfondo da alleggerire.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
