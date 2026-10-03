@@ -1289,6 +1289,22 @@ function startPerfMode() {
       document.querySelectorAll(".ig-shade").forEach(function (el) {
         el.style.display = "none";
       });
+    } else if (mode.indexOf("menu-only:") === 0) {
+      /* One icon alone in the menu: its own cost. */
+      var only = mode.slice(10);
+      toMenu();
+      document.querySelectorAll(".tile").forEach(function (t) {
+        if (t.dataset.gameId !== only) t.style.display = "none";
+      });
+    } else if (mode === "menu-noraster") {
+      /* Layered icons without their "raster" pieces (animated SVGs that
+         are repainted every frame, img.R - tools/build_icon_layers.py). */
+      toMenu();
+      setTimeout(function () {
+        document.querySelectorAll(".ig-art img.R").forEach(function (img) {
+          img.style.display = "none";
+        });
+      }, 1500);
     } else if (mode.indexOf("game:") === 0) {
       var id = mode.slice(5);
       var g = enabledGames().filter(function (x) { return x.id === id; })[0];

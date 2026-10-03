@@ -243,7 +243,9 @@ class Icon:
             parent.append(e)
         text = ET.tostring(svg, encoding="unicode")
         self.chunks.append((name, text))
-        return '<img class="L%s" src="%s/%s/%s" alt="">' % (" Lx" if big else "", URL_BASE, self.id, name)
+        # R = pezzo "raster" (SVG animato, ridisegnato a ogni frame)
+        return '<img class="L%s%s" src="%s/%s/%s" alt="">' % (
+            " Lx" if big else "", " R" if animated else "", URL_BASE, self.id, name)
 
     def raster_css(self, elements):
         """Regole e keyframes originali per le classi usate negli elementi."""
@@ -288,19 +290,35 @@ class Icon:
         self.css.append(".ig-%s .%s { %s; }" % (self.id, cls, "; ".join(props)))
         return cls
 
+    def is_raster(self, el):
+        return self.animated(el) and not self.composite_ok(el)
+
     def convert_children(self, parent, wrap_attrs, big=False):
-        """Figli di un contenitore -> markup (sequenze statiche raggruppate)."""
-        html, run = [], []
+        """Figli di un contenitore -> markup. Sequenze di pezzi fermi -> un
+        SVG statico; sequenze di pezzi "raster" vicini -> un solo SVG animato
+        (un documento e un filtro invece di uno per pezzo: es. il gesso
+        della lavagna)."""
+        html, run, rrun = [], [], []
         def flush():
             if run:
                 html.append(self.chunk(list(run), wrap_attrs, False, big))
                 run.clear()
+            if rrun:
+                html.append(self.chunk(list(rrun), wrap_attrs, True, big))
+                rrun.clear()
         for el in parent:
             t = local(el.tag)
             if t in ("style", "defs", "title", "desc"):
                 continue
             if not self.animated(el) and not self.has_animated_desc(el):
+                if rrun:
+                    flush()
                 run.append(self.strip(el, False))
+                continue
+            if self.is_raster(el):
+                if run:
+                    flush()
+                rrun.append(self.strip(el, False))
                 continue
             flush()
             html.append(self.convert(el, wrap_attrs, big))

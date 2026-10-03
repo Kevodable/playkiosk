@@ -336,6 +336,8 @@ kiosk-perf run                             # sequenza standard: attract, menu, g
 kiosk-perf run -s 60 --settle 150 menu game:talpe   # stati a scelta
 kiosk-perf run menu-svg menu-layers        # confronto icone: SVG originali / livelli GPU
                                            # (iconMode forzato solo per quello stato)
+kiosk-perf run --settle 20 -s 30 menu-only:talpe menu-only:lavagna   # costo di una sola icona
+kiosk-perf run menu-noraster               # icone a livelli senza i pezzi ridisegnati a ogni frame
 kiosk-perf off && sudo systemctl restart kiosk.service   # SEMPRE alla fine
 ```
 

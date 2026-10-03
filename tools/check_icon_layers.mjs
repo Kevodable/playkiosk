@@ -87,6 +87,7 @@ for (const id of ids) {
       .ig-art{position:relative;width:640px;height:640px}
       .ig-art .L{position:absolute;inset:0;width:100%;height:100%}
       .ig-art .Lx{left:-100%;top:-100%;width:300%;height:300%}
+      .ig-shade{display:none}  /* confronto senza ombre: le ombre si guardano nel menu */
       ${hideImgs ? hideImgs + "{display:none}" : ""}
     </style><div class="ig-${id}">${frag}</div>`);
   for (const t of TIMES) {
