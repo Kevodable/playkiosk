@@ -87,6 +87,35 @@ Niente segreti in repo (password, chiavi, auth key Tailscale, IP).
   app_start, attract_view, menu_view, game_open, game_close(+durationMs),
   idle_return, error.
 
+## 6b. Animazioni e prestazioni (Raspberry Pi) — regole per shell e giochi
+Il costo non e' QUANTE cose si muovono ma COME (misure 2026-10-03, vedi log):
+cio' che la GPU muove senza ridisegnare costa poco (menu con ~300 animazioni:
+57% di CPU), cio' che va ridisegnato a ogni frame costa moltissimo e trascina
+tutta la pagina (7 pezzi cosi': menu da 55% a 197%). Finche' qualcosa si
+muove Chromium ridisegna lo schermo 60 volte al secondo (costo fisso
+10-25%); tutto fermo = ~0.
+1. **Muovere solo con `transform` e `opacity`** elementi/immagini (sprite
+   WebP). Mai animare `width/height/top/left/margin`, colori, `box-shadow`,
+   `filter`, `stroke-dashoffset`.
+2. **Niente SVG animati** (CSS/SMIL dentro un `<img>` o inline): vengono
+   ridisegnati a ogni frame. Le icone del menu passano da
+   `tools/build_icon_layers.py` per questo.
+3. **Ombre, bagliori, contorni: disegnati nelle immagini**, non calcolati da
+   filtri CSS su cose che si muovono.
+4. **Effetti che la GPU non sa fare** (linea che si disegna, percorso
+   curvo...): fotogrammi gia' pronti sfogliati con `transform` a scatti
+   (flipbook, vedi `tools/build_icon_flipbooks.py`).
+5. **Canvas:** ridisegnare solo quando cambia qualcosa, non a ogni frame.
+6. **Fermarsi quando si aspetta:** animazioni di contorno in pausa dopo
+   qualche secondo senza tocchi (come `iconPauseAfterSec` nel menu).
+7. **Ridurre i fotogrammi al secondo NON serve** (animazioni a scatti a
+   30/20 fps: stesso costo, Chromium ridisegna comunque a 60).
+8. **Misurare prima di considerarlo finito:** `kiosk-perf run game:<id>` sul
+   Pi (modalita' test, `docs/raspberry-pi-setup.md` §4.1). Budget: sotto il
+   **60-70% di CPU** mentre si gioca, a riposo il piu' vicino possibile a 0.
+Il raffreddamento conta quanto il software: nel totem il Pi 5 va con
+dissipatore e ventola (Active Cooler) e un minimo di ricircolo d'aria.
+
 ## 7. Struttura repo
 Cartelle:
 - `_legacy/` — vecchia repo, **SOLA LETTURA**, sorgente da cui pescare i 12
