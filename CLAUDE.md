@@ -403,6 +403,11 @@ forme, puzzle, tris, hanoi.
   sulla schermata iniziale (`BB.pausaDecorazioni`, nuovo). Partita 105% ->
   56%, schermata iniziale 26% -> 0,5%. Tutti i giochi ora nel budget.
 
+- 2026-10-03 — Repository pubblicato su GitHub: **Kevodable/playkiosk**
+  (pubblico, nome neutro), con tutto il contenuto (anche `_legacy` e il
+  tenant `funplanet`: scelta dell'utente). `.gitignore`: `.DS_Store`,
+  `.claude/`, cache Python.
+
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
   norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
@@ -414,8 +419,9 @@ forme, puzzle, tris, hanoi.
   forzato.
 - **Icone:** tutte e 12 animate (`tools/build_<gioco>.py`).
 - **Branch:** solo `main`, tutto unito (fino a revisione doc del Pi,
-  `kiosk-perf`, icone a livelli GPU); branch `feature/*` e `docs/*` eliminati. **Nessun remote GitHub
-  collegato**: da aggiungere, poi primo push (attiva l'auto-deploy su Pages).
+  `kiosk-perf`, icone a livelli GPU); branch `feature/*` e `docs/*` eliminati.
+  **Remote GitHub:** `origin` = https://github.com/Kevodable/playkiosk
+  (**pubblico**, primo push 2026-10-03). GitHub Pages non ancora attivato.
 - **Dispositivo:** prototipo Raspberry Pi 5 `kiosk-dev-01` funzionante, tutte le
   verifiche ok (vedi `docs/raspberry-pi-setup.md`). Deploy con
   `device/pi/deploy.sh` (dal Mac: release versionate, rollback); roadmap di
