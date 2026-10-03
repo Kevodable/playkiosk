@@ -68,8 +68,7 @@ const SEEK = (t) => `(() => {
 
 for (const id of ids) {
   const svg = await (await fetch(`${BASE}games/assets/icons/${id}.svg`)).text();
-  // FRAG=icon-fps30.html (variabile d'ambiente) per controllare una variante
-  const frag = await (await fetch(`${BASE}games/assets/icons-gpu/${id}/${process.env.FRAG || "icon.html"}`)).text();
+  const frag = await (await fetch(`${BASE}games/assets/icons-gpu/${id}/icon.html`)).text();
   // pezzi "raster" (SVG animati dentro <img>): il loro tempo non e' pilotabile,
   // quindi si nascondono in entrambe le versioni e si confronta il resto
   const raster = await (await fetch(`${BASE}games/assets/icons-gpu/${id}/raster.json`)).json();

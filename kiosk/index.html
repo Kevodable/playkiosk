@@ -1098,10 +1098,7 @@ function buildIconLayers(g, content) {
   box.className = "ig ig-" + g.id;
   content.appendChild(box);
 
-  /* state.iconVariant: another build of the same fragment (perf test only,
-     e.g. "icon-fps30.html" - tools/build_icon_fps.py). */
-  var url = state.iconVariant ? g.iconLayers.replace(/icon\.html/, state.iconVariant) : g.iconLayers;
-  fetch(url)
+  fetch(g.iconLayers)
     .then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.text();
@@ -1285,12 +1282,6 @@ function startPerfMode() {
     /* read on first use: the tenant config is not loaded yet at startup */
     if (!baseKnown) { baseIconMode = state.config.iconMode; baseKnown = true; }
     state.config.iconMode = baseIconMode;
-    state.iconVariant = null;
-    if (mode.indexOf("menu-fps:") === 0) {
-      /* layered icons with animations resampled at N fps (icon-fpsN.html) */
-      state.iconVariant = "icon-fps" + parseInt(mode.slice(9), 10) + ".html";
-      mode = "menu";
-    }
     if (mode === "menu-svg" || mode === "menu-layers") {
       state.config.iconMode = mode.slice(5);
       mode = "menu";
