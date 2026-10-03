@@ -334,6 +334,8 @@ sudo systemctl restart kiosk.service       # la shell si apre con ?perf=1 (badge
 kiosk-perf run                             # sequenza standard: attract, menu, game:memory,
                                            # menu-static (icone ferme), menu-noshadow (senza ombre)
 kiosk-perf run -s 60 --settle 150 menu game:talpe   # stati a scelta
+kiosk-perf run menu-svg menu-layers        # confronto icone: SVG originali / livelli GPU
+                                           # (iconMode forzato solo per quello stato)
 kiosk-perf off && sudo systemctl restart kiosk.service   # SEMPRE alla fine
 ```
 

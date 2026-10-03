@@ -1,0 +1,2 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><defs><filter id="chalk" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="4" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5" xChannelSelector="R" yChannelSelector="G" /></filter></defs>
+<polygon points="268.6,195.7 275.3,204.4 286.1,202.4 279.9,211.5 285.2,221.2 274.6,218.1 267.0,226.1 266.7,215.0 256.7,210.3 267.1,206.6" fill="#FFD23F" stroke="#2B2D42" stroke-width="3" stroke-linejoin="round" /></svg>

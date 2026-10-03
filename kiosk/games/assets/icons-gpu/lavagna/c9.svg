@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><style>.sun7 { stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw-sun7 7.2s linear infinite }
+@keyframes draw-sun7 { 0%, 14.10% { stroke-dashoffset: 100; } 15.40%, 100% { stroke-dashoffset: 0; } }</style><defs><filter id="chalk" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="4" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5" xChannelSelector="R" yChannelSelector="G" /></filter></defs>
+<g filter="url(#chalk)" opacity=".93"><path class="sun7" pathLength="100" d="M330.7 160.8 L330.7 144.4" fill="none" stroke="#FFE66B" stroke-width="7.4" stroke-linecap="round" stroke-linejoin="round" /></g></svg>

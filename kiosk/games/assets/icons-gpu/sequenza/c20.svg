@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><defs><radialGradient id="shine" cx=".4" cy=".35" r=".7">
+  <stop offset="0" stop-color="#FFFFFF" stop-opacity=".95" />
+  <stop offset=".55" stop-color="#FFFFFF" stop-opacity=".45" />
+  <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+</radialGradient></defs>
+<polygon points="241.1,94.0 247.6,102.3 258.0,100.4 252.0,109.2 257.1,118.5 246.9,115.5 239.6,123.1 239.3,112.6 229.8,108.0 239.7,104.5" fill="#FFD23F" stroke="#2B2D42" stroke-width="3" stroke-linejoin="round" /></svg>

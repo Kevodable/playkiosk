@@ -1,0 +1,2 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-640 -640 1920 1920"><style>.slash-apple { stroke-dasharray: 100; stroke-dashoffset: 100; opacity: 0; animation: slash-apple 6s infinite }
+@keyframes slash-apple { 0%, 27.00% { stroke-dashoffset: 100; opacity: 0; } 27.10% { stroke-dashoffset: 100; opacity: 1; } 31.00% { stroke-dashoffset: 0; opacity: 1; } 37.00%, 100% { stroke-dashoffset: 0; opacity: 0; } }</style><path class="slash-apple" pathLength="100" d="M419.3 140.8 Q509.4 176.6 585.5 236.8" fill="none" stroke="#BFE6FF" stroke-width="15.4" stroke-linecap="round" /></svg>

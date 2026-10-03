@@ -123,7 +123,13 @@ Cartelle:
   ma resta disponibile (misure già nel config di `default`).
 - **Icone:** **animate**, SVG autocontenuti con i livelli WebP incorporati e
   animazioni CSS; generate da `tools/build_<gioco>.py` a partire dall'arte
-  Scenario (sorgenti in `tools/art/`).
+  Scenario (sorgenti in `tools/art/`). **Versione a livelli GPU** (per il
+  Raspberry): `games/assets/icons-gpu/<id>/`, generata dagli SVG con
+  `tools/build_icon_layers.py` + `tools/build_icon_shadows.py` (ombre gia'
+  disegnate, una per pezzo, che si muovono col pezzo), fedelta' verificata
+  con `tools/check_icon_layers.py`. Scelta col token `iconMode` nel config
+  del tenant: `"layers"` o `"svg"` (= SVG originali, il ritorno indietro).
+  **Ogni modifica a un SVG va rigenerata** coi due script.
 - **Titolo:** sotto l'icona, scritto **come nel manifest** (maiuscole e
   minuscole: le minuscole di Bold Doodle sono piu' morbide, niente maiuscolo
   forzato). Colore **acceso/saturo per gioco** (`titleColor` nel manifest) +
@@ -314,6 +320,13 @@ forme, puzzle, tris, hanoi.
   **modalita' test** della shell (`?perf=1`), spenta di default, accesa solo
   da file-interruttore sul Pi (`kiosk-perf on` + restart), mai dal touch.
   Branch `feature/perf-tools` (da `docs/pi-review`).
+
+- 2026-10-03 — **Icone a livelli GPU** (branch `feature/icone-gpu`): stesse
+  icone, ma ogni pezzo animato e' un livello che anima il compositor
+  (niente ridisegno a ogni frame) e le 3 drop-shadow sono ombre gia'
+  disegnate che seguono i pezzi. Fedelta' misurata pixel per pixel
+  (<= 0,35% di pixel diversi, solo bordi). Reversibile: `iconMode: "svg"` nel
+  config (gli SVG originali non sono toccati) o rollback della release.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a

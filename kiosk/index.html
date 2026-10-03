@@ -323,6 +323,26 @@
       drop-shadow(0 .35vmin 0 rgba(20,70,55,.35))
       drop-shadow(0 1.6vmin 1.4vmin rgba(20,70,55,.32));
   }
+  /* iconMode "layers": the icon is a square of GPU layers, as large as the
+     icon box allows (like object-fit:contain). The raised-glass look is not
+     the filter above but baked shadows (tools/build_icon_shadows.py: same
+     filter, drawn once): .ig-shade has the same layers and animations as
+     the icon (.ig-art) and lies under it, so each piece's shadow moves with
+     it. Each shadow image (.S) carries its own position. */
+  .tile__content--layers{ container-type:size; }
+  .ig{
+    position:relative;
+    width:min(100cqw,100cqh);
+    height:min(100cqw,100cqh);
+  }
+  .ig-shade, .ig-shade .L, .ig-art, .ig-art .L{
+    position:absolute;
+    inset:0;
+    width:100%; height:100%;
+  }
+  .ig-shade .S{ position:absolute; }
+  /* Layers whose content goes beyond the 640 viewBox cover 3x per side. */
+  .ig-art .Lx{ left:-100%; top:-100%; width:300%; height:300%; }
   /* Fallback (no icon available) stays a circle rather than stretching
      into an oval to fill a non-square box. */
   .tile__icon-fallback{
@@ -878,6 +898,9 @@ function enabledGames() {
       version: g.version || null,
       title: o.title || localized(g.title, g.id),
       iconSvg: o.icon || (g.icon && g.icon.svg) || null,
+      /* GPU-layered version of the same icon (tools/build_icon_layers.py);
+         a tenant's own icon override always wins over it. */
+      iconLayers: o.icon ? null : ((g.icon && g.icon.layers) || null),
       iconEmoji: (g.icon && g.icon.emoji) || null,
       color: (typeof g.color === "string" && g.color.charAt(0) === "#") ? g.color : null,
       titleColor: (typeof g.titleColor === "string" && g.titleColor.charAt(0) === "#") ? g.titleColor : null
@@ -1024,7 +1047,9 @@ function buildTile(g, buttonPath) {
   /* The icon box: the game's (animated) icon, one per tile. */
   var content = document.createElement("div");
   content.className = "tile__content";
-  if (g.iconSvg) {
+  if (g.iconLayers && state.config && state.config.iconMode === "layers") {
+    buildIconLayers(g, content);
+  } else if (g.iconSvg) {
     var img = document.createElement("img");
     img.className = "tile__icon-img";
     img.alt = "";
@@ -1054,6 +1079,45 @@ function buildTile(g, buttonPath) {
 
   btn.addEventListener("click", function () { openGame(g); });
   return btn;
+}
+
+/* iconMode "layers" (tenant config): the same animated icon as GPU layers
+   (games/assets/icons-gpu/<id>/: icon.html fragment + SVG layers + baked
+   shadows that move with their pieces). Chromium animates them on the compositor instead of repainting a
+   whole animated SVG every frame (on the Pi: menu 156% CPU -> see
+   docs/raspberry-pi-setup.md 4.1). If the fragment cannot be loaded, the
+   tile falls back to the plain SVG icon, exactly as in iconMode "svg". */
+function buildIconLayers(g, content) {
+  content.classList.add("tile__content--layers");
+  var box = document.createElement("div");
+  box.className = "ig ig-" + g.id;
+  content.appendChild(box);
+
+  fetch(g.iconLayers)
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    })
+    .then(function (html) {
+      var art = document.createElement("div");
+      art.innerHTML = html;
+      while (art.firstChild) box.appendChild(art.firstChild);
+    })
+    .catch(function (err) {
+      telemetry("error", { where: "iconLayers", gameId: g.id, message: String(err) });
+      content.classList.remove("tile__content--layers");
+      box.remove();
+      if (g.iconSvg) {
+        var img = document.createElement("img");
+        img.className = "tile__icon-img";
+        img.alt = "";
+        img.src = g.iconSvg;
+        img.onerror = function () { img.replaceWith(buildIconFallback(g)); };
+        content.appendChild(img);
+      } else {
+        content.appendChild(buildIconFallback(g));
+      }
+    });
 }
 
 function buildIconFallback(g) {
@@ -1183,8 +1247,19 @@ function startPerfMode() {
     goMenu();
   }
 
+  /* menu-svg / menu-layers force the icon mode (A/B on the same release);
+     every other state uses the tenant's own. */
+  var baseIconMode, baseKnown = false;
+
   function apply(mode) {
     holdGame = false;
+    /* read on first use: the tenant config is not loaded yet at startup */
+    if (!baseKnown) { baseIconMode = state.config.iconMode; baseKnown = true; }
+    state.config.iconMode = baseIconMode;
+    if (mode === "menu-svg" || mode === "menu-layers") {
+      state.config.iconMode = mode.slice(5);
+      mode = "menu";
+    }
     if (mode === "attract") {
       closeGame();
       closeGameFrame();
@@ -1192,16 +1267,27 @@ function startPerfMode() {
     } else if (mode === "menu") {
       toMenu();
     } else if (mode === "menu-static") {
-      /* Icons frozen: each animated SVG swapped for its still PNG. */
+      /* Icons frozen: each animated SVG swapped for its still PNG (iconMode
+         "svg"), or the GPU layers' animations paused ("layers"). */
       toMenu();
       document.querySelectorAll(".tile__icon-img").forEach(function (img) {
         img.src = img.src.replace(/\.svg(\?.*)?$/, ".png");
       });
+      /* the layer fragments arrive asynchronously: pause once they are in */
+      setTimeout(function () {
+        document.getAnimations().forEach(function (a) {
+          var el = a.effect && a.effect.target;
+          if (el && el.closest && el.closest(".ig")) a.pause();
+        });
+      }, 1500);
     } else if (mode === "menu-noshadow") {
-      /* Icons animated, but without the raised-glass drop-shadows. */
+      /* Icons animated, but without the raised-glass shadow. */
       toMenu();
       document.querySelectorAll(".tile__icon-img").forEach(function (img) {
         img.style.filter = "none";
+      });
+      document.querySelectorAll(".ig-shade").forEach(function (el) {
+        el.style.display = "none";
       });
     } else if (mode.indexOf("game:") === 0) {
       var id = mode.slice(5);

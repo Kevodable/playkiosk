@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><defs><radialGradient id="shine" cx=".4" cy=".35" r=".7">
+  <stop offset="0" stop-color="#FFFFFF" stop-opacity=".95" />
+  <stop offset=".55" stop-color="#FFFFFF" stop-opacity=".45" />
+  <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+</radialGradient></defs>
+<circle cx="559.6" cy="287.4" r="37.9" fill="url(#shine)" /></svg>
