@@ -273,6 +273,7 @@ def cmd_run(a):
         channel.wait_seen(nonce, 10)
     finally:
         server.shutdown()
+        server.server_close()   # libera la porta subito (es. due "run" di fila)
     print("\n== riepilogo")
     print(f"   {'stato':16s} {'sistema':>8s} {'chromium':>9s} {'temp':>6s} {'max':>6s}")
     for mode, r, issues in results:
