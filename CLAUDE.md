@@ -373,6 +373,14 @@ forme, puzzle, tris, hanoi.
   vicine (livelli 3x, ombre e flipbook sporgono, trasparenti ma cliccabili):
   `pointer-events: none` sulle icone, il clic arriva sempre alla tile sotto.
 
+- 2026-10-03 — **Palloncini** (primo gioco col metodo di misura): il costo
+  era nelle schermate di contorno, non nella partita. Icona SVG animata con
+  drop-shadow sulla schermata iniziale, mascotte SVG + velo sfocato con le
+  nuvole in moto dietro sulla finale. `BB.iconeLivelli()` (shared.js,
+  attivabile per gioco): icone a livelli GPU con pausa, sfondo fermo sotto
+  il velo. Misure (CPU Chromium): iniziale 75% -> 22%, finale 43% -> 5%,
+  partita 54% invariata (palloncini mossi dal JS a ogni frame: nel budget).
+
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
   norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
@@ -401,8 +409,10 @@ forme, puzzle, tris, hanoi.
   "svg"` o rollback della release. `kiosk-perf` + timer `kiosk-health`
   installati sul prototipo; modalita' test SPENTA.
 - **Da fare (prestazioni):** prova nel totem chiuso (`journalctl -t
-  kiosk-health`); i **giochi** scaldano anch'essi (Palloncini fermo 81%,
-  Memory fermo 46%): stesso metodo di misura, un gioco alla volta.
+  kiosk-health`, totem non ancora pronto). **Giochi:** Palloncini fatto
+  (`BB.iconeLivelli()`); gli altri 10 con icona SVG animata su schermata
+  iniziale/finale vanno attivati e misurati uno alla volta (Memory a riposo
+  46%).
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
