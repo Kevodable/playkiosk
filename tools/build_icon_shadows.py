@@ -16,10 +16,10 @@ seguono i pezzi, sulla GPU, senza essere ricalcolate.
 
 Differenze (minime) rispetto al filtro di oggi: dove le ombre di due pezzi si
 sovrappongono fuori dall'icona sono un po' piu' scure; i pezzi "raster"
-(SVG animati: gesso, tagli della frutta, pallina del labirinto) non hanno
+(flipbook: gesso, tagli della frutta, pallina del labirinto) non hanno
 ombra propria.
 
-Prima: tools/build_icon_layers.py (rigenera icon.html senza ombre).
+Prima: tools/build_icon_layers.py e tools/build_icon_flipbooks.py.
 Uso: python3 tools/build_icon_shadows.py [id ...]   (senza id: tutte)
 """
 import json, os, re, subprocess, sys, tempfile, time
@@ -102,6 +102,8 @@ def main():
         n = 0
         def walk(node):
             nonlocal n
+            if "F" in node["cls"].split():
+                return                  # flipbook: niente ombra propria (come i pezzi raster)
             node["static"] = [i for i in node["imgs"] if i["src"].rsplit("/", 1)[-1] not in raster]
             if node["static"]:
                 n += 1
@@ -141,6 +143,8 @@ def main():
         total = 0
         def shade(node):
             nonlocal total
+            if "F" in node["cls"].split():
+                return ""
             parts = []
             if node.get("shade"):
                 a = Image.open(os.path.join(tmp, "%s-%s-with.png" % (gid, node["shade"]))).convert("RGBA")

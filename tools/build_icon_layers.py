@@ -12,7 +12,8 @@ animateMotion) restano piccoli SVG animati: solo loro si ridisegnano.
 Uscita, per ogni icona: games/assets/icons-gpu/<id>/
   icon.html   frammento (stile con classi/keyframes prefissati + markup)
   cN.svg      livelli SVG (statici o, per i pezzi "raster", animati)
-L'ombra in rilievo viene aggiunta da tools/build_icon_shadows.py.
+Poi: tools/build_icon_flipbooks.py (i pezzi raster diventano flipbook) e
+tools/build_icon_shadows.py (l'ombra in rilievo).
 
 Gli SVG originali NON vengono toccati: la shell usa questa versione solo con
 "iconMode": "layers" nel config del tenant.

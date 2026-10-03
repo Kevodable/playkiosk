@@ -26,6 +26,10 @@
 @keyframes frutta--sword { 0% { transform: rotate(0deg); } 18.00% { transform: rotate(0deg); animation-timing-function: ease-in-out; } 26.00% { transform: rotate(-14deg); animation-timing-function: cubic-bezier(.7,0,1,.5); } 30.00% { transform: rotate(30deg); animation-timing-function: ease-out; } 34.00% { transform: rotate(22deg); animation-timing-function: ease-in-out; } 46.00% { transform: rotate(0deg); } 60.00% { transform: rotate(0deg); animation-timing-function: ease-in-out; } 68.00% { transform: rotate(-14deg); animation-timing-function: cubic-bezier(.7,0,1,.5); } 72.00% { transform: rotate(30deg); animation-timing-function: ease-out; } 76.00% { transform: rotate(22deg); animation-timing-function: ease-in-out; } 88.00% { transform: rotate(0deg); } 100% { transform: rotate(0deg); } }
 @keyframes frutta--whole-apple { 0%, 29.90% { opacity: 1; transform: scale(1); } 30.00% { opacity: 0; transform: scale(1); } 51.00% { opacity: 0; transform: scale(.4); } 51.50% { opacity: 1; transform: scale(.4); animation-timing-function: cubic-bezier(.3,1.6,.6,1); } 59.00%, 100% { opacity: 1; transform: scale(1); } }
 @keyframes frutta--whole-orange { 0%, 71.90% { opacity: 1; transform: scale(1); } 72.00% { opacity: 0; transform: scale(1); } 93.00% { opacity: 0; transform: scale(.4); } 93.50% { opacity: 1; transform: scale(.4); animation-timing-function: cubic-bezier(.3,1.6,.6,1); } 100.00%, 100% { opacity: 1; transform: scale(1); } }
+.ig-frutta .frutta--f1-img { width: 1800%; height: 100%; animation: frutta--f1 6s step-end infinite; }
+@keyframes frutta--f1 { 0% { transform: translate(0%, 0%); } 27.2222% { transform: translate(-5.5556%, 0%); } 27.7778% { transform: translate(-11.1111%, 0%); } 28.3333% { transform: translate(-16.6667%, 0%); } 28.8889% { transform: translate(-22.2222%, 0%); } 29.4444% { transform: translate(-27.7778%, 0%); } 30% { transform: translate(-33.3333%, 0%); } 30.5556% { transform: translate(-38.8889%, 0%); } 31.1111% { transform: translate(-44.4444%, 0%); } 31.6667% { transform: translate(-50%, 0%); } 32.2222% { transform: translate(-55.5556%, 0%); } 32.7778% { transform: translate(-61.1111%, 0%); } 33.3333% { transform: translate(-66.6667%, 0%); } 33.8889% { transform: translate(-72.2222%, 0%); } 34.4444% { transform: translate(-77.7778%, 0%); } 35% { transform: translate(-83.3333%, 0%); } 35.5556% { transform: translate(-88.8889%, 0%); } 36.1111% { transform: translate(-94.4444%, 0%); } 36.6667% { transform: translate(0%, 0%); } 100% { transform: translate(0%, 0%); } }
+.ig-frutta .frutta--f2-img { width: 1800%; height: 100%; animation: frutta--f2 6s step-end infinite; }
+@keyframes frutta--f2 { 0% { transform: translate(0%, 0%); } 69.4444% { transform: translate(-5.5556%, 0%); } 70% { transform: translate(-11.1111%, 0%); } 70.5556% { transform: translate(-16.6667%, 0%); } 71.1111% { transform: translate(-22.2222%, 0%); } 71.6667% { transform: translate(-27.7778%, 0%); } 72.2222% { transform: translate(-33.3333%, 0%); } 72.7778% { transform: translate(-38.8889%, 0%); } 73.3333% { transform: translate(-44.4444%, 0%); } 73.8889% { transform: translate(-50%, 0%); } 74.4444% { transform: translate(-55.5556%, 0%); } 75% { transform: translate(-61.1111%, 0%); } 75.5556% { transform: translate(-66.6667%, 0%); } 76.1111% { transform: translate(-72.2222%, 0%); } 76.6667% { transform: translate(-77.7778%, 0%); } 77.2222% { transform: translate(-83.3333%, 0%); } 77.7778% { transform: translate(-88.8889%, 0%); } 78.3333% { transform: translate(-94.4444%, 0%); } 78.8889% { transform: translate(0%, 0%); } 100% { transform: translate(0%, 0%); } }
 </style>
 <!-- ombre: tools/build_icon_shadows.py -->
 <div class="ig-shade">
@@ -84,7 +88,7 @@
 <div class="L frutta--drops-apple-6">
 <img class="L" src="games/assets/icons-gpu/frutta/c5.svg" alt="">
 </div>
-<img class="L Lx R" src="games/assets/icons-gpu/frutta/c6.svg" alt="">
+<div class="F" style="left:64.1274%;top:20.5109%;width:28.7546%;height:17.7697%"><img class="frutta--f1-img" src="games/assets/icons-gpu/frutta/f1.webp" alt=""></div>
 </div>
 <div class="L frutta--float-orange-7">
 <div class="L frutta--whole-orange-8">
@@ -99,7 +103,7 @@
 <div class="L frutta--drops-orange-11">
 <img class="L" src="games/assets/icons-gpu/frutta/c10.svg" alt="">
 </div>
-<img class="L Lx R" src="games/assets/icons-gpu/frutta/c11.svg" alt="">
+<div class="F" style="left:60.5735%;top:55.081%;width:28.7546%;height:18.0928%"><img class="frutta--f2-img" src="games/assets/icons-gpu/frutta/f2.webp" alt=""></div>
 </div>
 <div class="L frutta--panda-12">
 <img class="L" src="games/assets/icons-gpu/frutta/c12.svg" alt="">

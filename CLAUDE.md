@@ -125,11 +125,13 @@ Cartelle:
   animazioni CSS; generate da `tools/build_<gioco>.py` a partire dall'arte
   Scenario (sorgenti in `tools/art/`). **Versione a livelli GPU** (per il
   Raspberry): `games/assets/icons-gpu/<id>/`, generata dagli SVG con
-  `tools/build_icon_layers.py` + `tools/build_icon_shadows.py` (ombre gia'
+  `tools/build_icon_layers.py` + `tools/build_icon_flipbooks.py` (i pezzi che
+  la GPU non sa animare, es. il gesso, diventano fotogrammi sfogliati) +
+  `tools/build_icon_shadows.py` (ombre gia'
   disegnate, una per pezzo, che si muovono col pezzo), fedelta' verificata
   con `tools/check_icon_layers.py`. Scelta col token `iconMode` nel config
   del tenant: `"layers"` o `"svg"` (= SVG originali, il ritorno indietro).
-  **Ogni modifica a un SVG va rigenerata** coi due script.
+  **Ogni modifica a un SVG va rigenerata** coi tre script, in quell'ordine.
 - **Titolo:** sotto l'icona, scritto **come nel manifest** (maiuscole e
   minuscole: le minuscole di Bold Doodle sono piu' morbide, niente maiuscolo
   forzato). Colore **acceso/saturo per gioco** (`titleColor` nel manifest) +
