@@ -330,10 +330,14 @@
      the icon (.ig-art) and lies under it, so each piece's shadow moves with
      it. Each shadow image (.S) carries its own position. */
   .tile__content--layers{ container-type:size; }
+  /* pointer-events:none: some layers (shadows, 3x layers, flipbooks) reach
+     beyond the icon box over the neighbouring tiles - transparent, but still
+     hit targets. A tap must always land on the tile underneath. */
   .ig{
     position:relative;
     width:min(100cqw,100cqh);
     height:min(100cqw,100cqh);
+    pointer-events:none;
   }
   .ig-shade, .ig-shade .L, .ig-art, .ig-art .L{
     position:absolute;

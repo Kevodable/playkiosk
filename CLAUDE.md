@@ -369,6 +369,10 @@ forme, puzzle, tris, hanoi.
   un'animazione corre), tolte. Scelta A+B: tenere le icone a livelli e
   **fermarle dopo 10 s senza tocchi**.
 
+- 2026-10-03 — Fix: con le icone a livelli i clic finivano sulle tile
+  vicine (livelli 3x, ombre e flipbook sporgono, trasparenti ma cliccabili):
+  `pointer-events: none` sulle icone, il clic arriva sempre alla tile sotto.
+
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
   norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
