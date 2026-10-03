@@ -1,1 +1,5 @@
+# File locali del Mac e degli strumenti: non vanno nel repository
 .DS_Store
+.claude/
+__pycache__/
+*.pyc
