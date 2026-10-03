@@ -296,3 +296,32 @@ button{ font-family:inherit; color:inherit; border:none; background:none; cursor
 @media (prefers-reduced-motion:reduce){
   *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
 }
+
+/* ---------- Icone a livelli GPU (BB.iconeLivelli) ----------
+   Stesse regole delle icone a livelli della shell (kiosk/index.html, .ig):
+   un quadrato di livelli animati dalla GPU, ombre gia' disegnate sotto
+   (.ig-shade), flipbook (.F). Il riquadro prende la larghezza dell'<img>
+   che sostituisce; niente filter: su un'icona animata si ricalcolerebbe a
+   ogni frame (l'ombra in rilievo e' gia' nei livelli). pointer-events:none:
+   i livelli sporgono dal riquadro ma non devono rubare i tocchi. */
+.bb-icona{
+  position:relative;
+  aspect-ratio:1 / 1;
+  height:auto;
+  container-type:size;
+  filter:none !important;
+}
+.bb-icona .ig{
+  position:absolute;
+  left:50%; top:50%;
+  width:min(100cqw,100cqh); height:min(100cqw,100cqh);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+.bb-icona .ig-shade, .bb-icona .ig-shade .L, .bb-icona .ig-art, .bb-icona .ig-art .L{
+  position:absolute; inset:0; width:100%; height:100%;
+}
+.bb-icona .ig-shade .S{ position:absolute; }
+.bb-icona .ig-art .Lx{ left:-100%; top:-100%; width:300%; height:300%; }
+.bb-icona .ig-art .F{ position:absolute; overflow:hidden; }
+.bb-icona .ig-art .F img{ position:absolute; left:0; top:0; }

@@ -9,6 +9,7 @@
      BB.lockScroll()      → blocca scroll/gesture sul kiosk
      BB.win(opzioni)      → overlay di vittoria/fine partita
      BB.score(gioco)      → record salvato in localStorage namespaced
+     BB.iconeLivelli()    → icone animate a livelli GPU (vedi sotto), per gioco
    100% vanilla, nessuna dipendenza. Funziona offline.
    ========================================================================== */
 (function (window, document) {
@@ -87,6 +88,87 @@
     'stroke-linecap="round" stroke-linejoin="round"/>' +
     '<rect x="20" y="28" width="9" height="14" rx="2" fill="#BA7831" stroke="#522C09" stroke-width="3"/>' +
     '</svg>';
+
+  /* --------------------------------------------------------------------------
+     Icone a livelli GPU. Le <img> con l'icona animata (../assets/icons/<id>.svg)
+     sono SVG ridisegnati a ogni frame: sul Raspberry costano molto (e con un
+     filtro sopra ancora di piu'). Con BB.iconeLivelli(), se la shell usa
+     iconMode "layers", diventano la stessa icona a livelli animati dalla GPU
+     (../assets/icons-gpu/<id>/icon.html, vedi tools/build_icon_layers.py),
+     che si ferma dopo iconPauseAfterSec senza tocchi e riparte al tocco.
+     Fuori dalla shell, con iconMode "svg" o se il frammento non si carica,
+     resta l'SVG di sempre.
+     ------------------------------------------------------------------------ */
+  var livelli = null;         /* { pausa: secondi } quando attive */
+
+  function configShell() {
+    try {
+      if (window.parent !== window && window.parent.state) return window.parent.state.config;
+    } catch (e) { /* non nella shell */ }
+    return null;
+  }
+
+  /* Ferma le animazioni dell'icona dopo N s senza tocchi (alla posa iniziale),
+     al tocco ripartono: come nel menu della shell. */
+  function pausaIcona(ig) {
+    if (!livelli.pausa) return;
+    var timer = null, ferma = false;
+    function anims() { return ig.isConnected ? ig.getAnimations({ subtree: true }) : []; }
+    function pausa() {
+      ferma = true;
+      anims().forEach(function (a) { a.pause(); a.currentTime = 0; });
+    }
+    function sveglia(e) {
+      /* solo tocchi veri: gli eventi generati dal codice (es. il segnale
+         con cui la modalita' test della shell tiene aperto il gioco) no */
+      if (e && !e.isTrusted) return;
+      if (!ig.isConnected) {
+        ["pointerdown", "touchstart", "click"].forEach(function (ev) {
+          document.removeEventListener(ev, sveglia, true);
+        });
+        clearTimeout(timer);
+        return;
+      }
+      if (ferma) { ferma = false; anims().forEach(function (a) { a.play(); }); }
+      clearTimeout(timer);
+      timer = setTimeout(pausa, livelli.pausa * 1000);
+    }
+    ["pointerdown", "touchstart", "click"].forEach(function (ev) {
+      document.addEventListener(ev, sveglia, true);
+    });
+    sveglia();
+  }
+
+  /* Sostituisce un'<img> dell'icona animata con la versione a livelli,
+     solo quando frammento e immagini sono pronti (niente buchi). */
+  function iconaLivelli(img) {
+    var m = /assets\/icons\/(\w+)\.svg/.exec(img.getAttribute("src") || "");
+    if (!m) return;
+    var id = m[1];
+    var box = document.createElement("div");
+    box.className = img.className + " bb-icona";
+    var ig = document.createElement("div");
+    ig.className = "ig ig-" + id;
+    box.appendChild(ig);
+    fetch("../assets/icons-gpu/" + id + "/icon.html")
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.text();
+      })
+      .then(function (html) {
+        /* i percorsi del frammento sono relativi alla shell */
+        ig.innerHTML = html.replace(/games\/assets\/icons-gpu\//g, "../assets/icons-gpu/");
+        return Promise.all(Array.prototype.map.call(ig.querySelectorAll("img"), function (i) {
+          return i.decode().catch(function () {});
+        }));
+      })
+      .then(function () {
+        if (!img.isConnected) return;
+        img.replaceWith(box);
+        pausaIcona(ig);
+      })
+      .catch(function () { /* resta l'SVG */ });
+  }
 
   var BB = {
 
@@ -190,11 +272,33 @@
         "</div>";
       ov.hidden = false;
 
+      /* Con le icone a livelli: mascotte a livelli, e lo sfondo dietro il
+         velo sfocato si ferma (altrimenti la sfocatura a tutto schermo si
+         ricalcola a ogni frame); riparte con "Rigioca". */
+      var fermate = [];
+      if (livelli) {
+        Array.prototype.forEach.call(ov.querySelectorAll("img"), iconaLivelli);
+        document.getAnimations().forEach(function (a) {
+          var el = a.effect && a.effect.target;
+          if (el && !ov.contains(el) && a.playState === "running") { a.pause(); fermate.push(a); }
+        });
+      }
+
       // Per uscire si usa il pulsante flottante "🏠 Giochi" del launcher (unico).
       ov.querySelector("#bb-replay").addEventListener("click", function () {
         ov.hidden = true;
+        fermate.forEach(function (a) { a.play(); });
         if (typeof opzioni.rigioca === "function") opzioni.rigioca();
       });
+    },
+
+    /* Icone a livelli GPU per questo gioco (vedi "Icone a livelli GPU" sopra):
+       da chiamare una volta, dopo che il markup del gioco c'e'. */
+    iconeLivelli: function () {
+      var cfg = configShell();
+      if (!cfg || cfg.iconMode !== "layers") return;
+      livelli = { pausa: cfg.iconPauseAfterSec || 0 };
+      Array.prototype.forEach.call(document.querySelectorAll("img"), iconaLivelli);
     },
 
     /* Nasconde l'overlay vittoria (utile se un gioco lo riusa) */

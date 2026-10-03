@@ -1339,6 +1339,11 @@ function startPerfMode() {
     /* read on first use: the tenant config is not loaded yet at startup */
     if (!baseKnown) { baseIconMode = state.config.iconMode; baseKnown = true; }
     state.config.iconMode = baseIconMode;
+    /* "<state>#svg": that state with the original SVG icons (A/B) */
+    if (/#svg$/.test(mode)) {
+      state.config.iconMode = "svg";
+      mode = mode.slice(0, -4);
+    }
     if (mode === "menu-svg" || mode === "menu-layers") {
       state.config.iconMode = mode.slice(5);
       mode = "menu";
@@ -1396,12 +1401,28 @@ function startPerfMode() {
         });
       }, 1500);
     } else if (mode.indexOf("game:") === 0) {
-      var id = mode.slice(5);
+      /* "game:<id>@<selector>": once the game has loaded, click <selector>
+         inside it (e.g. a level button) to measure the game being played.
+         A scripted click is not a pointerdown: it does not count as input. */
+      var at = mode.indexOf("@");
+      var id = mode.slice(5, at < 0 ? undefined : at);
+      var press = at < 0 ? null : mode.slice(at + 1);
       var g = enabledGames().filter(function (x) { return x.id === id; })[0];
       if (!g) return false;
       toMenu();
       openGame(g);
       holdGame = true;
+      if (press) {
+        frame.addEventListener("load", function once() {
+          frame.removeEventListener("load", once);
+          setTimeout(function () {
+            try {
+              var b = frame.contentDocument.querySelector(press);
+              if (b) b.click();
+            } catch (e) {}
+          }, 800);
+        });
+      }
     } else {
       return false;
     }

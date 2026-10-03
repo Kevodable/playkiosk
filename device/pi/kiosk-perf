@@ -14,7 +14,9 @@
 #                                    shell in ogni stato e lo misura.
 #                                    Stati: attract, menu, menu-static
 #                                    (icone ferme), menu-noshadow (icone
-#                                    senza ombre), game:<id>.
+#                                    senza ombre), game:<id>, game:<id>@<sel>
+#                                    (preme <sel> nel gioco, es. un livello);
+#                                    "#svg" in coda = con le icone SVG.
 #                                    Senza stati: la sequenza standard.
 #
 # Solo lettura: non cambia nulla del sistema (a parte perf.on con on/off).
@@ -210,7 +212,12 @@ class Channel:
 
 
 def expected_screen(mode):
-    return mode if mode.startswith("game:") else mode.split("-")[0]
+    """Schermo che la shell deve mostrare: "game:<id>" (senza "@pulsante"
+    e "#svg"), altrimenti la prima parola (menu-..., attract)."""
+    mode = mode.split("#")[0]
+    if mode.startswith("game:"):
+        return mode.split("@")[0]
+    return mode.split("-")[0]
 
 
 def make_handler(channel):
