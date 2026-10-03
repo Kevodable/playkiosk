@@ -381,6 +381,10 @@ forme, puzzle, tris, hanoi.
   il velo. Misure (CPU Chromium): iniziale 75% -> 22%, finale 43% -> 5%,
   partita 54% invariata (palloncini mossi dal JS a ogni frame: nel budget).
 
+- 2026-10-03 — **Memory**: `BB.iconeLivelli()` attivo. Schermata iniziale
+  42% -> 0,4% (icona a livelli, in pausa dopo 10 s); partita ~2% (carte
+  ferme finche' nessuno le gira).
+
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
   norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
@@ -409,10 +413,9 @@ forme, puzzle, tris, hanoi.
   "svg"` o rollback della release. `kiosk-perf` + timer `kiosk-health`
   installati sul prototipo; modalita' test SPENTA.
 - **Da fare (prestazioni):** prova nel totem chiuso (`journalctl -t
-  kiosk-health`, totem non ancora pronto). **Giochi:** Palloncini fatto
-  (`BB.iconeLivelli()`); gli altri 10 con icona SVG animata su schermata
-  iniziale/finale vanno attivati e misurati uno alla volta (Memory a riposo
-  46%).
+  kiosk-health`, totem non ancora pronto). **Giochi:** Palloncini e Memory
+  fatti (`BB.iconeLivelli()`); gli altri 9 con icona SVG animata su
+  schermata iniziale/finale vanno attivati e misurati uno alla volta.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
