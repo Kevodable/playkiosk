@@ -132,6 +132,9 @@ Cartelle:
   con `tools/check_icon_layers.py`. Scelta col token `iconMode` nel config
   del tenant: `"layers"` o `"svg"` (= SVG originali, il ritorno indietro).
   **Ogni modifica a un SVG va rigenerata** coi tre script, in quell'ordine.
+  **Pausa delle icone** (`iconPauseAfterSec` nel config, su default 10): dopo
+  N s senza tocchi le icone a livelli tornano alla posa iniziale e si
+  fermano, al primo tocco ripartono (0/assente = mai).
 - **Titolo:** sotto l'icona, scritto **come nel manifest** (maiuscole e
   minuscole: le minuscole di Bold Doodle sono piu' morbide, niente maiuscolo
   forzato). Colore **acceso/saturo per gioco** (`titleColor` nel manifest) +
@@ -329,6 +332,13 @@ forme, puzzle, tris, hanoi.
   disegnate che seguono i pezzi. Fedelta' misurata pixel per pixel
   (<= 0,35% di pixel diversi, solo bordi). Reversibile: `iconMode: "svg"` nel
   config (gli SVG originali non sono toccati) o rollback della release.
+
+- 2026-10-03 — Misure sul Pi delle icone a livelli: prima versione 224%
+  (19 pezzi SVG animati ridisegnati a ogni frame trascinano tutta la pagina),
+  con i flipbook **56%** e 62 C (da 156% e 75-84 C). Ombre: costo ~0.
+  Animazioni a 30/20 fps: nessun guadagno (Chromium ridisegna a 60 finche'
+  un'animazione corre), tolte. Scelta A+B: tenere le icone a livelli e
+  **fermarle dopo 10 s senza tocchi**.
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a

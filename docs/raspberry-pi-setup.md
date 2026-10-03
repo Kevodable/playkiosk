@@ -339,6 +339,8 @@ kiosk-perf run menu-svg menu-layers        # confronto icone: SVG originali / li
 kiosk-perf run --settle 20 -s 30 menu-only:talpe menu-only:lavagna   # costo di una sola icona
 kiosk-perf run menu-noraster               # icone a livelli senza i pezzi ridisegnati a ogni frame
 kiosk-perf run menu-turns:3                # solo 3 icone animate alla volta, a turno ogni 4 s
+kiosk-perf run --settle 30 menu-idle       # menu lasciato solo: icone in pausa dopo iconPauseAfterSec
+                                           # (negli altri stati del menu la pausa e' spenta)
 kiosk-perf off && sudo systemctl restart kiosk.service   # SEMPRE alla fine
 ```
 

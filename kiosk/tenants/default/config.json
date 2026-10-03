@@ -39,6 +39,8 @@
   },
   "iconMode": "layers",
   "_iconMode": "Icone del menu: \"layers\" = livelli animati dalla GPU (games/assets/icons-gpu/, tools/build_icon_layers.py + build_icon_shadows.py), leggere sul Raspberry. \"svg\" (o voce assente) = gli SVG animati originali (games/assets/icons/), esattamente come prima: e' il ritorno indietro.",
+  "iconPauseAfterSec": 10,
+  "_iconPauseAfterSec": "Solo con iconMode \"layers\": dopo N secondi senza tocchi le icone del menu tornano alla posa iniziale e si fermano, al primo tocco ripartono (un'animazione in corso fa ridisegnare lo schermo 60 volte al secondo: sul Raspberry ~56% di CPU contro ~0). 0 o voce assente = mai in pausa.",
   "idleTimeoutSec": 75,
   "attract": {
     "loop": [],

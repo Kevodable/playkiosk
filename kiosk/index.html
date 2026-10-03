@@ -829,6 +829,7 @@ function resetMenuScroll() {
 
 function goAttract() {
   stopIdleWatcher();
+  stopIconPause();
   stopAttractLoop();
   closeGameFrame();
   resetMenuScroll();
@@ -960,6 +961,56 @@ function goMenu() {
     telemetry("idle_return", { from: "menu" });
     goAttract();
   });
+  startIconPause();
+}
+
+/* ---------------------------------------------------------------------------
+   Icon pause (iconMode "layers" + tenant config iconPauseAfterSec): after N s
+   without touches on the menu, the layered icons go back to their first
+   frame and stop; the first touch starts them all again. While any
+   animation runs Chromium redraws the screen 60 times a second (on the Pi:
+   menu ~56% CPU animated, ~0 still), so a menu nobody is looking at should
+   not move. 0 or absent = never pause. SVG icons (iconMode "svg") cannot be
+   paused from here and are left as they are.
+   ------------------------------------------------------------------------- */
+function startIconPause() {
+  stopIconPause();
+  var sec = state.config && state.config.iconPauseAfterSec;
+  if (!sec || state.config.iconMode !== "layers") return;
+  var timer = null;
+  var paused = false;
+  function animations() {
+    var list = [];
+    document.querySelectorAll("#menu-grid .ig").forEach(function (box) {
+      list = list.concat(box.getAnimations({ subtree: true }));
+    });
+    return list;
+  }
+  function pause() {
+    paused = true;
+    animations().forEach(function (a) { a.pause(); a.currentTime = 0; });
+  }
+  function wake() {
+    if (paused) {
+      paused = false;
+      animations().forEach(function (a) { a.play(); });
+    }
+    clearTimeout(timer);
+    timer = setTimeout(pause, sec * 1000);
+  }
+  var events = ["pointerdown", "touchstart", "click", "wheel"];
+  events.forEach(function (ev) {
+    document.addEventListener(ev, wake, { passive: true });
+  });
+  wake();
+  state.iconPauseStop = function () {
+    clearTimeout(timer);
+    events.forEach(function (ev) { document.removeEventListener(ev, wake); });
+  };
+}
+
+function stopIconPause() {
+  if (state.iconPauseStop) { state.iconPauseStop(); state.iconPauseStop = null; }
 }
 
 /* Optional window frame over the menu (see .menu__window). Switched on
@@ -1137,6 +1188,7 @@ function buildIconFallback(g) {
    ------------------------------------------------------------------------- */
 function openGame(g) {
   stopIdleWatcher();
+  stopIconPause();
   state.currentGame = g;
   state.gameOpenedAt = Date.now();
 
@@ -1250,6 +1302,7 @@ function startPerfMode() {
     closeGame();
     closeGameFrame();
     goMenu();
+    stopIconPause();      /* menu states measure moving icons... */
   }
 
   /* menu-svg / menu-layers force the icon mode (A/B on the same release);
@@ -1322,6 +1375,10 @@ function startPerfMode() {
       document.querySelectorAll(".tile").forEach(function (t) {
         if (t.dataset.gameId !== only) t.style.display = "none";
       });
+    } else if (mode === "menu-idle") {
+      /* ...except this one: the menu as left alone, icon pause included */
+      toMenu();
+      startIconPause();
     } else if (mode.indexOf("menu-turns:") === 0) {
       toMenu();
       startTurns(parseInt(mode.slice(11), 10) || 1);
