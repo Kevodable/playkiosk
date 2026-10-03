@@ -397,6 +397,12 @@ forme, puzzle, tris, hanoi.
   con drop-shadow sfocato (bagliore) mosse a ogni frame + 28 stelline di
   sfondo animate con box-shadow.
 
+- 2026-10-03 — **Acchiappa-stelle**: bagliore delle stelle disegnato negli
+  sprite (`tools/bake_filter.py`, nuovo: un filtro CSS cotto in un'immagine)
+  invece del drop-shadow su stelle in movimento; stelline di sfondo in pausa
+  sulla schermata iniziale (`BB.pausaDecorazioni`, nuovo). Partita 105% ->
+  56%, schermata iniziale 26% -> 0,5%. Tutti i giochi ora nel budget.
+
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
   norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
@@ -425,10 +431,9 @@ forme, puzzle, tris, hanoi.
   "svg"` o rollback della release. `kiosk-perf` + timer `kiosk-health`
   installati sul prototipo; modalita' test SPENTA.
 - **Da fare (prestazioni):** prova nel totem chiuso (`journalctl -t
-  kiosk-health`, totem non ancora pronto). **Giochi:** icone a livelli attive
-  su tutti; resta **Acchiappa-stelle** (partita 105%, schermata iniziale
-  26%): bagliore delle stelle da disegnare nello sprite invece del filtro,
-  stelline di sfondo da alleggerire.
+  kiosk-health`, totem non ancora pronto). **Giochi:** tutti nel budget
+  (schermate iniziali ~0,5% dopo la pausa; partite senza tocchi: quasi tutte
+  ~0,4%, Frutta 36%, Palloncini 54%, Acchiappa-stelle 56%).
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
