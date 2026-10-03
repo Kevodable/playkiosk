@@ -1255,9 +1255,30 @@ function startPerfMode() {
   /* menu-svg / menu-layers force the icon mode (A/B on the same release);
      every other state uses the tenant's own. */
   var baseIconMode, baseKnown = false;
+  var turnsTimer = null;
+
+  /* menu-turns:N - only N layered icons animate at a time, the next N take
+     over every 4 s (the others hold still): what animating "in turns" would
+     cost. Measurement only. */
+  function startTurns(n) {
+    var k = 0;
+    function step() {
+      var boxes = Array.prototype.slice.call(document.querySelectorAll(".ig"));
+      boxes.forEach(function (box, i) {
+        var on = ((i - k) % boxes.length + boxes.length) % boxes.length < n;
+        box.getAnimations({ subtree: true }).forEach(function (a) {
+          if (on) a.play(); else a.pause();
+        });
+      });
+      k = (k + n) % Math.max(1, boxes.length);
+    }
+    setTimeout(step, 1500);
+    turnsTimer = setInterval(step, 4000);
+  }
 
   function apply(mode) {
     holdGame = false;
+    if (turnsTimer) { clearInterval(turnsTimer); turnsTimer = null; }
     /* read on first use: the tenant config is not loaded yet at startup */
     if (!baseKnown) { baseIconMode = state.config.iconMode; baseKnown = true; }
     state.config.iconMode = baseIconMode;
@@ -1301,6 +1322,9 @@ function startPerfMode() {
       document.querySelectorAll(".tile").forEach(function (t) {
         if (t.dataset.gameId !== only) t.style.display = "none";
       });
+    } else if (mode.indexOf("menu-turns:") === 0) {
+      toMenu();
+      startTurns(parseInt(mode.slice(11), 10) || 1);
     } else if (mode === "menu-noraster") {
       /* Layered icons without their "raster" pieces (animated SVGs that
          are repainted every frame, img.R - tools/build_icon_layers.py). */
