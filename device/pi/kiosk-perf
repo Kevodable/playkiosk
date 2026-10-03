@@ -1,0 +1,283 @@
+#!/usr/bin/env python3
+# Misure e salute del kiosk -> sul Pi: /usr/local/bin/kiosk-perf (chmod 755)
+#
+#   kiosk-perf sample [-s 60]        CPU (sistema e processi Chromium/cage),
+#                                    temperatura, clock, throttling dello
+#                                    stato che il kiosk mostra adesso
+#   kiosk-perf health                una riga di salute (la usa il timer
+#                                    kiosk-health; avvisi sopra soglia)
+#   kiosk-perf on | off | status     modalita' test della shell (file
+#                                    /srv/kiosk/perf.on; serve un restart
+#                                    del kiosk perche' abbia effetto)
+#   kiosk-perf run [-s 60] [--settle 150] [stato ...]
+#                                    con la modalita' test accesa porta la
+#                                    shell in ogni stato e lo misura.
+#                                    Stati: attract, menu, menu-static
+#                                    (icone ferme), menu-noshadow (icone
+#                                    senza ombre), game:<id>.
+#                                    Senza stati: la sequenza standard.
+#
+# Solo lettura: non cambia nulla del sistema (a parte perf.on con on/off).
+# Durante "run" ascolta su 127.0.0.1:8081: la shell (aperta con ?perf=1)
+# legge da li' lo stato da mostrare e conferma di averlo applicato; senza
+# conferma la misura non parte (niente numeri attribuiti allo stato sbagliato).
+import argparse, http.server, json, os, statistics, subprocess, sys, threading, time
+
+PERF_FLAG = "/srv/kiosk/perf.on"
+PORT = 8081
+SHELL_ORIGIN = "http://127.0.0.1:8080"
+STANDARD = ["attract", "menu", "game:memory", "menu-static", "menu-noshadow"]
+HZ = os.sysconf("SC_CLK_TCK")
+NCPU = os.cpu_count() or 1
+TEMP_WARN = 75.0
+
+THROTTLE_BITS = {
+    0: "sottotensione", 1: "freq ARM limitata", 2: "throttling", 3: "limite temp soft",
+    16: "sottotensione (da boot)", 17: "freq ARM limitata (da boot)",
+    18: "throttling (da boot)", 19: "limite temp soft (da boot)",
+}
+
+
+def vc(*args):
+    try:
+        return subprocess.run(["vcgencmd", *args], capture_output=True, text=True,
+                              timeout=5).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def temp_c():
+    try:
+        return int(open("/sys/class/thermal/thermal_zone0/temp").read()) / 1000.0
+    except OSError:
+        return float(vc("measure_temp").split("=")[1].split("'")[0])
+
+
+def clock_mhz(which):
+    out = vc("measure_clock", which)
+    return int(out.split("=")[1]) / 1e6 if "=" in out else 0.0
+
+
+def throttled():
+    out = vc("get_throttled")
+    val = int(out.split("=")[1], 16) if "=" in out else 0
+    flags = [name for bit, name in THROTTLE_BITS.items() if val & (1 << bit)]
+    return val, flags
+
+
+def system_ticks():
+    v = list(map(int, open("/proc/stat").readline().split()[1:]))
+    return sum(v), v[3] + v[4]
+
+
+def process_kind(args):
+    """Chromium riscrive argv in una sola stringa: si cerca --type= ovunque."""
+    exe = args[0] if args else ""
+    if exe.endswith("/cage") or exe == "cage":
+        return "cage"
+    if "chromium" not in exe:
+        return None
+    kind = "chromium:browser"
+    for a in args:
+        if a.startswith("--type="):
+            kind = "chromium:" + a[7:]
+        elif a.startswith("--utility-sub-type="):
+            sub = a.split("=", 1)[1].split(".")[-1]
+            kind = "chromium:utility:" + sub
+    return kind
+
+
+def process_ticks():
+    out = {}
+    for pid in os.listdir("/proc"):
+        if not pid.isdigit():
+            continue
+        try:
+            raw = open(f"/proc/{pid}/cmdline", "rb").read()
+            kind = process_kind(raw.replace(b"\0", b" ").decode(errors="replace").split())
+            if not kind:
+                continue
+            st = open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()
+            out[pid] = (kind, int(st[11]) + int(st[12]))
+        except (OSError, IndexError, ValueError):
+            pass
+    return out
+
+
+def sample(seconds):
+    """Medie su `seconds`: CPU in % di un core (max 100% x core)."""
+    temps, arm, gpu = [], [], []
+    t0, i0 = system_ticks()
+    p0 = process_ticks()
+    w0 = time.monotonic()
+    for _ in range(seconds):
+        time.sleep(1)
+        temps.append(temp_c())
+        arm.append(clock_mhz("arm"))
+        gpu.append(clock_mhz("v3d"))
+    t1, i1 = system_ticks()
+    p1 = process_ticks()
+    dt = time.monotonic() - w0
+    busy = (t1 - t0) - (i1 - i0)
+    per = {}
+    for pid, (kind, ticks) in p1.items():
+        if pid in p0:
+            per[kind] = per.get(kind, 0.0) + 100.0 * (ticks - p0[pid][1]) / HZ / dt
+    val, flags = throttled()
+    return {
+        "seconds": seconds,
+        "cpu_system": 100.0 * busy / max(1, t1 - t0) * NCPU,
+        "cpu_chromium": sum(v for k, v in per.items() if k.startswith("chromium")),
+        "processes": per,
+        "temp_mean": statistics.mean(temps), "temp_start": temps[0],
+        "temp_end": temps[-1], "temp_max": max(temps),
+        "arm_mhz": statistics.mean(arm), "gpu_mhz": statistics.mean(gpu),
+        "throttled": val, "throttled_flags": flags,
+    }
+
+
+def print_sample(title, r):
+    print(f"\n== {title}")
+    print(f"   CPU sistema   {r['cpu_system']:6.1f}%   (100% = 1 core, max {NCPU * 100}%)")
+    print(f"   CPU Chromium  {r['cpu_chromium']:6.1f}%")
+    for kind, v in sorted(r["processes"].items(), key=lambda kv: -kv[1]):
+        if v >= 0.5:
+            print(f"     {kind:32s} {v:6.1f}%")
+    print(f"   temperatura   media {r['temp_mean']:.1f} C  (inizio {r['temp_start']:.1f},"
+          f" fine {r['temp_end']:.1f}, max {r['temp_max']:.1f})")
+    print(f"   clock medio   ARM {r['arm_mhz']:.0f} MHz, GPU {r['gpu_mhz']:.0f} MHz")
+    flags = ", ".join(r["throttled_flags"]) or "nessuno"
+    print(f"   throttled     0x{r['throttled']:x} ({flags})")
+    sys.stdout.flush()
+
+
+# ---------------------------------------------------------------- run
+class Channel:
+    """Stato richiesto alla shell + ultima conferma ricevuta."""
+    def __init__(self):
+        # nonce di partenza dall'orologio: una sessione nuova non coincide mai
+        # con l'ultimo nonce gia' visto dalla shell nella sessione prima
+        self.mode, self.nonce, self.seen = "", int(time.time()), None
+        self.lock = threading.Condition()
+
+    def request(self, mode):
+        with self.lock:
+            self.nonce += 1
+            self.mode = mode
+            return self.nonce
+
+    def wait_seen(self, nonce, timeout):
+        with self.lock:
+            return self.lock.wait_for(lambda: self.seen == nonce, timeout)
+
+
+def make_handler(channel):
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query)
+            seen = q.get("seen", [""])[0]
+            with channel.lock:
+                if seen.isdigit():
+                    channel.seen = int(seen)
+                    channel.lock.notify_all()
+                body = json.dumps({"mode": channel.mode, "nonce": channel.nonce}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Access-Control-Allow-Origin", SHELL_ORIGIN)
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+    return Handler
+
+
+def cmd_run(a):
+    if not os.path.exists(PERF_FLAG):
+        sys.exit("kiosk-perf: modalita' test spenta. Prima: kiosk-perf on, poi"
+                 " sudo systemctl restart kiosk.service")
+    modes = a.modes or STANDARD
+    channel = Channel()
+    try:
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), make_handler(channel))
+    except OSError as e:
+        sys.exit(f"kiosk-perf: porta {PORT} non disponibile ({e.strerror}):"
+                 " un altro 'kiosk-perf run' in corso?")
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    results = []
+    try:
+        for mode in modes:
+            nonce = channel.request(mode)
+            if not channel.wait_seen(nonce, 20):
+                sys.exit(f"kiosk-perf: la shell non ha confermato lo stato '{mode}' in 20 s"
+                         " (kiosk riavviato dopo 'kiosk-perf on'?)")
+            print(f"-- {mode}: applicato, assestamento {a.settle} s, misura {a.seconds} s",
+                  file=sys.stderr, flush=True)
+            time.sleep(a.settle)
+            r = sample(a.seconds)
+            print_sample(mode, r)
+            results.append((mode, r))
+        # fine sessione: la shell torna all'attract e al comportamento normale
+        nonce = channel.request("attract")
+        channel.wait_seen(nonce, 10)
+    finally:
+        server.shutdown()
+    print("\n== riepilogo")
+    print(f"   {'stato':16s} {'sistema':>8s} {'chromium':>9s} {'temp':>6s} {'max':>6s}")
+    for mode, r in results:
+        print(f"   {mode:16s} {r['cpu_system']:7.1f}% {r['cpu_chromium']:8.1f}%"
+              f" {r['temp_mean']:5.1f}C {r['temp_max']:5.1f}C")
+
+
+# ---------------------------------------------------------------- health
+def cmd_health(a):
+    r = sample(a.seconds)
+    val, flags = r["throttled"], r["throttled_flags"]
+    warn = r["temp_max"] >= TEMP_WARN or val & 0xF
+    # <4> = warning nel journal (SyslogLevelPrefix), <6> = info; a terminale
+    # niente prefisso, solo "ATTENZIONE"
+    prefix = ("<4>" if warn else "<6>") if not sys.stdout.isatty() else (
+        "ATTENZIONE " if warn else "")
+    print(f"{prefix}temp={r['temp_mean']:.1f}C max={r['temp_max']:.1f}C"
+          f" arm={r['arm_mhz']:.0f}MHz cpu={r['cpu_system']:.0f}%"
+          f" chromium={r['cpu_chromium']:.0f}% throttled=0x{val:x}"
+          + (f" ({', '.join(flags)})" if flags else ""))
+
+
+def cmd_switch(a):
+    if a.cmd == "on":
+        open(PERF_FLAG, "w").close()
+    elif a.cmd == "off" and os.path.exists(PERF_FLAG):
+        os.remove(PERF_FLAG)
+    on = os.path.exists(PERF_FLAG)
+    print(f"modalita' test: {'ACCESA' if on else 'spenta'} ({PERF_FLAG})")
+    if a.cmd != "status":
+        print("effetto dopo: sudo systemctl restart kiosk.service")
+
+
+def main():
+    p = argparse.ArgumentParser(prog="kiosk-perf", description="Misure e salute del kiosk")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("sample"); s.add_argument("-s", "--seconds", type=int, default=60)
+    h = sub.add_parser("health"); h.add_argument("-s", "--seconds", type=int, default=10)
+    for name in ("on", "off", "status"):
+        sub.add_parser(name)
+    r = sub.add_parser("run")
+    r.add_argument("-s", "--seconds", type=int, default=60)
+    r.add_argument("--settle", type=int, default=150)
+    r.add_argument("modes", nargs="*")
+    a = p.parse_args()
+    if a.cmd == "sample":
+        print_sample("stato attuale", sample(a.seconds))
+    elif a.cmd == "health":
+        cmd_health(a)
+    elif a.cmd == "run":
+        cmd_run(a)
+    else:
+        cmd_switch(a)
+
+
+if __name__ == "__main__":
+    main()

@@ -1136,8 +1136,88 @@ document.addEventListener("touchmove", function (e) {
 document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
 /* ---------------------------------------------------------------------------
+   Perf test mode (only with ?perf=1, set by the device when the operator
+   runs "kiosk-perf on" - see device/pi/kiosk-perf). Never reachable from the
+   touchscreen. While "kiosk-perf run" is measuring, it serves the screen
+   state to show on 127.0.0.1:8081; we apply it, disable the idle return and
+   echo the nonce back so the measurement only starts once the state is
+   really on screen. With no session running the fetch just fails and the
+   kiosk behaves normally.
+   ------------------------------------------------------------------------- */
+function startPerfMode() {
+  var PERF_URL = "http://127.0.0.1:8081/mode";
+  var seen = 0;
+
+  var badge = document.createElement("div");
+  badge.textContent = "PERF";
+  badge.style.cssText = "position:fixed;right:4px;bottom:4px;z-index:9999;" +
+    "font:700 12px/1 sans-serif;color:#fff;background:rgba(200,0,0,.7);" +
+    "padding:3px 5px;border-radius:3px;pointer-events:none";
+  document.body.appendChild(badge);
+
+  /* goMenu() starts a new idle watcher without stopping the previous one:
+     stop it here so menu -> menu never leaves a stray timer behind. */
+  function toMenu() {
+    stopIdleWatcher();
+    stopAttractLoop();
+    closeGame();
+    closeGameFrame();
+    goMenu();
+  }
+
+  function apply(mode) {
+    if (mode === "attract") {
+      closeGame();
+      closeGameFrame();
+      goAttract();
+    } else if (mode === "menu") {
+      toMenu();
+    } else if (mode === "menu-static") {
+      /* Icons frozen: each animated SVG swapped for its still PNG. */
+      toMenu();
+      document.querySelectorAll(".tile__icon-img").forEach(function (img) {
+        img.src = img.src.replace(/\.svg(\?.*)?$/, ".png");
+      });
+    } else if (mode === "menu-noshadow") {
+      /* Icons animated, but without the raised-glass drop-shadows. */
+      toMenu();
+      document.querySelectorAll(".tile__icon-img").forEach(function (img) {
+        img.style.filter = "none";
+      });
+    } else if (mode.indexOf("game:") === 0) {
+      var id = mode.slice(5);
+      var g = enabledGames().filter(function (x) { return x.id === id; })[0];
+      if (!g) return false;
+      toMenu();
+      openGame(g);
+    } else {
+      return false;
+    }
+    stopIdleWatcher();
+    return true;
+  }
+
+  setInterval(function () {
+    if (!state.config) return;
+    fetch(PERF_URL + "?seen=" + seen, { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (msg) {
+        if (!msg.nonce || msg.nonce === seen) return;
+        if (apply(msg.mode)) {
+          seen = msg.nonce;
+          telemetry("perf_mode", { mode: msg.mode });
+        }
+      })
+      .catch(function () {});
+  }, 2000);
+}
+
+/* ---------------------------------------------------------------------------
    Wire-up
    ------------------------------------------------------------------------- */
+if (new URLSearchParams(window.location.search).get("perf") === "1") {
+  startPerfMode();
+}
 document.getElementById("screen-attract").addEventListener("click", onAttractTap);
 watchGameFrameActivity();
 

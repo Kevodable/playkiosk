@@ -307,6 +307,13 @@ forme, puzzle, tris, hanoi.
   `device/pi/` **allineati al prototipo** (collaudato); restano 2 migliorie da
   applicare sul Pi: `bind 127.0.0.1` nel Caddyfile (oggi Caddy ascolta su
   `*:8080`, porta aperta alla LAN) ed errore chiaro se manca Chromium.
+- 2026-10-03 — Misura del consumo: sul Pi il menu fermo porta Chromium a
+  ~120% di CPU e il SoC a 74 C (attract: ~10% e 58 C, GPU attiva). Invece di
+  un test usa e getta, **strumento fisso** su ogni kiosk: `kiosk-perf`
+  (misure, salute) + timer `kiosk-health` (una riga nel journal ogni 5 min) +
+  **modalita' test** della shell (`?perf=1`), spenta di default, accesa solo
+  da file-interruttore sul Pi (`kiosk-perf on` + restart), mai dal touch.
+  Branch `feature/perf-tools` (da `docs/pi-review`).
 
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
@@ -327,6 +334,11 @@ forme, puzzle, tris, hanoi.
   sez. 5 del doc: fatto il punto 4 (script di deploy), il resto da fare.
   **Da applicare sul Pi** (dopo ok): Caddyfile con `bind 127.0.0.1` e
   `kiosk-browser.sh` nuovo (vedi `device/pi/README.md`).
+- **Prestazioni:** menu fermo troppo pesante sul Pi (~120% CPU, 74 C).
+  Strumento `kiosk-perf` pronto (branch `feature/perf-tools`), da installare
+  sul Pi; poi misura dei 5 stati, report e proposta di soluzioni (ipotesi:
+  SVG animati in `<img>` + 3 `drop-shadow` per icona, ridisegnati a ogni frame).
+  Obiettivo: menu fermo < 25% di CPU senza perdere le icone vive.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;

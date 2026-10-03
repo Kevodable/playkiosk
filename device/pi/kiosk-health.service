@@ -1,0 +1,13 @@
+# Salute del kiosk -> sul Pi: /etc/systemd/system/kiosk-health.service
+# Lanciato da kiosk-health.timer: una riga nel journal con temperatura,
+# clock, CPU e throttling (media su 10 s). Sopra 75 C o con throttling in
+# corso la riga e' un warning. Lettura: journalctl -t kiosk-health
+# Utente kiosk: e' nel gruppo video (vcgencmd), nessun privilegio in piu'.
+[Unit]
+Description=Kiosk: riga di salute (temperatura, CPU, throttling)
+
+[Service]
+Type=oneshot
+User=kiosk
+ExecStart=/usr/local/bin/kiosk-perf health
+SyslogIdentifier=kiosk-health

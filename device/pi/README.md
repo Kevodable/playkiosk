@@ -10,6 +10,9 @@ deploy, rollback, diagnostica): [`docs/raspberry-pi-setup.md`](../../docs/raspbe
 | `kiosk.service`     | `/etc/systemd/system/kiosk.service`  | root:root 644           | `sudo systemctl daemon-reload && sudo systemctl restart kiosk.service` |
 | `pam-cage`          | `/etc/pam.d/cage`                    | root:root 644           | effetto al prossimo avvio di `kiosk.service`          |
 | `kiosk-browser.sh`  | `/usr/local/bin/kiosk-browser.sh`    | root:root 755           | `sudo systemctl restart kiosk.service`                |
+| `kiosk-perf`        | `/usr/local/bin/kiosk-perf`          | root:root 755           | nessuno (misure; vedi doc §4.1)                       |
+| `kiosk-health.service` | `/etc/systemd/system/kiosk-health.service` | root:root 644     | `sudo systemctl daemon-reload`                        |
+| `kiosk-health.timer`   | `/etc/systemd/system/kiosk-health.timer`   | root:root 644     | `sudo systemctl enable --now kiosk-health.timer`      |
 | `deploy.sh`         | **non va sul Pi**: si lancia dal Mac | —                       | `device/pi/deploy.sh [deploy\|list\|rollback [nome]]` |
 
 Installazione di tutti i file (dal Pi, con la cartella `device/pi/` copiata in `~/pi`):
@@ -19,7 +22,10 @@ sudo install -m 644 ~/pi/Caddyfile        /etc/caddy/Caddyfile
 sudo install -m 644 ~/pi/kiosk.service    /etc/systemd/system/kiosk.service
 sudo install -m 644 ~/pi/pam-cage         /etc/pam.d/cage
 sudo install -m 755 ~/pi/kiosk-browser.sh /usr/local/bin/kiosk-browser.sh
+sudo install -m 755 ~/pi/kiosk-perf       /usr/local/bin/kiosk-perf
+sudo install -m 644 ~/pi/kiosk-health.service ~/pi/kiosk-health.timer /etc/systemd/system/
 sudo systemctl daemon-reload
+sudo systemctl enable --now kiosk-health.timer
 sudo systemctl reload caddy
 sudo systemctl restart kiosk.service
 ```
@@ -31,6 +37,9 @@ sudo systemctl restart kiosk.service
   migliorie, **da applicare sul prototipo**:
   - `Caddyfile`: `bind 127.0.0.1` (sul Pi Caddy ascolta su `*:8080`);
   - `kiosk-browser.sh`: errore chiaro nel journal se manca Chromium.
+  Nuovi, **da installare sul prototipo**: `kiosk-perf`, `kiosk-health.service`
+  e `.timer`, e `kiosk-browser.sh` con l'interruttore della modalità test
+  (`/srv/kiosk/perf.on`).
   Confronto: `ssh <admin>@<host> cat /etc/caddy/Caddyfile | diff -I '^ *#' - device/pi/Caddyfile`.
 - **Niente segreti** in questa cartella: niente password, chiavi, auth key
   Tailscale, IP. L'accesso SSH (solo chiave) lo imposta cloud-init

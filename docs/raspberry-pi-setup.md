@@ -50,6 +50,9 @@ usa `localStorage`; con `file://` Chromium blocca o isola tutte e tre le cose.
 | `/etc/systemd/system/kiosk.service`   | ← `device/pi/kiosk.service`                                 |
 | `/etc/pam.d/cage`                     | ← `device/pi/pam-cage`                                      |
 | `/usr/local/bin/kiosk-browser.sh`     | ← `device/pi/kiosk-browser.sh`                              |
+| `/usr/local/bin/kiosk-perf`           | ← `device/pi/kiosk-perf` (misure e salute, §4.1)            |
+| `/etc/systemd/system/kiosk-health.*`  | ← `device/pi/kiosk-health.service` / `.timer`               |
+| `/srv/kiosk/perf.on`                  | interruttore della modalità test (assente = kiosk normale)  |
 | `/etc/ssh/sshd_config.d/50-cloud-init.conf` | SSH solo chiave (scritto da cloud-init, non versionato) |
 | `/home/kiosk/.config/chromium/`       | profilo Chromium: qui vivono `localStorage` (deviceUuid, record dei giochi) |
 
@@ -307,6 +310,40 @@ vcgencmd get_throttled                      # 0x0 = nessun sottovoltaggio / thro
 Riavvio del solo kiosk: `sudo systemctl restart kiosk.service`.
 cage parte senza `-s`: il cambio di terminale (`Ctrl+Alt+Fn`) è disattivato,
 si interviene via SSH/Tailscale.
+
+### 4.1 Misure di prestazioni e salute (`kiosk-perf`)
+
+Strumento fisso su ogni kiosk (`device/pi/kiosk-perf`), solo lettura. CPU in
+% di un core (il Pi 5 ha 4 core: massimo 400%).
+
+```sh
+kiosk-perf sample -s 60      # stato attuale: CPU sistema e processi Chromium
+                             # (gpu-process, renderer, browser), cage,
+                             # temperatura, clock ARM/GPU, throttling
+kiosk-perf health            # una riga (la stessa del timer)
+journalctl -t kiosk-health   # storico: una riga ogni 5 min (kiosk-health.timer);
+                             # sopra 75 C o con throttling = warning
+journalctl -t kiosk-health -p warning   # solo gli avvisi
+```
+
+**Modalità test della shell** (per confrontare gli stati in modo ripetibile):
+
+```sh
+kiosk-perf on                              # crea /srv/kiosk/perf.on
+sudo systemctl restart kiosk.service       # la shell si apre con ?perf=1 (badge "PERF" in basso a destra)
+kiosk-perf run                             # sequenza standard: attract, menu, game:memory,
+                                           # menu-static (icone ferme), menu-noshadow (senza ombre)
+kiosk-perf run -s 60 --settle 150 menu game:talpe   # stati a scelta
+kiosk-perf off && sudo systemctl restart kiosk.service   # SEMPRE alla fine
+```
+
+Per ogni stato: la shell lo applica e lo conferma (canale su
+`127.0.0.1:8081`, aperto solo durante `run`), poi assestamento (`--settle`,
+default 150 s, perché la temperatura sale lentamente) e misura (`-s`, default
+60 s); alla fine un riepilogo. Senza conferma entro 20 s `run` si ferma
+(modalità non accesa, kiosk non riavviato, gioco inesistente). In modalità
+test il ritorno all'attract per inattività è spento solo negli stati imposti
+da `run`; dal touch la modalità non si attiva mai.
 
 ---
 

@@ -1,0 +1,13 @@
+# Timer della salute del kiosk -> sul Pi: /etc/systemd/system/kiosk-health.timer
+# Ogni 5 minuti, primo giro 2 minuti dopo il boot.
+# Attivazione: sudo systemctl enable --now kiosk-health.timer
+[Unit]
+Description=Kiosk: salute ogni 5 minuti
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

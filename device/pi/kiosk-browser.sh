@@ -8,6 +8,10 @@ BROWSER=$(command -v chromium || command -v chromium-browser) || {
   echo "kiosk-browser: chromium non trovato" >&2
   exit 1
 }
+# Modalita' test (kiosk-perf on): la shell si apre con ?perf=1 e si lascia
+# pilotare da "kiosk-perf run". Spenta = file assente = kiosk normale.
+URL=http://127.0.0.1:8080/
+[ -e /srv/kiosk/perf.on ] && URL="$URL?perf=1"
 exec "$BROWSER" \
   --kiosk \
   --ozone-platform=wayland \
@@ -20,4 +24,4 @@ exec "$BROWSER" \
   --disable-pinch \
   --password-store=basic \
   --check-for-update-interval=31536000 \
-  http://127.0.0.1:8080
+  "$URL"
