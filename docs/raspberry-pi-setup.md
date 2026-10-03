@@ -341,7 +341,11 @@ Per ogni stato: la shell lo applica e lo conferma (canale su
 `127.0.0.1:8081`, aperto solo durante `run`), poi assestamento (`--settle`,
 default 150 s, perché la temperatura sale lentamente) e misura (`-s`, default
 60 s); alla fine un riepilogo. Senza conferma entro 20 s `run` si ferma
-(modalità non accesa, kiosk non riavviato, gioco inesistente). In modalità
+(modalità non accesa, kiosk non riavviato, gioco inesistente). Una misura
+disturbata è marcata **SCARTATA** (con il motivo): la shell riporta lo
+schermo che mostra davvero e i tocchi/tasti ricevuti, e se cambiano durante
+assestamento o misura, o la shell smette di rispondere, il numero non vale.
+Durante `run` non toccare il kiosk (né tastiere o mouse collegati). In modalità
 test il ritorno all'attract per inattività è spento solo negli stati imposti
 da `run`; dal touch la modalità non si attiva mai.
 

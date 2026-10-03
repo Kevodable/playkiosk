@@ -21,6 +21,9 @@
 # Durante "run" ascolta su 127.0.0.1:8081: la shell (aperta con ?perf=1)
 # legge da li' lo stato da mostrare e conferma di averlo applicato; senza
 # conferma la misura non parte (niente numeri attribuiti allo stato sbagliato).
+# La shell riporta anche lo schermo che mostra davvero e quanti tocchi/tasti
+# ha ricevuto: se durante assestamento o misura cambiano (qualcuno tocca il
+# kiosk) o la shell smette di rispondere, la misura e' SCARTATA.
 import argparse, http.server, json, os, statistics, subprocess, sys, threading, time
 
 PERF_FLAG = "/srv/kiosk/perf.on"
@@ -153,8 +156,12 @@ def print_sample(title, r):
 
 # ---------------------------------------------------------------- run
 class Channel:
-    """Stato richiesto alla shell + ultima conferma ricevuta."""
+    """Stato richiesto alla shell, ultima conferma ricevuta e, durante una
+    misura, i disturbi: schermo diverso da quello atteso, tocchi/tasti,
+    shell che smette di rispondere."""
     def __init__(self):
+        self.screen, self.inputs, self.last_poll = None, None, 0.0
+        self.expected, self.base_inputs, self.max_gap, self.issues = None, None, 0.0, []
         # nonce di partenza dall'orologio: una sessione nuova non coincide mai
         # con l'ultimo nonce gia' visto dalla shell nella sessione prima
         self.mode, self.nonce, self.seen = "", int(time.time()), None
@@ -170,18 +177,49 @@ class Channel:
         with self.lock:
             return self.lock.wait_for(lambda: self.seen == nonce, timeout)
 
+    def watch(self, expected_screen):
+        with self.lock:
+            self.expected, self.base_inputs = expected_screen, self.inputs
+            self.max_gap, self.issues = 0.0, []
+            if self.screen != expected_screen:
+                self.issues.append(f"la shell mostra '{self.screen}'")
+
+    def unwatch(self):
+        with self.lock:
+            gap = max(self.max_gap, time.monotonic() - self.last_poll)
+            if gap > 10:
+                self.issues.append(f"shell senza risposta per {gap:.0f} s")
+            self.expected = None
+            return list(dict.fromkeys(self.issues))
+
+    def poll(self, seen, screen, inputs):
+        """Chiamato a ogni richiesta della shell (ogni ~2 s)."""
+        now = time.monotonic()
+        with self.lock:
+            if self.expected is not None:
+                self.max_gap = max(self.max_gap, now - self.last_poll)
+                if screen != self.expected:
+                    self.issues.append(f"schermo cambiato in '{screen}'")
+                if inputs != self.base_inputs:
+                    self.issues.append("tocchi o tasti durante la misura")
+            self.screen, self.inputs, self.last_poll = screen, inputs, now
+            if seen.isdigit():
+                self.seen = int(seen)
+                self.lock.notify_all()
+            return {"mode": self.mode, "nonce": self.nonce}
+
+
+def expected_screen(mode):
+    return mode if mode.startswith("game:") else mode.split("-")[0]
+
 
 def make_handler(channel):
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
-            seen = q.get("seen", [""])[0]
-            with channel.lock:
-                if seen.isdigit():
-                    channel.seen = int(seen)
-                    channel.lock.notify_all()
-                body = json.dumps({"mode": channel.mode, "nonce": channel.nonce}).encode()
+            arg = lambda k: q.get(k, [""])[0]
+            body = json.dumps(channel.poll(arg("seen"), arg("screen"), arg("inputs"))).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "no-store")
@@ -215,10 +253,14 @@ def cmd_run(a):
                          " (kiosk riavviato dopo 'kiosk-perf on'?)")
             print(f"-- {mode}: applicato, assestamento {a.settle} s, misura {a.seconds} s",
                   file=sys.stderr, flush=True)
+            channel.watch(expected_screen(mode))
             time.sleep(a.settle)
             r = sample(a.seconds)
+            issues = channel.unwatch()
             print_sample(mode, r)
-            results.append((mode, r))
+            if issues:
+                print(f"   SCARTATA: {'; '.join(issues)}", flush=True)
+            results.append((mode, r, issues))
         # fine sessione: la shell torna all'attract e al comportamento normale
         nonce = channel.request("attract")
         channel.wait_seen(nonce, 10)
@@ -226,9 +268,10 @@ def cmd_run(a):
         server.shutdown()
     print("\n== riepilogo")
     print(f"   {'stato':16s} {'sistema':>8s} {'chromium':>9s} {'temp':>6s} {'max':>6s}")
-    for mode, r in results:
+    for mode, r, issues in results:
         print(f"   {mode:16s} {r['cpu_system']:7.1f}% {r['cpu_chromium']:8.1f}%"
-              f" {r['temp_mean']:5.1f}C {r['temp_max']:5.1f}C")
+              f" {r['temp_mean']:5.1f}C {r['temp_max']:5.1f}C"
+              + ("   SCARTATA" if issues else ""))
 
 
 # ---------------------------------------------------------------- health

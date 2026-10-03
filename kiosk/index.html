@@ -1147,6 +1147,23 @@ document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 function startPerfMode() {
   var PERF_URL = "http://127.0.0.1:8081/mode";
   var seen = 0;
+  /* Every touch/key, in the shell or inside the game iframe, is counted and
+     reported with the screen actually shown: kiosk-perf discards a
+     measurement if either changes while it runs. */
+  var inputs = 0;
+  function countInput() { inputs++; }
+  ["pointerdown", "keydown"].forEach(function (ev) {
+    document.addEventListener(ev, countInput, true);
+  });
+  var frame = document.getElementById("game-frame");
+  frame.addEventListener("load", function () {
+    var doc;
+    try { doc = frame.contentDocument; } catch (e) { doc = null; }
+    if (!doc) return;
+    ["pointerdown", "keydown"].forEach(function (ev) {
+      doc.addEventListener(ev, countInput, true);
+    });
+  });
 
   var badge = document.createElement("div");
   badge.textContent = "PERF";
@@ -1199,7 +1216,10 @@ function startPerfMode() {
 
   setInterval(function () {
     if (!state.config) return;
-    fetch(PERF_URL + "?seen=" + seen, { cache: "no-store" })
+    var screen = state.currentScreen +
+      (state.currentScreen === "game" && state.currentGame ? ":" + state.currentGame.id : "");
+    fetch(PERF_URL + "?seen=" + seen + "&screen=" + encodeURIComponent(screen) +
+      "&inputs=" + inputs, { cache: "no-store" })
       .then(function (r) { return r.json(); })
       .then(function (msg) {
         if (!msg.nonce || msg.nonce === seen) return;
