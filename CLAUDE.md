@@ -72,6 +72,35 @@ Setup, deploy/rollback, diagnostica e roadmap: `docs/raspberry-pi-setup.md`;
 file di configurazione versionati (fonte di verita'): `device/pi/`.
 Niente segreti in repo (password, chiavi, auth key Tailscale, IP).
 
+## 5c. Backend centrale (hosting) — decisioni 2026-10-14
+Serve SOLO alla parte centrale (i kiosk restano offline-first): telemetria
+(eventi d'uso + righe di salute dei Pi), in futuro dashboard della flotta,
+config dei tenant e diritti sui giochi (tier). Anteprima web: GitHub Pages.
+- **Hosting:** Aruba **Linux Easy** (condiviso): PHP 8.0-8.5, MySQL (5
+  database, 1 GB, ampliabile a pagamento), cron, backup 1-7 giorni,
+  datacenter in Italia. **Niente SSH** (c'e' solo in Linux Advanced): file via
+  FTP/FTPS, database creati dal pannello Aruba. Scelto rispetto a Serverplan
+  (piu' caro su 3 anni) e ai fornitori con rincari forti al rinnovo.
+- **Dominio:** **`benbenplay.com`** (preso). Nome generico, non del
+  cliente. `benbenplay.it/.eu/.net` erano liberi al 2026-10-04.
+- **Divisione dei compiti:** l'utente fa acquisto, login al pannello Aruba e a
+  phpMyAdmin, creazione del database e dell'accesso FTP, e salva le
+  credenziali in un file **fuori dalla repo** (`~/.config/playkiosk/`,
+  permessi solo utente). Claude non entra in pannelli web con password e le
+  password non passano dalla chat. Claude scrive il backend PHP, lo schema e
+  le migrazioni (eseguite sul server da una pagina protetta: il database di
+  un hosting condiviso di solito non accetta connessioni esterne), lo script
+  di deploy via FTPS che legge le credenziali da quel file, i collaudi e il
+  lato kiosk (`telemetry()`, timer di salute).
+- **Database pensato per durare** (1 GB per tutta la flotta): righe compatte
+  (kiosk come id numerico, eventi come codici brevi, ~60 byte/riga); salute
+  riassunta (una riga all'ora con media/massimo + una subito in caso di
+  allarme: temperatura alta, throttling) invece di una ogni 5 minuti; dati
+  grezzi tenuti **60-90 giorni** poi riassunti per giorno (partite per gioco,
+  durata media, temperatura massima) e cancellati; archivio facoltativo dei
+  grezzi in file compressi nello spazio web. Stima: qualche MB per kiosk
+  all'anno (salvando tutto grezzo sarebbero ~95 MB per kiosk all'anno).
+
 ## 6. Vincoli tecnici
 - Shell in **HTML single-file**, niente build tool / bundler.
 - **JS solo ASCII**: vale per la **logica** JS (nomi, operatori, stringhe
@@ -83,7 +112,7 @@ Niente segreti in repo (password, chiavi, auth key Tailscale, IP).
   account kevodable, `.nojekyll`) = anteprima.
 - **Telemetria:** una funzione `telemetry(event, payload)` → oggi `console.log`
   di `{ts, tenantId, deviceUuid, event, ...}`, con cucitura TODO per POST al
-  backend futuro (PHP+MySQL su Aruba). `deviceUuid` in `localStorage`. Eventi:
+  backend futuro (PHP+MySQL su Aruba, vedi sez. 5c). `deviceUuid` in `localStorage`. Eventi:
   app_start, attract_view, menu_view, game_open, game_close(+durationMs),
   idle_return, error.
 
@@ -408,6 +437,10 @@ forme, puzzle, tris, hanoi.
   tenant `funplanet`: scelta dell'utente). `.gitignore`: `.DS_Store`,
   `.claude/`, cache Python.
 
+- 2026-10-14 — **Backend centrale:** scelto Aruba Linux Easy, dominio
+  `benbenplay.com` (sez. 5c): criteri del database e divisione dei compiti
+  (credenziali fuori repo, niente login di Claude nei pannelli web).
+
 ## Stato attuale
 - **Shell/menu:** tile nude (icona animata in rilievo + titolo), sfondo a
   norma, **cornice a finestra v2** (architrave, stipiti, davanzale) su default;
@@ -440,6 +473,9 @@ forme, puzzle, tris, hanoi.
   kiosk-health`, totem non ancora pronto). **Giochi:** tutti nel budget
   (schermate iniziali ~0,5% dopo la pausa; partite senza tocchi: quasi tutte
   ~0,4%, Frutta 36%, Palloncini 54%, Acchiappa-stelle 56%).
+- **Backend:** hosting Aruba Linux Easy + `benbenplay.com` (sez. 5c).
+  Prossimo passo: attivazione, poi database e accesso FTP dal pannello
+  (utente), file delle credenziali fuori repo, poi backend e telemetria.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
     riscrivere senza accento o trovare un font simile con gli accenti;
