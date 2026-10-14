@@ -81,7 +81,8 @@ config dei tenant e diritti sui giochi (tier). Anteprima web: GitHub Pages.
   datacenter in Italia. **Niente SSH** (c'e' solo in Linux Advanced): file via
   FTP/FTPS, database creati dal pannello Aruba. Scelto rispetto a Serverplan
   (piu' caro su 3 anni) e ai fornitori con rincari forti al rinnovo.
-- **Dominio:** **`benbenplay.com`** (preso). Nome generico, non del
+- **Acquistati** (2026-10-14): hosting Linux Easy + dominio
+  **`benbenplay.com`**. Nome generico, non del
   cliente. `benbenplay.it/.eu/.net` erano liberi al 2026-10-04.
 - **Divisione dei compiti:** l'utente fa acquisto, login al pannello Aruba e a
   phpMyAdmin, creazione del database e dell'accesso FTP, e salva le
@@ -473,8 +474,8 @@ forme, puzzle, tris, hanoi.
   kiosk-health`, totem non ancora pronto). **Giochi:** tutti nel budget
   (schermate iniziali ~0,5% dopo la pausa; partite senza tocchi: quasi tutte
   ~0,4%, Frutta 36%, Palloncini 54%, Acchiappa-stelle 56%).
-- **Backend:** hosting Aruba Linux Easy + `benbenplay.com` (sez. 5c).
-  Prossimo passo: attivazione, poi database e accesso FTP dal pannello
+- **Backend:** hosting Aruba Linux Easy + `benbenplay.com` **acquistati**
+  (sez. 5c). Prossimo passo: database e accesso FTP dal pannello
   (utente), file delle credenziali fuori repo, poi backend e telemetria.
 - **Aperti:**
   - accenti non coperti da Bold Doodle (es. "difficolta'" in 9 giochi):
